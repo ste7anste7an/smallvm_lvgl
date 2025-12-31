@@ -763,8 +763,7 @@ extern "C" void esp8266DeepSleep(uint64_t usecs) {
 	#define DEFAULT_TONE_PIN 2
 	#define PIN_LED 13
 	static const char reservedPin[TOTAL_PINS] = {
-		//sodb remove reserved pins 7 and 8 for LMS-ESP32v2 serial port
-		0, 1, 0, 1, 0, 1, 1, 0, 0, 0,
+		0, 1, 0, 1, 0, 1, 1, 1, 1, 0,
 		0, 1, 1, 0, 0, 1, 1, 1, 0, 0,
 		1, 1, 1, 0, 1, 0, 0, 0, 1, 1,
 		1, 1, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -1037,12 +1036,10 @@ extern "C" void esp8266DeepSleep(uint64_t usecs) {
 		#endif
 	#endif
 	static const char reservedPin[TOTAL_PINS] = {
-		//sodb remove reserved pins 7 and 8 for LMS-ESP32v2 serial port
-		
-		0, 1, 0, 1, 0, 0, 1, 0, 0, 1,
+		0, 1, 0, 1, 0, 0, 1, 1, 1, 1,
 		1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 1, 0, 0, 0, 1, 1,
-		1, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+		1, 0, 0, 0, 1, 0, 0, 0, 1, 1,
+		1, 1, 0, 0, 0, 0, 0, 1, 1, 0};
 
 #elif defined(TTGO_RP2350)
 
@@ -3121,27 +3118,6 @@ static OBJ primSquareWave(int argCount, OBJ *args) {
 	return isSupported ? trueObj : falseObj;
 }
 
-//sodb
-/*
-static OBJ primGetCpuFreq(int argCount, OBJ *args) {
-		char s[100];
-		sprintf(s,"cpu freq %d",ESP.getCpuFreqMHz());
-		outputString(s);
-		return trueObj;
-	
-}
-*/
-
-
-static OBJ primOutputString(int argCount, OBJ *args) {
-	OBJ arg = args[0];
-	if (IS_TYPE(arg, StringType)) { // string
-		char *s = obj2str(arg);
-		outputString(s);
-		return trueObj;
-	}
-	return falseObj;
-}
 // forward to primitives that don't take argCount
 
 static OBJ primSetUserLED2(int argCount, OBJ *args) { primSetUserLED(args); return falseObj; }
@@ -3164,9 +3140,6 @@ static PrimEntry entries[] = {
 	{"analogWrite", primAnalogWrite2},
 	{"digitalRead", primDigitalRead},
 	{"digitalWrite", primDigitalWrite2},
-//sodb
-	{"outputstring",primOutputString},
-	//{"cpufreq",primGetCpuFreq},
 };
 
 void addIOPrims() {

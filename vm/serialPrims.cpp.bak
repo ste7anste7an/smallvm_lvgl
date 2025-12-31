@@ -377,37 +377,8 @@ static OBJ primSerialClose(int argCount, OBJ *args) {
 	return falseObj;
 }
 
-//sodb
-OBJ primSerialAvailable(int argCount, OBJ *args) {
-	int byteCount = serialAvailable();
-	return int2obj(byteCount);
-}
-
-
-
 // Empty byte array constant
 static uint32 emptyByteArray = HEADER(ByteArrayType, 0);
-
-static OBJ primSerialReadNr(int argCount, OBJ *args) {
-	if (!isOpen) return fail(serialPortNotOpen);
-	if (argCount < 1) return fail(notEnoughArguments);
-	if (!isInt(args[0])) return fail(needsIntegerError);
-
-	taskSleep(-1);
-	int byteCount = serialAvailable();
-	if (byteCount == 0) return (OBJ) &emptyByteArray;
-	if (byteCount < 0) return fail(primitiveNotImplemented);
-	int nrbytes = obj2int(args[0]);
-	byteCount = (nrbytes<=byteCount) ? nrbytes : byteCount;
-	int wordCount = (byteCount + 3) / 4;
-	OBJ result = newObj(ByteArrayType, wordCount, falseObj);
-	if (!result) return fail(insufficientMemoryError);
-	serialReadBytes((uint8 *) &FIELD(result, 0), byteCount);
-	setByteCountAdjust(result, byteCount);
-	return result;
-}
-
-
 
 static OBJ primSerialRead(int argCount, OBJ *args) {
 	if (!isOpen) return fail(serialPortNotOpen);
@@ -579,20 +550,6 @@ static OBJ primMIDIRecv(int argCount, OBJ *args) { return falseObj; }
 
 #endif // USB_MIDI
 
-
-#if defined(LMS_ESP32)
-		// sodb: lms-esp32vw: SERIAL_PORT.begin(baudRate, SERIAL_8N1, 8, 7); rx=8, tx=7
-		// lms-esp32v1 rx=18, tx=19
-		
-	OBJ primSerialESPVersion (int argCount, OBJ *args) {
-		return int2obj(getESPVersion() );
-	}
-
-
-
-
-#endif
-
 // DUELink Downlink Primitives
 
 #if defined(DUELink)
@@ -684,11 +641,6 @@ static PrimEntry entries[] = {
 	{"open", primSerialOpen},
 	{"close", primSerialClose},
 	{"read", primSerialRead},
-	{"available",primSerialAvailable},
-	{"readNr", primSerialReadNr},
-#if defined(LMS_ESP32)
-	{"espversion", primSerialESPVersion},
-#endif
 	{"readInto", primSerialReadInto},
 	{"write", primSerialWrite},
 	{"setPins", primSetPins},

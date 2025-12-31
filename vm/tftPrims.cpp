@@ -30,7 +30,7 @@ static int deferUpdates = false;
 	defined(ARDUINO_NRF52840_CLUE) || defined(ARDUINO_IOT_BUS) || defined(SCOUT_MAKES_AZUL) || \
 	defined(TTGO_RP2040) || defined(TTGO_DISPLAY) || defined(ARDUINO_M5STACK_Core2) || \
 	defined(GAMEPAD_DISPLAY) || defined(PICO_ED) || defined(OLED_128_64) || defined(COCUBE) || \
-	defined(M5Atom_S3_TFT)
+	defined(M5Atom_S3_TFT) || defined(TFT_CONFIG)
 
 	#define BLACK 0
 	#define WHITE 65535
@@ -542,6 +542,256 @@ static int deferUpdates = false;
 			return pressure;
 		}
 
+	#elif defined(TFT_CONFIG)
+		#include <Arduino.h>
+		#include <Arduino_GFX_Library.h>
+		#include <XPT2046_Touchscreen.h>
+		#include "touch_cst820.h"
+		#include <SPI.h>
+		#include "configurator.h"
+
+
+		#include <LittleFS.h>
+		#include <FS.h>
+
+
+		Config cfg;
+
+		Arduino_DataBus *bus = nullptr;
+		Arduino_GFX *gfx = nullptr;
+		#define tft (*gfx)
+		//Arduino_GFX& tft = *gfx;
+		XPT2046_Touchscreen *touch = nullptr;
+		SPIClass* touchSPI = nullptr;
+
+
+		#define HAS_TOUCH_SCREEN 1
+
+		// New (I2C/CST820):
+		static TouchCST820 *touchI2C = nullptr;
+
+		// Cache last point for XPT so we don’t call getPoint() multiple times per frame
+		static TS_Point lastP;
+		static bool lastPTouched = false;
+		static uint32_t lastTouchPoll = 0;
+	
+	
+
+		void tftInit() {
+
+			#ifndef TFT_WIDTH
+			#define TFT_WIDTH  (cfg.lvgl.width)
+			#endif
+
+			#ifndef TFT_HEIGHT
+			#define TFT_HEIGHT (cfg.lvgl.height)
+			#endif
+			if (!LittleFS.begin()) {
+					Serial.println("LittleFS mount failed!");
+					return;
+				}
+
+			if (!LittleFS.exists("/config.txt")) {
+				Serial.println("File does not exist!");
+				return;
+			}
+
+			configurator::setWarnUnknownKeys(true);
+			configurator::setDebug(false);
+
+			if (!configurator::loadConfig(&cfg)) {
+				Serial.println("Defaults used");
+			}
+			Serial.printf("DC %d, Cs %d, SCK %d, mosi %d, miso %d\n ", cfg.lcd.dc, cfg.lcd.cs,
+					cfg.lcd.sck, cfg.lcd.mosi, cfg.lcd.miso);
+			Serial.printf("ToucH interface: %s controller: %s\n",cfg.touch.interface,cfg.touch.controller);
+			bus = new Arduino_ESP32SPI(
+					cfg.lcd.dc, cfg.lcd.cs,
+					cfg.lcd.sck, cfg.lcd.mosi, cfg.lcd.miso,
+					cfg.lcd.spi, true
+				);
+
+
+			if (strcmp(cfg.lcd.controller, "ILI9341") == 0) {
+				gfx = new Arduino_ILI9341(bus, cfg.lcd.rst, cfg.lcd.rotation, false);
+			} else if (strcmp(cfg.lcd.controller, "ST7789") == 0) {
+				gfx = new Arduino_ST7789(bus, cfg.lcd.rst, cfg.lcd.rotation, cfg.lcd.invert,cfg.lcd.width, cfg.lcd.height,cfg.lcd.col_offset,cfg.lcd.row_offset);
+			}  else if (strcmp(cfg.lcd.controller, "ST7796") == 0) {
+				//if (cfg.lcd.col_offset==0 && cfg.lcd.row_offset==0)
+				//  gfx = new Arduino_ST7796(bus, cfg.lcd.rst, cfg.lcd.rotation, false);
+				//else
+				gfx = new Arduino_ST7796(bus, cfg.lcd.rst, cfg.lcd.rotation, cfg.lcd.invert,cfg.lcd.width, cfg.lcd.height,cfg.lcd.col_offset,cfg.lcd.row_offset);
+			}else {
+				Serial.println("Unknown controller, defaulting to ILI9341");
+				gfx = new Arduino_ILI9341(bus, cfg.lcd.rst, cfg.lcd.rotation, false);
+			}
+		
+			tft.begin();
+			tft.fillScreen(RGB565_BLACK);
+			delay(1); 
+			useTFT = true;
+
+			pinMode(cfg.lcd.backlight, OUTPUT);
+			digitalWrite(cfg.lcd.backlight, HIGH); // turn backlight ON (or LOW if your display is inverted)
+
+	
+
+		}
+
+			static inline bool isTouchXPT(void) {
+			return (0 == strcmp(cfg.touch.interface, "spi")) &&
+					(0 == strcmp(cfg.touch.controller, "xpt2046"));
+		}
+
+		static inline bool isTouchCST(void) {
+			return (0 == strcmp(cfg.touch.interface, "i2c")) &&
+					(0 == strcmp(cfg.touch.controller, "cst820"));
+		}
+
+		static void touchInit() {
+			// char s[100];
+			// sprintf(s,"touch init: %s %s ",cfg.touch.interface,cfg.touch.controller);
+			// outputString(s);
+			if (touchEnabled) return;
+
+			if (isTouchXPT()) {
+			// char s[100];
+			// sprintf(s,"xpt: spi: %d, miso: %d mosi: %d cs: %d",cfg.touch.spi,cfg.touch.miso, cfg.touch.mosi,cfg.touch.cs) ;
+			// outputString(s);
+	
+			// Create SPI bus if not already
+			//if (!touchSPI) {
+			touchSPI = new SPIClass(cfg.touch.spi);
+			touchSPI->begin(cfg.touch.sck, cfg.touch.miso, cfg.touch.mosi, -1);
+			touchEnabled = true;
+		//	}
+
+			// Create touch object if not already
+		//	if (!touch) {
+			if (cfg.touch.irq != 0) touch = new XPT2046_Touchscreen(cfg.touch.cs, cfg.touch.irq);
+			else                    touch = new XPT2046_Touchscreen(cfg.touch.cs);
+		//	}
+
+			touch->begin(*touchSPI);
+			touch->setRotation(cfg.touch.rotation);
+
+			
+			return;
+		}
+
+		if (isTouchCST()) {
+			Serial.println("CST820 touch initializing");
+
+			if (!touchI2C) touchI2C = new TouchCST820();          // heap
+			touchI2C->configure(cfg.touch.i2c, cfg.touch.sda, cfg.touch.scl);
+			touchI2C->setScreenSize(cfg.lvgl.width, cfg.lvgl.height);
+			touchI2C->begin();
+
+			touchEnabled = true;
+			return;
+		}
+		// char s[100];
+		// sprintf("Unknown touch config: iface=%s controller=%s\n",
+		// 				cfg.touch.interface, cfg.touch.controller);
+		// outputString(s);	
+		touchEnabled = false;
+		}
+
+		static int screenTouched() {
+			if (!touchEnabled) touchInit();
+			if (!touchEnabled) return 0;
+
+			if (isTouchXPT()) {
+				// optional: rate-limit reads to reduce SPI traffic
+				uint32_t now = millis();
+				if ((uint32_t)(now - lastTouchPoll) > 5) {
+				lastPTouched = (touch && touch->touched());
+				if (lastPTouched) lastP = touch->getPoint();
+				lastTouchPoll = now;
+				}
+				return lastPTouched ? 1 : 0;
+			}
+
+			if (isTouchCST()) {
+				return (touchI2C && touchI2C->touched()) ? 1 : 0;  // you can return points if you prefer
+			}
+
+			return 0;
+		}
+		static int screenTouchX() {
+		if (!touchEnabled) touchInit();
+		if (!touchEnabled) return -1;
+
+		if (isTouchXPT()) {
+			if (!screenTouched()) return -1;  // ensures lastP is valid
+
+			// Your example mapping:
+			// uint16_t x = map(p.x, 200, 3800, cfg.tft.width, 0);
+			return (int)map((int)lastP.x, 200, 3800, (int)cfg.lvgl.width, 0);
+		}
+
+		if (isTouchCST()) {
+			if (!touchI2C) return -1;
+			// touchI2C->x() already calls update(); returns -1 if none
+			return touchI2C->x();
+		}
+
+		return -1;
+		}
+
+		static int screenTouchY() {
+		if (!touchEnabled) touchInit();
+		if (!touchEnabled) return -1;
+
+		if (isTouchXPT()) {
+			if (!screenTouched()) return -1;
+
+			// Your example mapping:
+			// uint16_t y = map(p.y, 300, 3900, 0, cfg.tft.height);
+			return (int)map((int)lastP.y, 300, 3900, 0, (int)cfg.lvgl.height);
+		}
+
+		if (isTouchCST()) {
+			if (!touchI2C) return -1;
+			return touchI2C->y();
+		}
+
+		return -1;
+		}
+		static int screenTouchPressure() {
+		if (!touchEnabled) touchInit();
+		if (!touchEnabled) return -1;
+
+		if (isTouchXPT()) {
+			if (!screenTouched()) return -1;
+			return (int)lastP.z;
+		}
+
+		if (isTouchCST()) {
+			if (!touchI2C) return -1;
+			return touchI2C->pressure(); // constant 1000 when touched, else -1
+		}
+
+		return -1;
+		}
+
+		static int screenTouchGesture() {
+		if (!touchEnabled) touchInit();
+		if (!touchEnabled) return -1;
+
+		if (isTouchXPT()) {
+			return -1; // XPT2046 has no gesture
+		}
+
+		if (isTouchCST()) {
+			return touchI2C ? touchI2C->gesture() : -1;
+		}
+
+		return -1;
+		}
+
+		
+
 	#elif defined(SCOUT_MAKES_AZUL)
 		#undef BLACK // defined in SSD1306 header
 		#include "Adafruit_GFX.h"
@@ -992,7 +1242,12 @@ static int hasTFT() {
 	return useTFT;
 }
 
-#define BUFFER_PIXELS_SIZE (TFT_WIDTH * 8)
+//sodb
+// set this buffer to fixed value
+// take TFT_WIDTH * 4 --> 4*320=1280
+// #define BUFFER_PIXELS_SIZE (TFT_WIDTH * 8)
+#define BUFFER_PIXELS_SIZE (1280)
+
 uint16_t bufferPixels[BUFFER_PIXELS_SIZE]; // used by primPixelRow and primDrawBuffer
 
 static int color24to16b(int color24b) {
@@ -1206,7 +1461,11 @@ static OBJ primPixelRow(int argCount, OBJ *args) {
 			OBJ pixelObj = FIELD(pixelDataObj, (i + 1));
 			bufferPixels[i] = (isInt(pixelObj)) ? color24to16b(obj2int(pixelObj)) : 0;
 		}
+		#if defined(TFT_CONFIG)
+		tft.draw16bitRGBBitmap(x, y, bufferPixels, pixelCount, 1);
+		#else
 		tft.drawRGBBitmap(x, y, bufferPixels, pixelCount, 1);
+		#endif
 	} else if (IS_TYPE(pixelDataObj, ByteArrayType)) {
 		int isRGB565 = true;
 		if (bytesPerPixel < 0) {
@@ -1238,7 +1497,11 @@ static OBJ primPixelRow(int argCount, OBJ *args) {
 				byte += bytesPerPixel;
 			}
 		}
+		#if defined(TFT_CONFIG)
+		tft.draw16bitRGBBitmap(x, y, bufferPixels, pixelCount, 1);
+		#else
 		tft.drawRGBBitmap(x, y, bufferPixels, pixelCount, 1);
+		#endif
 	}
 	UPDATE_DISPLAY();
 	return falseObj;
@@ -1585,13 +1848,24 @@ static OBJ primDrawBuffer(int argCount, OBJ *args) {
 				}
 			}
 		}
-		tft.drawRGBBitmap(
+
+		#if defined(TFT_CONFIG)
+			tft.draw16bitRGBBitmap(
 			originX * scale,
 			(originY + y) * scale,
 			bufferPixels,
 			originWidth * scale,
 			scale
-		);
+			);
+		#else
+			tft.drawRGBBitmap(
+				originX * scale,
+				(originY + y) * scale,
+				bufferPixels,
+				originWidth * scale,
+				scale
+			);
+		#endif
 	}
 
 	UPDATE_DISPLAY();
@@ -1695,6 +1969,2025 @@ static OBJ primAprilTag(int argCount, OBJ *args) { return falseObj; }
 
 #endif
 
+//LVGL
+
+
+#if defined(LVGL) 
+#include <lvgl.h>
+extern bool useLVGL;
+extern bool LVGL_initialized;
+void setup_lvgl(void); 
+
+static uint32_t screenWidth;
+static uint32_t screenHeight;
+
+
+
+void my_disp_flush(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map)
+{
+//#ifndef DIRECT_RENDER_MODE
+  uint32_t w = lv_area_get_width(area);
+  uint32_t h = lv_area_get_height(area);
+
+  tft.draw16bitBeRGBBitmap(area->x1, area->y1, (uint16_t *)px_map, w, h);
+  
+//#endif // #ifndef DIRECT_RENDER_MODE
+
+  /*Call it to tell LVGL you are ready*/
+  lv_disp_flush_ready(disp);
+}
+
+void my_touchpad_read(lv_indev_t *indev, lv_indev_data_t *data)
+{
+			if (screenTouched()) {
+				data->state = LV_INDEV_STATE_PRESSED;
+				data->point.x = screenTouchX();
+				data->point.y = screenTouchY();
+			
+			} else {
+			data->state = LV_INDEV_STATE_RELEASED;
+			}
+		
+}
+
+#define TFT_BUFFER_LINES 40
+static lv_draw_buf_t draw_buf;
+static lv_color_t *buf1;
+static lv_color_t *buf2;
+
+bool event_seen = false;
+
+static lv_display_t * disp;
+
+// some includes for c++ maps etc.
+#include <unordered_map>
+#include <string>
+#include <functional>
+#include <vector>
+
+
+template<typename T>
+class ObjectRegistry {
+public:
+    void add(const std::string& name, T* obj) {
+        registry[name] = obj;
+    }
+
+	
+
+    T* get(const std::string& name) const {
+		auto it = registry.find(name);
+        return it != registry.end() ? it->second : nullptr;
+	}
+
+    bool remove(const std::string& name) {
+        return registry.erase(name) > 0;
+    }
+
+    void printall() {
+         for (const auto& pair : registry) {
+             char s[100];
+			sprintf(s,"name %s ",pair.first.c_str());
+			outputString(s);
+    	}
+	}
+
+    size_t size() const {
+        return registry.size();
+    }
+
+	std::vector<std::string> getAllNames() const {
+        std::vector<std::string> names;
+        for (const auto& entry : registry) {
+            names.push_back(entry.first);
+        }
+        return names;
+    }
+
+	std::string findNameFor(T* obj) const {
+        for (const auto& pair : registry) {
+            if (pair.second == obj) {
+                return pair.first;
+				//  char s[100];
+				// sprintf(s,"find name %s ",pair.first.c_str());
+				// outputString(s);
+            }
+        }
+        return "";
+    }
+
+private:
+    std::unordered_map<std::string, T*> registry;
+};
+
+template <>
+lv_obj_t* ObjectRegistry<lv_obj_t>::get(const std::string& name) const {
+    if (name == "lv_scr_act") {
+        return lv_scr_act();
+    } else {
+        auto it = registry.find(name);
+        return it != registry.end() ? it->second : nullptr;
+    }
+}
+
+
+ObjectRegistry<lv_obj_t>  registry;
+
+ObjectRegistry<lv_font_t> font_buffer;
+
+ObjectRegistry<lv_style_t> style_registry;
+
+ObjectRegistry<lv_chart_series_t> series_registry;
+
+ObjectRegistry<char*> btnmap_registry;
+
+ 
+void fs_init() {
+
+    if (!LittleFS.begin()) {
+        outputString("⚠️ LittleFS mount failed, formatting...");
+        if (!LittleFS.format()) {
+            outputString("❌ LittleFS format failed!");
+        }
+        if (!LittleFS.begin()) {
+            outputString("❌ LittleFS mount failed again after format!");
+        }
+    }
+    outputString("✅ LittleFS mounted successfully.");
+
+}
+
+/*
+bool my_ready_cb(lv_fs_drv_t *) {
+  return true;
+}
+
+void *my_open_cb(lv_fs_drv_t *, const char *path, lv_fs_mode_t mode) {
+  char full_path[64];
+  snprintf(full_path, sizeof(full_path), "/%s", path);
+  const char *fmode = (mode == LV_FS_MODE_WR) ? "w" : "r";
+  File *f = new File(LittleFS.open(full_path, fmode));
+  if (!f || !*f) {
+    delete f;
+    return nullptr;
+  }
+  outputString("file oped");
+  outputString(full_path);
+  return f;
+}
+
+lv_fs_res_t my_close_cb(lv_fs_drv_t *, void *file_p) {
+  File *f = static_cast<File *>(file_p);
+  f->close();
+  delete f;
+  return LV_FS_RES_OK;
+}
+
+lv_fs_res_t my_read_cb(lv_fs_drv_t *, void *file_p, void *buf, uint32_t btr, uint32_t *br) {
+  File *f = static_cast<File *>(file_p);
+  *br = f->read((uint8_t *)buf, btr);
+  uint8_t *cp = (uint8_t*)br;
+  return LV_FS_RES_OK;
+}
+
+lv_fs_res_t my_seek_cb(lv_fs_drv_t *, void *file_p, uint32_t pos, lv_fs_whence_t whence) {
+  File *f = static_cast<File *>(file_p);
+  if (whence == LV_FS_SEEK_CUR) f->seek(pos + f->position());
+  else if (whence == LV_FS_SEEK_END) f->seek(f->size() - pos);
+  else f->seek(pos);
+  return LV_FS_RES_OK;
+}
+
+lv_fs_res_t my_tell_cb(lv_fs_drv_t *, void *file_p, uint32_t *pos) {
+  File *f = static_cast<File *>(file_p);
+  *pos = f->position();
+  return LV_FS_RES_OK;
+}
+
+// Register LittleFS with LVGL
+void lv_fs_littlefs_init() {
+  static lv_fs_drv_t drv;
+  lv_fs_drv_init(&drv);
+  drv.letter = 'L';
+  drv.ready_cb = my_ready_cb;
+  drv.open_cb = my_open_cb;
+  drv.close_cb = my_close_cb;
+  drv.read_cb = my_read_cb;
+  drv.seek_cb = my_seek_cb;
+  drv.tell_cb = my_tell_cb;
+  lv_fs_drv_register(&drv);
+}
+
+
+uint8_t* load_file_to_psram(const char *path, size_t *out_size) {
+    // Open the file
+    fs::File f = LittleFS.open(path, "r");
+    if (!f || f.isDirectory()) {
+        outputString("Failed to open file for reading");
+        return nullptr;
+    }
+
+    size_t size = f.size();  // Get the file size
+    if (out_size) *out_size = size;
+
+    // Allocate buffer in PSRAM
+    //uint8_t *buffer = (uint8_t *)heap_caps_malloc(size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+	uint8_t *buffer = (uint8_t *)malloc(size);
+	
+    if (!buffer) {
+        outputString("Failed to allocate PSRAM buffer");
+        f.close();
+        return nullptr;
+    }
+
+    // Read file into buffer
+    size_t bytes_read = f.read(buffer, size);
+	char s[100];
+    sprintf(s,"Read %u bytes\n", bytes_read);
+	outputString(s);
+    f.close();
+
+    if (bytes_read != size) {
+		//char s[100];
+        sprintf(s,"Read %u/%u bytes\n", bytes_read, size);
+		outputString(s);
+        heap_caps_free(buffer);
+        return nullptr;
+    }
+
+    return buffer;
+}
+*/
+/* //sodb task to run lvgl on core 1; does not work
+void lvglTask(void *pvParameter) {
+    while (true) {
+        if (LVGL_initialized && useLVGL) {
+            lv_tick_inc(5);        // advance LVGL tick
+            lv_timer_handler();    // process LVGL tasks
+        }
+        //vTaskDelay(5 / portTICK_PERIOD_MS);  // let other tasks run
+		vTaskDelay(5);  // let other tasks run
+    }
+}
+*/
+
+void setup_lvgl() {
+	/*
+	#include "esp_heap_caps.h"
+
+ 	size_t buf_size = TFT_WIDTH * TFT_BUFFER_LINES * sizeof(lv_color_t);
+ 	char s[100];
+	 sprintf(s,"free heap before: %d psram: %d ",  ESP.getFreeHeap(),ESP.getFreePsram());
+	 outputString(s);
+    
+
+	 buf = (lv_color_t *)malloc(TFT_WIDTH * TFT_BUFFER_LINES * sizeof(lv_color_t));
+	
+	 //buf = (lv_color_t *)heap_caps_malloc(TFT_WIDTH * 10 * sizeof(lv_color_t), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+	 if (buf)  outputString("malloc succesfull");
+	 else outputString("cannot mallocsuccesfull");
+	
+	  sprintf(s,"free heap after: %d psram: %d ",  ESP.getFreeHeap(),ESP.getFreePsram());
+	  outputString(s);
+	  */
+  	lv_init();
+	// double buffer
+
+/* // sodb try to give Wifi more chance 
+xTaskCreatePinnedToCore(
+        lvglTask,       // Task function
+        "LVGL Task",    // Name
+        64000,           // Stack size (increase if widgets crash)
+        NULL,           // Parameters
+        1,              // Priority
+        NULL,           // Handle
+        1               // Core 1
+    );
+
+*/
+#include "esp_heap_caps.h"
+
+ 	size_t buf_size = TFT_WIDTH * TFT_BUFFER_LINES * sizeof(lv_color_t);
+ 	char s[100];
+	 sprintf(s,"free heap before: %d psram: %d ",  ESP.getFreeHeap(),ESP.getFreePsram());
+	 outputString(s);
+    
+	  
+	#if defined(COCUBE)
+	  buf1 = (lv_color_t *)heap_caps_malloc(TFT_WIDTH * 20 * sizeof(lv_color_t), MALLOC_CAP_DMA);
+ 	  buf2 = (lv_color_t *)heap_caps_malloc(TFT_WIDTH * 20 * sizeof(lv_color_t), MALLOC_CAP_DMA);
+	#else
+	  buf1 = (lv_color_t *)heap_caps_malloc(TFT_WIDTH * 40 * sizeof(lv_color_t), MALLOC_CAP_DMA);
+ 	  buf2 = (lv_color_t *)heap_caps_malloc(TFT_WIDTH * 40 * sizeof(lv_color_t), MALLOC_CAP_DMA);
+	#endif
+ 	if (buf1)  outputString("malloc succesfull");
+	 else outputString("cannot mallocsuccesfull");
+	
+	  sprintf(s,"free heap after: %d psram: %d ",  ESP.getFreeHeap(),ESP.getFreePsram());
+	  outputString(s);
+
+	disp = lv_display_create(TFT_WIDTH, TFT_HEIGHT);
+    lv_display_set_buffers(disp, buf1, buf2, TFT_WIDTH * 40, LV_DISPLAY_RENDER_MODE_PARTIAL);
+    lv_display_set_flush_cb(disp, my_disp_flush);
+	#if defined(TFT_ESPI) 
+		#if defined(CYDROT)
+			lv_display_set_resolution(disp, TFT_WIDTH, TFT_HEIGHT);
+		#else
+			lv_display_set_resolution(disp, TFT_HEIGHT, TFT_WIDTH);
+		#endif
+	#else
+    	lv_display_set_resolution(disp, TFT_WIDTH, TFT_HEIGHT);
+	#endif
+   #if defined(HAS_TOUCH_SCREEN)
+	/*Initialize the (dummy) input device driver*/
+		lv_indev_t * indev = lv_indev_create();
+		lv_indev_set_type(indev, LV_INDEV_TYPE_POINTER); /*Touchpad should have POINTER type*/
+		lv_indev_set_read_cb(indev, my_touchpad_read);
+		if (!touchEnabled) touchInit();
+	#endif
+   #if defined(COCUBE)
+    lv_indev_t * indev = lv_indev_create();
+	lv_indev_set_type(indev, LV_INDEV_TYPE_KEYPAD); /*Touchpad should have POINTER type*/
+	lv_indev_set_read_cb(indev,keypad_read);
+	
+	lv_indev_set_long_press_time(indev, 400);        // ms until LV_EVENT_LONG_PRESSED
+	lv_indev_set_long_press_repeat_time(indev, 100); // repeat interval in ms
+
+    // Optional: create a group so widgets can get focus
+	group = lv_group_create();
+	// Attach the keypad input device to the group
+	lv_indev_set_group(indev, group);
+   #endif
+ fs_init() ;
+//lv_fs_littlefs_init();
+	LVGL_initialized = true;
+	// store main screen object in object with name '!main_screen_default'
+	// hide this object from user in get_all_objects
+	registry.add("!main_screen_default",lv_scr_act() );
+}
+
+
+void set_lvgl(bool use_lvgl) {
+	if (use_lvgl) {
+		useLVGL=true;
+		// refresh all objects
+
+		lv_obj_invalidate(lv_scr_act());
+
+		// char s[100];
+		// sprintf(s,"set lvgl on %d\n",use_lvgl);
+		// outputString(s);
+
+	} else {
+		useLVGL=false;
+		tftClear();
+		// char s[100];
+		// sprintf(s,"set tft on \n");
+		// outputString(s);
+	}
+}
+
+
+// dummy test for generating ticks
+void lvgl_tick() {
+ 	lv_tick_inc(1);
+     lv_timer_handler();
+}
+
+
+
+// in lvgl 9 there is no LV_EVENT_NONE defined, so define it ourselves
+#define LV_EVENT_NONE_CUSTOM (lv_event_code_t)(-1)
+struct LastEventInfo {
+    lv_event_t *event;
+    lv_event_code_t code;
+    lv_obj_t *target;
+	std::string  name;
+	uint32_t id;
+};
+
+
+static LastEventInfo last_event = {
+    nullptr,
+    LV_EVENT_NONE_CUSTOM,
+    nullptr,
+    std::string(),   // default empty string
+    0                // id
+};
+
+// generic call back function for all events
+void ui_log_event_cb(lv_event_t *e) {
+    last_event.event = e;
+    last_event.code = lv_event_get_code(e);
+    last_event.target = (lv_obj_t *) lv_event_get_target(e);
+	if (lv_obj_get_class(last_event.target) == &lv_buttonmatrix_class) {
+		last_event.id = lv_buttonmatrix_get_selected_button(last_event.target);
+	}
+	last_event.name = registry.findNameFor( last_event.target);
+		char s[100];
+		sprintf(s,"Event %d on obj name %s id %d", last_event.code, last_event.name.c_str(),last_event.id);
+		outputString(s);
+	// // send broadcast
+	event_seen = true; // set to false in getevent
+	
+	char eventmessage[] = "LVGLevent";
+	// send a broadcast with text: LVGLevent
+	startReceiversOfBroadcast(eventmessage, 9);
+	sendBroadcastToIDE(eventmessage, 9);
+}
+
+int ui_get_last_event(std::string& name_out) {
+    name_out = last_event.name;
+    return static_cast<int>(last_event.code);
+}
+
+
+const lv_font_t* get_font_from_scale(int scale_x) {
+    switch(scale_x) {
+        case 1: return &lv_font_montserrat_14;
+        case 2: return &lv_font_montserrat_24;
+        case 3: return &lv_font_montserrat_40;
+		case 4: return &lv_font_montserrat_48;
+        default: return &lv_font_montserrat_14; // default fallback
+    }
+}
+
+
+
+
+void ui_add_image(char * obj_name, const char *path, const char * parent_name) {
+	lv_obj_t* parent = registry.get(parent_name);
+	lv_obj_t* obj;
+    // Create an img object
+    
+	if (!registry.get(obj_name) && parent) {
+		lv_obj_t *obj = lv_img_create(lv_screen_active());
+		// Set image source from file
+		lv_img_set_src(obj, path);
+		outputString("ui_add_image");
+		outputString(path);
+		// Optional: align or move the image
+		//lv_obj_center(img);
+		registry.add(obj_name, obj);
+	}
+}
+
+
+void ui_add_font(char * obj_name, const char *path) {
+	lv_obj_t* obj;
+    // Create an img object
+    
+	if (!font_buffer.get(obj_name) ) {
+		lv_font_t *obj = lv_binfont_create(path);
+		// Set image source from file
+		if (obj) {
+			font_buffer.add(obj_name, obj);
+		}
+	}
+}
+
+/*
+void ui_add_image(char * obj_name, const char *path, const char * parent_name) {
+	lv_obj_t* parent = registry.get(parent_name);
+	lv_obj_t* obj;
+    // Create an img object
+    
+	if (!registry.get(obj_name) && parent) {
+		size_t size;
+		uint8_t* buffer = load_file_to_psram(path,&size);
+		lv_image_dsc_t *img_dsc = (lv_image_dsc_t *)buffer;
+		lv_obj_t *obj = lv_img_create(lv_screen_active());
+		// Set image source from file
+		lv_img_set_src(obj, img_dsc);
+		outputString("ui_add_image");
+		outputString(path);
+		// Optional: align or move the image
+		//lv_obj_center(img);
+		registry.add(obj_name, obj);
+		img_buffer.add(obj_name, buffer);
+
+	}
+}
+
+*/
+
+
+void ui_create_button_label(char * obj_name, int scale, const char * label_text, const char * parent_name) {
+	lv_obj_t* parent = registry.get(parent_name);
+	lv_obj_t* obj;
+	if (!registry.get(obj_name) && parent) {
+		if (lv_obj_get_class(parent) == &lv_list_class) {
+			obj = lv_list_add_button(parent, NULL, label_text);
+		} else {
+			obj = lv_btn_create(parent);
+			// sodb: check whether label is correctly removed when parent btn object is deleted
+			lv_obj_t * label = lv_label_create(obj);
+			lv_label_set_text(label, label_text);
+			lv_obj_set_style_text_font(label, get_font_from_scale(scale), LV_PART_MAIN);
+			lv_obj_center(label);
+		}
+		lv_obj_add_event_cb(obj, ui_log_event_cb, LV_EVENT_CLICKED, NULL);
+		registry.add(obj_name, obj);
+	}
+
+}
+
+
+void ui_create_button(char * obj_name, const char * parent) {
+	if (!registry.get(obj_name) && registry.get(parent)) {
+		lv_obj_t* obj = lv_btn_create(registry.get(parent));
+		lv_obj_add_event_cb(obj, ui_log_event_cb, LV_EVENT_CLICKED, NULL);
+		// sodb: check whether label is correctly removes when partent btn object is deleted
+		registry.add(obj_name, obj);
+	}
+
+}
+
+void ui_create_label(char * obj_name, int scale, const char * label_text, const char * parent) {
+    if (!registry.get(obj_name) && registry.get(parent)) {
+		lv_obj_t* label = lv_label_create(registry.get(parent));
+		lv_label_set_text(label, label_text);
+		lv_obj_set_style_text_font(label, get_font_from_scale(scale), LV_PART_MAIN);
+		registry.add(obj_name, label);
+	}
+}
+
+
+void ui_create_slider(char * obj_name, const char * parent) {
+    if (!registry.get(obj_name) && registry.get(parent)) {
+		lv_obj_t* obj = lv_slider_create(registry.get(parent));
+		lv_obj_add_event_cb(obj, ui_log_event_cb,LV_EVENT_VALUE_CHANGED, NULL);
+		lv_obj_add_event_cb(obj, ui_log_event_cb,LV_EVENT_LONG_PRESSED, NULL);
+		lv_slider_set_range(obj, 0, 100);
+		registry.add(obj_name, obj);
+	}
+}
+
+void ui_create_arc(char * obj_name, const char * parent) {
+    if (!registry.get(obj_name) && registry.get(parent)) {
+		lv_obj_t* obj = lv_arc_create(registry.get(parent));
+		lv_obj_add_event_cb(obj, ui_log_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
+		lv_obj_add_event_cb(obj, ui_log_event_cb,LV_EVENT_LONG_PRESSED, NULL);
+		// sodb solve unmovable arc on capacitive touch displays.
+		lv_obj_add_flag(obj, (lv_obj_flag_t)(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_CHECKABLE ));
+		registry.add(obj_name, obj);
+	}
+}
+
+
+void ui_create_switch(char * obj_name, const char * parent) {
+    if (!registry.get(obj_name) && registry.get(parent)) {
+		lv_obj_t* obj = lv_switch_create(registry.get(parent));
+		lv_obj_add_event_cb(obj, ui_log_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
+		registry.add(obj_name, obj);
+	}
+}
+
+
+void ui_create_led(char * obj_name, const char * parent) {
+    if (!registry.get(obj_name) && registry.get(parent)) {
+		lv_obj_t* obj = lv_led_create(registry.get(parent));
+		// lv_obj_add_event_cb(obj, ui_log_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
+		registry.add(obj_name, obj);
+	}
+}
+
+void ui_create_bar(char * obj_name, const char * parent) {
+    if (!registry.get(obj_name) && registry.get(parent)) {
+		lv_obj_t* obj = lv_bar_create(registry.get(parent));
+		// lv_obj_add_event_cb(obj, ui_log_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
+		registry.add(obj_name, obj);
+	}
+}
+
+void ui_create_tabview(char * obj_name, const char * parent) {
+    if (!registry.get(obj_name) && registry.get(parent)) {
+		lv_obj_t* obj = lv_tabview_create(registry.get(parent));
+		// lv_obj_add_event_cb(obj, ui_log_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
+		registry.add(obj_name, obj);
+	}
+}
+
+void ui_create_tileview(char * obj_name, const char * parent) {
+    if (!registry.get(obj_name) && registry.get(parent)) {
+		lv_obj_t* obj = lv_tileview_create(registry.get(parent));
+		// lv_obj_add_event_cb(obj, ui_log_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
+		registry.add(obj_name, obj);
+	}
+}
+
+void ui_create_screen(char * obj_name, const char * parent) {
+    if (!registry.get(obj_name) && registry.get(parent)) {
+		#if defined(LMSDISPLAY)
+			#define _TFT_WIDTH TFT_HEIGHT
+			#define _TFT_HEIGHT TFT_WIDTH
+		#else
+			#define _TFT_WIDTH TFT_WIDTH
+			#define _TFT_HEIGHT TFT_HEIGHT
+		#endif
+		lv_obj_t* obj = lv_obj_create(0); // crete empty screen
+		lv_obj_set_pos(obj, 0, 0);
+		lv_obj_set_size(obj, _TFT_WIDTH, _TFT_HEIGHT);
+		registry.add(obj_name, obj);
+	}
+}
+
+
+void ui_create_roller(char * obj_name, const char * parent) {
+    if (!registry.get(obj_name) && registry.get(parent)) {
+		lv_obj_t* obj = lv_roller_create(registry.get(parent));
+		lv_obj_add_event_cb(obj, ui_log_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
+		lv_obj_add_event_cb(obj, ui_log_event_cb,LV_EVENT_LONG_PRESSED, NULL);
+		registry.add(obj_name, obj);
+	}
+}
+
+void ui_create_spinbox(char * obj_name, const char * parent) {
+    if (!registry.get(obj_name) && registry.get(parent)) {
+		lv_obj_t* obj = lv_spinbox_create(registry.get(parent));
+		lv_obj_add_event_cb(obj, ui_log_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
+		registry.add(obj_name, obj);
+	}
+}
+
+void ui_create_spinner(char * obj_name, const char * parent) {
+    if (!registry.get(obj_name) && registry.get(parent)) {
+		lv_obj_t* obj = lv_spinner_create(registry.get(parent));
+		registry.add(obj_name, obj);
+	}
+}
+
+void ui_create_scale(char * obj_name, const char * parent) {
+    if (!registry.get(obj_name) && registry.get(parent)) {
+		lv_obj_t* obj = lv_scale_create(registry.get(parent));
+		registry.add(obj_name, obj);
+	}
+}
+
+void ui_create_keyboard(char * obj_name, const char * parent) {
+    if (!registry.get(obj_name) && registry.get(parent)) {
+		lv_obj_t* obj = lv_keyboard_create(registry.get(parent));
+		lv_obj_add_event_cb(obj, ui_log_event_cb, LV_EVENT_READY, NULL);
+		registry.add(obj_name, obj);
+	}
+}
+void ui_create_textarea(char * obj_name, const char * parent) {
+    if (!registry.get(obj_name) && registry.get(parent)) {
+		lv_obj_t* obj = lv_textarea_create(registry.get(parent));
+		registry.add(obj_name, obj);
+	}
+}
+
+void ui_add_tab(char * obj_name, const char * parent) {
+    if (!registry.get(obj_name) && registry.get(parent)) {
+		lv_obj_t* obj = lv_tabview_add_tab(registry.get(parent),obj_name);
+		lv_obj_add_event_cb(obj, ui_log_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
+		registry.add(obj_name, obj);
+	}
+}
+
+void ui_add_series(char * series, const char * chart, int color) {
+    if (registry.get(chart) && !series_registry.get(series)) {
+		lv_chart_series_t* obj = lv_chart_add_series(registry.get(chart), lv_color_hex(color),  LV_CHART_AXIS_PRIMARY_Y);
+		//lv_obj_add_event_cb(obj, ui_log_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
+		outputString("ui_add_series");
+		series_registry.add(series, obj);
+	}
+}
+
+void ui_set_next_value(char * series, char * chart, int val) {
+    if (registry.get(chart) && series_registry.get(series)) {
+		lv_chart_set_next_value(registry.get(chart), series_registry.get(series), val);
+		char s[100];
+		sprintf(s,"ui_set_next_value series=%s chart=%s val = %d", series,chart,val);
+		outputString(s);
+
+	}
+}
+
+void ui_set_next_value2(char * series, char * chart, int val, int val2) {
+    if (registry.get(chart) && series_registry.get(series)) {
+		lv_chart_set_next_value2(registry.get(chart), series_registry.get(series), val, val2);
+		outputString("lv_chart_set_next_value2");
+	}
+}
+
+
+void ui_add_chart(char * obj_name, const char * parent, char * chart_type, char * chart_update_mode) {
+	if (!registry.get(obj_name))  {
+		lv_chart_type_t chart_type_id = LV_CHART_TYPE_LINE;
+		lv_chart_update_mode_t chart_update_mode_id = LV_CHART_UPDATE_MODE_SHIFT;
+		if (strcmp(chart_type,"bar")==0) chart_type_id = LV_CHART_TYPE_BAR;
+		else if (strcmp(chart_type,"scatter")==0) chart_type_id = LV_CHART_TYPE_SCATTER;
+
+		if (strcmp(chart_update_mode,"circular")==0) chart_update_mode_id = LV_CHART_UPDATE_MODE_CIRCULAR;
+		lv_obj_t* obj = lv_chart_create(registry.get(parent));
+		lv_chart_set_type(obj, chart_type_id);
+		lv_chart_set_update_mode(obj, chart_update_mode_id);
+
+		registry.add(obj_name, obj);
+	}
+}
+
+void ui_add_tile(char * obj_name, const char * parent, int col_id, int row_id, lv_dir_t dir ) {
+    if (!registry.get(obj_name) && registry.get(parent)) {
+		lv_obj_t* obj = lv_tileview_add_tile(registry.get(parent), col_id, row_id, dir);
+		lv_obj_add_event_cb(obj, ui_log_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
+		registry.add(obj_name, obj);
+	}
+}
+
+
+void ui_create_list(char * obj_name, const char * parent) {
+    if (!registry.get(obj_name) && registry.get(parent)) {
+		lv_obj_t* obj = lv_list_create(registry.get(parent));
+		// lv_obj_add_event_cb(obj, ui_log_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
+		registry.add(obj_name, obj);
+	}
+	if (strcmp(parent,"lv_scr_act") !=0) {
+		
+	}
+}
+
+void ui_create_style(char * obj_name, const char * parent) {
+    if (!style_registry.get(obj_name)) { 
+		lv_style_t* obj = new lv_style_t;
+		lv_style_init(obj);
+		// lv_obj_add_event_cb(obj, ui_log_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
+		style_registry.add(obj_name, obj);
+	}
+}
+
+void ui_set_parent(char * obj_name, const char * parent, int states, int parts){
+	lv_obj_t* obj =  registry.get(obj_name);
+	lv_obj_t* obj_parent =  registry.get(parent);
+	char s[100];
+	sprintf(s,"set parent: %s parent %s",obj_name,parent);
+	outputString(s);
+
+	if (obj && obj_parent) {
+		if ( (lv_obj_get_class(obj) == &lv_keyboard_class) &&
+			 (lv_obj_get_class(obj_parent) == &lv_textarea_class) ) {
+				outputString("attaching keyboard to textarea");
+			 	lv_keyboard_set_textarea(obj, obj_parent);
+			} else
+				lv_obj_set_parent(registry.get(obj_name), obj_parent);
+	} else
+	if (style_registry.get(obj_name) && obj_parent) {
+		lv_style_t* style =  style_registry.get(obj_name);
+		lv_obj_add_style(obj_parent, style, states + parts);
+		outputString("style added");
+		
+	}
+}
+
+
+void free_btnmap(char **btnmap) {
+    if (!btnmap) return;
+    for (size_t i = 0; btnmap[i] != NULL; i++) {
+        free(btnmap[i]);
+    }
+    free(btnmap);
+}
+
+void ui_delete_obj(char * obj_name) {
+    lv_obj_t* obj = registry.get(obj_name);
+	lv_font_t* font = font_buffer.get(obj_name);
+	lv_style_t* style = style_registry.get(obj_name);
+	lv_chart_series_t* chart_series = series_registry.get(obj_name);
+	char** btnmap = btnmap_registry.get(obj_name);
+	// lv_chart_series_t* series = series_registry.get(obj_name); 
+	// not needed because lv_obj_del of chart already deletes all the series attached to the chart
+    if (obj) {
+		lv_obj_del(obj);
+        registry.remove(obj_name);
+    } 
+	if (font){
+			outputString("deleting font");
+			lv_binfont_destroy(font);
+			font_buffer.remove(obj_name);
+	} 
+	if (style) { 
+		delete style;
+		style_registry.remove(obj_name);
+	} 
+	if (chart_series) {
+		// lv_obj_del(obj); // slready deleted iwith parent chart
+        series_registry.remove(obj_name);
+	}
+	if (btnmap) { 
+		outputString("deleting btnmap");
+		free_btnmap(btnmap); // free structure of char** for btnmap
+		btnmap_registry.remove(obj_name); // remove entry in btnmap_registry
+	}
+}
+
+void ui_set_size(char * obj_name,  lv_coord_t w, lv_coord_t h ) {
+	lv_obj_t* obj = registry.get(obj_name);
+	if (obj) {
+		// char s[100];
+		// sprintf(s,"set_size %s, x=%d, y=%d",obj_name,w,h);
+		// outputString(s);
+		lv_obj_set_size(obj,w,h);
+	}
+}
+
+void ui_set_pos(char * obj_name,  uint16_t pos_x, uint16_t pos_y) {
+	lv_obj_t* obj = registry.get(obj_name);
+	if (obj!=nullptr) {
+		lv_obj_set_pos(obj,pos_x,pos_y);
+	}
+}
+
+void ui_set_scroll(char * obj_name,  lv_dir_t scroll_dir) {
+	lv_obj_t* obj = registry.get(obj_name);
+	if (obj!=nullptr) {
+		if (lv_obj_get_class(obj) == &lv_tabview_class) {
+			// when tabview, take container of tabs to controll scroll direction
+			lv_obj_t *content = lv_tabview_get_content(obj);
+			lv_obj_set_scroll_dir(content, scroll_dir);
+		} else
+			  lv_obj_set_scroll_dir(obj, scroll_dir);
+		}
+}
+
+
+void ui_set_value(char * obj_name, int value) {
+	lv_obj_t* obj = registry.get(obj_name);
+	if (obj) {
+		if (lv_obj_get_class(obj) == &lv_arc_class) {
+			lv_arc_set_value(obj, value);
+		} else 
+		if (lv_obj_get_class(obj) == &lv_slider_class) {
+			lv_slider_set_value(obj, value, LV_ANIM_OFF);
+		} else
+		if (lv_obj_get_class(obj) == &lv_bar_class) {
+			lv_bar_set_value(obj, value, LV_ANIM_OFF);
+		} else
+		if (lv_obj_get_class(obj) == &lv_spinbox_class) {
+		char s[100];
+		sprintf(s,"set_value %s: %d",obj_name,value);
+		outputString(s);
+			lv_spinbox_set_value(obj, value);
+		} else
+		if (lv_obj_get_class(obj) == &lv_switch_class) {
+			if (value==0) lv_obj_remove_state(obj, LV_STATE_CHECKED);
+			else if (value&1) lv_obj_add_state(obj, LV_STATE_CHECKED);
+			else if (value>1) lv_obj_add_state(obj, (lv_state_t)value);
+			else if (value<0) lv_obj_remove_state(obj,(lv_state_t) -value);
+			
+		} else
+		if (lv_obj_get_class(obj) == &lv_led_class) {
+			if (value==0) lv_led_off(obj);
+			else if (value&1) lv_led_on(obj);
+			
+			
+		} else
+		if (lv_obj_get_class(obj) == &lv_roller_class) {
+			lv_roller_set_visible_row_count(obj,value);
+		}
+	}
+}
+
+void ui_set_text(char * obj_name, char * text, int scale) {
+    lv_obj_t* obj = registry.get(obj_name);
+	if (obj) {
+		if (lv_obj_get_class(obj) == &lv_label_class) {
+			lv_label_set_text(obj, text);
+			lv_obj_set_style_text_font(obj, get_font_from_scale(scale), LV_PART_MAIN);
+		} else 
+		if (lv_obj_get_class(obj) == &lv_button_class) {
+			lv_obj_t *label = lv_obj_get_child(obj, 0);
+			if (label) {
+				lv_label_set_text(label, text);
+				lv_obj_set_style_text_font(label, get_font_from_scale(scale), LV_PART_MAIN);
+			}
+		} else 
+		if (lv_obj_get_class(obj) == &lv_roller_class) {
+			lv_roller_set_options(obj, text, LV_ROLLER_MODE_INFINITE);
+			lv_obj_set_style_text_font(obj, get_font_from_scale(scale), LV_PART_MAIN | LV_STATE_DEFAULT | LV_STYLE_PROP_FLAG_INHERITABLE);
+			lv_obj_set_style_text_font(obj, get_font_from_scale(scale), LV_PART_SELECTED|  LV_STATE_DEFAULT);
+			
+		}else 
+		if (lv_obj_get_class(obj) == &lv_textarea_class) {
+			lv_textarea_set_text(obj, text);
+			//lv_obj_set_style_text_font(obj, get_font_from_scale(scale), LV_PART_MAIN); // does not seem to work
+		}
+	}
+}
+
+void ui_set_text_font(char * obj_name, char * text, char * font_name) {
+    lv_obj_t* obj = registry.get(obj_name);
+
+				
+	if (obj) {
+		lv_font_t * font = font_buffer.get(font_name);
+		if (lv_obj_get_class(obj) == &lv_label_class) {
+			lv_label_set_text(obj, text);
+			if (font) {
+				lv_obj_set_style_text_font(obj, font, LV_PART_MAIN);
+			}
+		} else 
+		if (lv_obj_get_class(obj) == &lv_button_class) {
+			lv_obj_t *label = lv_obj_get_child(obj, 0);
+			if (label) {
+				lv_label_set_text(label, text);
+				if (font)
+					lv_obj_set_style_text_font(label, font, LV_PART_MAIN);
+			}
+		} else 
+		if (lv_obj_get_class(obj) == &lv_roller_class) {
+			lv_roller_set_options(obj, text, LV_ROLLER_MODE_INFINITE);
+		}
+	}
+}
+
+
+void ui_set_attribute(char * obj_name, char * attribute_name, int to_val, int until_val){
+	lv_obj_t* obj = registry.get(obj_name);
+	if (obj) {
+		if (strcmp(attribute_name,"flags")==0) lv_obj_add_flag(obj, (lv_obj_flag_t)to_val); else
+		if (lv_obj_get_class(obj) == &lv_arc_class) {
+			if (strcmp(attribute_name,"range")==0) lv_arc_set_range(obj, to_val, until_val);
+			else if (strstr(attribute_name,"angles")) lv_arc_set_bg_angles(obj, to_val, until_val);
+			else if (strstr(attribute_name,"rotation")) lv_arc_set_rotation(obj, to_val);
+			else if (strstr(attribute_name,"line width")) {
+				outputString("line width");
+				lv_obj_set_style_arc_width(obj,to_val,LV_PART_MAIN);
+				lv_obj_set_style_arc_width(obj,to_val,LV_PART_INDICATOR);
+			}
+		} else 
+		if (lv_obj_get_class(obj) == &lv_slider_class) {
+			if (strcmp(attribute_name,"range")==0) lv_slider_set_range(obj, to_val, until_val);
+		} else
+		if (lv_obj_get_class(obj) == &lv_bar_class) {
+			if (strcmp(attribute_name,"range")==0) lv_bar_set_range(obj, to_val, until_val);
+		} else
+		if (lv_obj_get_class(obj) == &lv_spinner_class) {
+			if (strcmp(attribute_name,"animation")==0) lv_spinner_set_anim_params(obj, to_val, until_val);
+			else if (strstr(attribute_name,"line width")) {
+				lv_obj_set_style_arc_width(obj,to_val,LV_PART_MAIN);
+				lv_obj_set_style_arc_width(obj,to_val,LV_PART_INDICATOR);
+			}
+		} else
+		if (lv_obj_get_class(obj) == &lv_spinbox_class) {
+			if (strcmp(attribute_name,"range")==0) lv_spinbox_set_range(obj, to_val, until_val);
+			if (strcmp(attribute_name,"digits")==0) lv_spinbox_set_digit_format(obj, to_val, until_val);
+			if (strcmp(attribute_name,"increment")==0) lv_spinbox_increment(obj);
+			if (strcmp(attribute_name,"decrement")==0) lv_spinbox_decrement(obj);
+		} else
+		if (lv_obj_get_class(obj) == &lv_led_class) {
+			if (strcmp(attribute_name,"brightness")==0) {
+				lv_led_set_brightness(obj,to_val );
+			}
+		} else 
+		if (lv_obj_get_class(obj) == &lv_chart_class) {
+			if (strcmp(attribute_name,"points")==0) {
+				lv_chart_set_point_count(obj,to_val );
+				outputString("lv_chart_set_point_count");
+			}
+			if (strcmp(attribute_name,"range")==0) {
+				lv_chart_set_range(obj, LV_CHART_AXIS_PRIMARY_Y, to_val, until_val);
+			}
+		} else
+		if (lv_obj_get_class(obj) == &lv_scale_class) {
+			if (strcmp(attribute_name,"tick count")==0) lv_scale_set_total_tick_count(obj,to_val );
+			if (strcmp(attribute_name,"major tick every")==0) lv_scale_set_major_tick_every(obj,to_val );
+			if (strcmp(attribute_name,"length")==0) lv_obj_set_style_length(obj,to_val, until_val );
+			if (strcmp(attribute_name,"range")==0) lv_scale_set_range(obj, to_val, until_val);
+			if (strstr(attribute_name,"scale mode")) lv_scale_set_mode(obj, (lv_scale_mode_t) to_val);
+			if (strstr(attribute_name,"angles")) lv_scale_set_angle_range(obj, to_val);
+			if (strstr(attribute_name,"rotation")) lv_scale_set_rotation(obj, to_val);
+			if (strcmp(attribute_name,"show labels")==0) {
+				bool show_labels = (to_val==1);
+				lv_scale_set_label_show(obj,show_labels);
+			}
+		} else
+		if (lv_obj_get_class(obj) == &lv_buttonmatrix_class) {
+			if (strcmp(attribute_name,"button ctrl")==0) {
+				// first clear all states
+				lv_btnmatrix_clear_btn_ctrl(obj, to_val, LV_BTNMATRIX_CTRL_HIDDEN);
+				lv_btnmatrix_clear_btn_ctrl(obj, to_val, LV_BTNMATRIX_CTRL_DISABLED);
+				lv_btnmatrix_clear_btn_ctrl(obj, to_val, LV_BTNMATRIX_CTRL_CHECKED);
+				lv_btnmatrix_clear_btn_ctrl(obj, to_val, LV_BTNMATRIX_CTRL_CHECKABLE);
+				lv_buttonmatrix_set_button_ctrl(obj,to_val, (lv_buttonmatrix_ctrl_t)until_val); // id, button_ctrl
+			}
+			if (strcmp(attribute_name,"width")==0) lv_buttonmatrix_set_button_width(obj,to_val, until_val); // id, width
+		} else 
+		if (lv_obj_get_class(obj) == &lv_textarea_class) {
+			if (strcmp(attribute_name,"focused")==0) lv_obj_add_state(obj, LV_STATE_FOCUSED);
+		} else
+		if ((lv_obj_get_class(obj) == &lv_button_class)  || (lv_obj_get_class(obj) == &lv_label_class)) {
+		   if (strstr(attribute_name,"rotation")) lv_obj_set_style_transform_angle(obj, to_val, 0);
+		}
+	}
+}
+
+
+void ui_set_style(char * obj_name, char * style_name, int to_val){
+	lv_style_t* obj = style_registry.get(obj_name);
+	if (obj) {
+		if (strcmp(style_name,"text font")==0) lv_style_set_text_font(obj,  get_font_from_scale(to_val));
+			else if (strstr(style_name,"bg color")) lv_style_set_bg_color(obj, lv_color_hex(to_val));
+			else if (strstr(style_name,"bg opa")) lv_style_set_bg_opa(obj, to_val);
+			else if (strstr(style_name,"border width")) lv_style_set_border_width(obj, to_val);
+    		else if (strstr(style_name,"border color")) lv_style_set_border_color(obj, lv_color_hex(to_val));
+			else if (strstr(style_name,"radius")) lv_style_set_radius(obj, to_val);
+			else if (strstr(style_name,"shadow width")) lv_style_set_shadow_width(obj, to_val);
+			else if (strstr(style_name,"shadow offset x")) lv_style_set_shadow_offset_x(obj, to_val);
+			else if (strstr(style_name,"shadow offset y")) lv_style_set_shadow_offset_y(obj, to_val);
+			else if (strstr(style_name,"shadow opa")) lv_style_set_shadow_opa(obj, to_val);
+			else if (strstr(style_name,"width")) lv_style_set_width(obj, to_val);
+			else if (strstr(style_name,"line width")) lv_style_set_line_width(obj, to_val);
+			else if (strstr(style_name,"line color")) lv_style_set_line_color(obj, lv_color_hex(to_val));
+			else if (strstr(style_name,"text color")) lv_style_set_text_color(obj, lv_color_hex(to_val));
+
+
+			
+
+	}
+}
+
+
+struct ClassNameMap {
+    const lv_obj_class_t *cls;
+    const char *name;
+} class_map[] = {
+    { &lv_buttonmatrix_class, "buttonmatrix" },
+    { &lv_label_class,       "label" },
+    { &lv_button_class,         "button" },
+    { &lv_obj_class,         "generic_obj" }, // base class
+    { nullptr,               nullptr }
+};
+
+// Get a readable class name
+const char *get_class_name(const lv_obj_class_t *cls) {
+    for (int i = 0; class_map[i].cls; i++) {
+        if (class_map[i].cls == cls) return class_map[i].name;
+    }
+    return "(unknown)";
+}
+
+// Print class hierarchy
+void print_class_hierarchy(const lv_obj_t *obj) {
+    if (!obj) return;
+
+    const lv_obj_class_t *cls = lv_obj_get_class(obj);
+
+    char s[100];
+			sprintf(s,"class name - %s (%p)", get_class_name(cls), cls);
+			outputString(s);
+}
+
+void ui_set_color(char * obj_name, int color) {
+	lv_obj_t* obj = registry.get(obj_name);
+	if (obj) {
+		if (lv_obj_get_class(obj) == &lv_label_class) {
+			lv_obj_set_style_text_color(obj, lv_color_hex(color), LV_PART_MAIN); 
+		} else 
+		if  (lv_obj_get_class(obj) == &lv_led_class) {
+			lv_led_set_color(obj,lv_color_hex(color));
+		} else
+		if  (lv_obj_get_class(obj) == &lv_switch_class) {
+			lv_obj_set_style_bg_color(obj, lv_color_hex(color), LV_PART_MAIN  | LV_STATE_DEFAULT);
+			lv_obj_set_style_bg_opa(obj, LV_OPA_COVER,LV_PART_MAIN |LV_STATE_DEFAULT);
+	    } else
+		if  ((lv_obj_get_class(obj) == &lv_arc_class) || (lv_obj_get_class(obj) == &lv_spinner_class)) {
+			outputString("change color arc or spinner");
+			lv_obj_set_style_arc_color(obj, lv_color_hex(color), LV_PART_MAIN);
+ 		} else
+			lv_obj_set_style_bg_color(obj, lv_color_hex(color), LV_PART_MAIN);
+	
+	}
+}
+
+void ui_set_color_2nd(char * obj_name, int color) {
+	lv_obj_t* obj = registry.get(obj_name);
+	if (obj) {
+		if (lv_obj_get_class(obj) == &lv_button_class) {
+			lv_obj_t *label = lv_obj_get_child(obj, 0);
+			lv_obj_set_style_text_color(label, lv_color_hex(color), 0); 
+		} else if ((lv_obj_get_class(obj) == &lv_arc_class)  || (lv_obj_get_class(obj) == &lv_spinner_class)){
+			lv_obj_set_style_arc_color(obj, lv_color_hex(color), LV_PART_INDICATOR);
+		} else if (lv_obj_get_class(obj) == &lv_switch_class) {
+			lv_obj_set_style_bg_color(obj, lv_color_hex(color), LV_PART_INDICATOR|LV_STATE_CHECKED);
+		    lv_obj_set_style_bg_opa(obj, LV_OPA_COVER, LV_PART_INDICATOR|LV_STATE_CHECKED);
+		}
+ 		else 
+			lv_obj_set_style_bg_color(obj, lv_color_hex(color), LV_PART_INDICATOR);
+		
+	}
+}
+
+void ui_set_color_3rd(char * obj_name, int color) {
+	lv_obj_t* obj = registry.get(obj_name);
+	if (obj) {
+		lv_obj_set_style_bg_color(obj, lv_color_hex(color), LV_PART_KNOB);
+		if (lv_obj_get_class(obj) == &lv_switch_class) lv_obj_set_style_bg_opa(obj, LV_OPA_COVER, LV_PART_KNOB);
+	}
+}
+
+void printall() {
+	registry.printall();
+
+}
+
+
+// helper code for object selection
+
+typedef enum {
+    CMD_UNKNOWN = -1,
+    CMD_BUTTON,
+	CMD_LABEL,
+    CMD_ARC,
+    CMD_SLIDER,
+    CMD_LED,
+    CMD_SWITCH,
+	CMD_BAR,
+	CMD_TABVIEW,
+	CMD_TILEVIEW,
+	CMD_LIST,
+	CMD_ROLLER,
+	CMD_SCREEN,
+	CMD_STYLE,
+	CMD_SPINBOX,
+	CMD_SPINNER,
+	CMD_SCALE,
+	CMD_TEXTAREA,
+	CMD_KEYBOARD,
+    CMD_COUNT
+} Command;
+
+
+Command lookup_cmd(const char *s) {
+    if (strcmp(s, "button") == 0)   return CMD_BUTTON;
+	if (strcmp(s, "label") == 0)    return CMD_LABEL;
+    if (strcmp(s, "arc") == 0)      return CMD_ARC;
+    if (strcmp(s, "slider") == 0)   return CMD_SLIDER;
+    if (strcmp(s, "led") == 0)      return CMD_LED;
+    if (strcmp(s, "switch") == 0)   return CMD_SWITCH;
+	if (strcmp(s, "bar") == 0)   	return CMD_BAR;
+	if (strcmp(s, "tabview") == 0)  return CMD_TABVIEW;
+	if (strcmp(s, "tileview") == 0) return CMD_TILEVIEW;
+	if (strcmp(s, "list") == 0)     return CMD_LIST;
+	if (strcmp(s, "roller") == 0)   return CMD_ROLLER;
+	if (strcmp(s, "style") == 0)   return CMD_STYLE;
+	if (strcmp(s, "spinbox") == 0)   return CMD_SPINBOX;
+	if (strcmp(s, "spinner") == 0)   return CMD_SPINNER;
+	if (strcmp(s, "screen") == 0)   return CMD_SCREEN;
+	if (strcmp(s, "scale") == 0)   return CMD_SCALE;
+	if (strcmp(s, "textarea") == 0)   return CMD_TEXTAREA;
+	if (strcmp(s, "keyboard") == 0)   return CMD_KEYBOARD;
+    return CMD_UNKNOWN;
+}
+
+/*
+static OBJ primLVGLaddimg(int argCount, OBJ *args) {
+	char* obj_name = obj2str(args[1]);
+	char* filename = obj2str(args[0]);
+	const char *parent;
+	if (argCount > 2) {
+		parent = obj2str(args[2]);
+	} else {
+		parent = "lv_scr_act";
+	}
+
+	ui_add_image(obj_name,filename,parent);
+	return falseObj;
+}
+*/
+
+static OBJ primLVGLaddfont(int argCount, OBJ *args) {
+	char* obj_name = obj2str(args[1]);
+	char* filename = obj2str(args[0]);
+	
+	ui_add_font(obj_name,filename);
+	return falseObj;
+}
+
+
+static OBJ primLVGLaddimg(int argCount, OBJ *args) {
+	char* obj_name = obj2str(args[1]);
+	char* filename = obj2str(args[0]);
+	const char *parent;
+	if (argCount > 2) {
+		parent = obj2str(args[2]);
+	} else {
+		parent = "lv_scr_act";
+	}
+
+	ui_add_image(obj_name,filename,parent);
+	return falseObj;
+}
+
+// primLVGL function definitions
+static OBJ primLVGLprintall(int argCount, OBJ *args) {
+	printall();
+	return falseObj;
+}
+
+static OBJ primLVGLgetallobjs(int argCount, OBJ *args) {
+	int count = registry.size();
+	count += font_buffer.size();
+	count += style_registry.size();
+	count += series_registry.size();
+	count += btnmap_registry.size();
+	OBJ result = newObj(ListType, count+1, zeroObj);
+	FIELD(result, 0) = int2obj(count);
+	int i=1;
+	std::vector<std::string> names = registry.getAllNames();
+	for (const auto& name : names) {
+		FIELD(result, i)=newStringFromBytes(name.c_str(), name.length());
+		i++;
+	}
+	names = font_buffer.getAllNames();
+	for (const auto& name : names) {
+		FIELD(result, i)=newStringFromBytes(name.c_str(), name.length());
+		i++;
+	}
+	names = style_registry.getAllNames();
+	for (const auto& name : names) {
+		FIELD(result, i)=newStringFromBytes(name.c_str(), name.length());
+		i++;
+	}
+	names = series_registry.getAllNames();
+	for (const auto& name : names) {
+		FIELD(result, i)=newStringFromBytes(name.c_str(), name.length());
+		i++;
+	}
+	names = btnmap_registry.getAllNames();
+	for (const auto& name : names) {
+		FIELD(result, i)=newStringFromBytes(name.c_str(), name.length());
+		i++;
+	}
+	return result;
+}
+
+
+static OBJ primLVGLgetallfonts(int argCount, OBJ *args) {
+	std::vector<std::string> names = font_buffer.getAllNames();
+	int count = font_buffer.size();
+	OBJ result = newObj(ListType, count+1, zeroObj);
+	FIELD(result, 0) = int2obj(count);
+	int i=1;
+	for (const auto& name : names) {
+		FIELD(result, i)=newStringFromBytes(name.c_str(), name.length());
+		i++;
+	}
+	return result;
+}
+
+
+static OBJ primLVGLgetallstyles(int argCount, OBJ *args) {
+	std::vector<std::string> names = style_registry.getAllNames();
+	int count = style_registry.size();
+	OBJ result = newObj(ListType, count+1, zeroObj);
+	FIELD(result, 0) = int2obj(count);
+	int i=1;
+	for (const auto& name : names) {
+		FIELD(result, i)=newStringFromBytes(name.c_str(), name.length());
+		i++;
+	}
+	return result;
+}
+
+
+static OBJ primLVGLgetallseries(int argCount, OBJ *args) {
+	std::vector<std::string> names = series_registry.getAllNames();
+	int count = series_registry.size();
+	OBJ result = newObj(ListType, count+1, zeroObj);
+	FIELD(result, 0) = int2obj(count);
+	int i=1;
+	for (const auto& name : names) {
+		FIELD(result, i)=newStringFromBytes(name.c_str(), name.length());
+		i++;
+	}
+	return result;
+}
+
+static OBJ primLVGLgetallbtnmaps(int argCount, OBJ *args) {
+	std::vector<std::string> names = btnmap_registry.getAllNames();
+	int count = btnmap_registry.size();
+	OBJ result = newObj(ListType, count+1, zeroObj);
+	FIELD(result, 0) = int2obj(count);
+	int i=1;
+	for (const auto& name : names) {
+		FIELD(result, i)=newStringFromBytes(name.c_str(), name.length());
+		i++;
+	}
+	return result;
+}
+
+static OBJ primLVGLaddBtn(int argCount, OBJ *args) {
+	int scale = 1;
+	char* obj_name = obj2str(args[0]);
+	const char *label_text;
+	if (argCount >1) {
+		scale = obj2int(args[1]);
+	} else scale=1;
+	if (argCount >2) {
+		OBJ value = args[2];
+		if (IS_TYPE(value, StringType)) {
+			label_text = obj2str(value);
+		} else if (isInt(value)) {
+   			char s[20];
+   			sprintf(s, "%d", obj2int(value));
+			label_text=s;
+		} else
+			label_text="";
+	} else 	label_text = obj2str(args[0]);
+	const char *parent;
+	if (argCount > 3) {
+		parent = obj2str(args[3]);
+	} else {
+		parent = "lv_scr_act";
+	}
+	char s[100];
+	sprintf(s,"btn: %s %s %d %s",obj_name, label_text, scale, parent );
+	outputString(s);
+	ui_create_button_label(obj_name, scale, label_text, parent);
+	return falseObj;
+}
+
+static OBJ primLVGLaddLabel(int argCount, OBJ *args) {
+	int scale = 1;
+	char* label_name = obj2str(args[0]);
+	const char *label_text;
+	if (argCount >1) {
+		scale = obj2int(args[1]);
+	} else scale =1;
+	if (argCount >2) {
+		OBJ value = args[2];
+		if (IS_TYPE(value, StringType)) {
+			label_text = obj2str(args[2]);
+		} else if (isInt(value)) {
+   			char s[20];
+   			sprintf(s, "%d", obj2int(value));
+			label_text=s;
+		} else
+			label_text="";
+	} else 	label_text = obj2str(args[0]);
+	const char *parent;
+	if (argCount > 3) {
+		parent = obj2str(args[3]);
+	} else {
+		parent = "lv_scr_act";
+	}
+	ui_create_label(label_name, scale, label_text, parent);
+	return falseObj;
+}
+
+static OBJ primLVGLaddSlider(int argCount, OBJ *args) {
+	char* obj_name = obj2str(args[0]);
+	const char *parent;
+	if (argCount > 1) {
+		parent = obj2str(args[1]);
+	} else {
+		parent = "lv_scr_act";
+	}
+	ui_create_slider(obj_name, parent);
+	return falseObj;
+}
+
+static OBJ primLVGLaddTab(int argCount, OBJ *args) {
+	char* obj_name = obj2str(args[0]);
+	char* parent = obj2str(args[1]);
+	ui_add_tab(obj_name, parent);
+	return falseObj;
+}
+
+static OBJ primLVGLaddTile(int argCount, OBJ *args) {
+	char* obj_name = obj2str(args[0]);
+	char* parent = obj2str(args[1]);
+	int col_id = obj2int(args[2]);
+	int row_id = obj2int(args[3]);
+	uint8_t l = (trueObj == args[4]) ? 1:0;
+	uint8_t r = (trueObj == args[5]) ? 1:0;
+	uint8_t t = (trueObj == args[6]) ? 1:0;
+	uint8_t b = (trueObj == args[7]) ? 1:0;
+	lv_dir_t dir = (lv_dir_t)(l + (r<<1) + (t<<2) + (b<<3));
+	ui_add_tile(obj_name, parent, col_id, row_id, dir);
+	return falseObj;
+}
+
+static OBJ primLVGLaddSeries(int argCount, OBJ *args) {
+	char* series = obj2str(args[0]);
+	char* chart = obj2str(args[1]);
+	int color = obj2int(args[2]);
+	ui_add_series(series, chart, color);
+	return falseObj;
+}
+
+static OBJ primLVGLaddchart(int argCount, OBJ *args) {
+	char* obj_name = obj2str(args[0]);
+	char* chart_type = obj2str(args[1]);
+	char* chart_update_mode = obj2str(args[2]);
+	const char* parent = "lv_scr_act";
+	if (argCount > 3) {
+		parent = obj2str(args[3]);
+	} 
+	ui_add_chart(obj_name, parent, chart_type, chart_update_mode);
+	return falseObj;
+}
+
+static OBJ primLVGLaddArc(int argCount, OBJ *args) {
+	char* obj_name = obj2str(args[0]);
+	const char *parent;
+	if (argCount > 1) {
+		parent = obj2str(args[1]);
+	} else {
+		parent = "lv_scr_act";
+	}
+	ui_create_arc(obj_name, parent);
+	return falseObj;
+}
+
+
+void free_btnmap(char **btnmap, size_t count) {
+    if (!btnmap) return;
+    for (size_t i = 0; i <= count; i++) {
+        free(btnmap[i]);  // free each string
+    }
+    free(btnmap);         // free the array of pointers
+}
+
+
+
+
+static OBJ primLVGLaddButtonMatrix(int argCount, OBJ *args) {
+	int count;
+	char* obj_name = obj2str(args[0]);
+	const char *parent;
+	OBJ obj = args[1];
+	if (argCount > 2) {
+		parent = obj2str(args[2]);
+	} else {
+		parent = "lv_scr_act";
+	}
+
+	if (IS_TYPE(obj, ListType)) {
+		count = obj2int(FIELD(obj, 0));
+		if (count >= WORDS(obj)) count = WORDS(obj) - 1;
+		if (!registry.get(obj_name) && registry.get(parent)) {
+			// alloc array of strings 
+			char** btnmap = (char **)malloc((count+1) * sizeof(char*));
+			for (size_t i = 1; i < count+1; i++) {
+				OBJ field =  FIELD(obj, i);
+				char* string_n = obj2str(field);
+				size_t len = strlen(string_n);
+				outputString(string_n);
+				if (len==0) {
+						btnmap[i-1] = (char *)malloc(2);
+						strcpy(btnmap[i-1], "\n");
+				} else {
+					btnmap[i-1] = (char *)malloc(len + 1); // +1 for null terminator
+					strcpy(btnmap[i-1], string_n);
+				}
+			}
+			btnmap[count]=NULL; // end button map
+			lv_obj_t* obj = lv_buttonmatrix_create(registry.get(parent));
+			lv_buttonmatrix_set_map(obj, btnmap);
+			lv_obj_add_event_cb(obj, ui_log_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
+			registry.add(obj_name, obj);
+			btnmap_registry.add(obj_name, btnmap); // store btnmap in registry
+		}
+	}
+		
+	return falseObj;
+}
+
+
+
+static OBJ primLVGLaddObject(int argCount, OBJ *args) {
+	char* obj_type = obj2str(args[0]);
+	char* obj_name = obj2str(args[1]);
+	const char *parent;
+	if (argCount > 2) {
+		parent = obj2str(args[2]);
+	} else {
+		parent = "lv_scr_act";
+	}
+	//bool event = (argCount > 1) ? (trueObj == args[1]) : true;
+	Command cmd = lookup_cmd(obj_type);
+	switch (cmd) {
+		case CMD_BUTTON:
+			outputString("Handle BUTTON");
+			ui_create_button(obj_name, parent);
+			break;
+		case CMD_ARC:
+			outputString("Handle ARC");
+			ui_create_arc(obj_name, parent);
+			break;
+		case CMD_SLIDER:
+			outputString("Handle SLIDER");
+			ui_create_slider(obj_name, parent);
+			break;
+		case CMD_LED:
+			outputString("Handle LED");
+			ui_create_led(obj_name, parent);
+			break;
+		case CMD_SWITCH:
+			outputString("Handle SWITCH");
+			ui_create_switch(obj_name, parent);
+			break;
+		case CMD_BAR:
+			outputString("Handle BAR");
+			ui_create_bar(obj_name, parent);
+			break;
+		case CMD_TABVIEW:
+			outputString("Handle TABVIEW");
+			ui_create_tabview(obj_name, parent);
+			break;
+		case CMD_TILEVIEW:
+			outputString("Handle TILEVIEW");
+			ui_create_tileview(obj_name, parent);
+			break;
+		case CMD_LIST:
+			outputString("Handle LIST");
+			ui_create_list(obj_name, parent);
+			break;
+		case CMD_ROLLER:
+			outputString("Handle ROLLER");
+			ui_create_roller(obj_name, parent);
+			break;
+		case CMD_SCREEN:
+			outputString("Handle SCREEN");
+			ui_create_screen(obj_name, parent);
+			break;
+		case CMD_STYLE:
+		 	outputString("Handle STYLE");
+		 	ui_create_style(obj_name, parent);
+		 	break;
+		case CMD_SPINBOX:
+		 	outputString("Handle SPINBOX");
+		 	ui_create_spinbox(obj_name, parent);
+		 	break;
+		case CMD_SPINNER:
+		 	outputString("Handle SPINNER");
+		 	ui_create_spinner(obj_name, parent);
+		 	break;
+		case CMD_SCALE:
+		 	ui_create_scale(obj_name, parent);
+		 	break;
+		case CMD_TEXTAREA:
+		 	ui_create_textarea(obj_name, parent);
+		 	break;
+		case CMD_KEYBOARD:
+		 	ui_create_keyboard(obj_name, parent);
+		 	break;
+		default:
+			outputString("Unknown command");;
+	}
+	return falseObj;
+}
+
+static OBJ primLVGLgetSymbol(int argCount, OBJ *args) {
+    static const std::unordered_map<std::string, int> symbolMap = {
+        {"bullet",        20042},
+        {"audio",         61441},
+        {"video",         61448},
+        {"list",          61451},
+        {"ok",            61452},
+        {"close",         61453},
+        {"power",         61457},
+        {"settings",      61459},
+        {"home",          61461},
+        {"download",      61465},
+        {"drive",         61468},
+        {"refresh",       61473},
+        {"mute",          61478},
+        {"volume_mid",    61479},
+        {"volume_max",    61480},
+        {"image",         61502},
+        {"tint",          61507},
+        {"prev",          61512},
+        {"play",          61515},
+        {"pause",         61516},
+        {"stop",          61517},
+        {"next",          61521},
+        {"eject",         61522},
+        {"left",          61523},
+        {"right",         61524},
+        {"plus",          61543},
+        {"minus",         61544},
+        {"eye_open",      61550},
+        {"eye_close",     61552},
+        {"warning",       61553},
+        {"shuffle",       61556},
+        {"up",            61559},
+        {"down",          61560},
+        {"loop",          61561},
+        {"directory",     61563},
+        {"upload",        61587},
+        {"call",          61589},
+        {"cut",           61636},
+        {"copy",          61637},
+        {"save",          61639},
+        {"bars",          61641},
+        {"envelope",      61664},
+        {"charge",        61671},
+        {"paste",         61674},
+        {"bell",          61683},
+        {"keyboard",      61724},
+        {"gps",           61732},
+        {"file",          61787},
+        {"wifi",          61931},
+        {"battery_full",  62016},
+        {"battery_3",     62017},
+        {"battery_2",     62018},
+        {"battery_1",     62019},
+        {"battery_empty", 62020},
+        {"usb",           62087},
+        {"bluetooth",     62099},
+        {"trash",         62189},
+        {"edit",          62212},
+        {"backspace",     62810},
+        {"sd_card",       63426},
+        {"new_line",      63650}
+    };
+	std::string symbol = obj2str(args[0]);
+    auto it = symbolMap.find(symbol);
+    if (it != symbolMap.end()) {
+        return int2obj(it->second);
+    }
+    return falseObj; // not found
+}
+
+static OBJ primLVGLloadScreen(int argCount, OBJ *args) {
+	char* obj_name = obj2str(args[0]);
+	lv_obj_t* obj = registry.get(obj_name);
+	//if (obj) lv_scr_load_anim(obj, LV_SCR_LOAD_ANIM_FADE_IN, 200, 0, false);
+	if (obj) lv_scr_load(obj);
+	return falseObj;
+}
+
+static OBJ primLVGLsetParent(int argCount, OBJ *args) {
+	char* obj = obj2str(args[0]);
+	char* parent = obj2str(args[1]);
+	// states and parts are only used when applying a style to an object]
+	int states = 0;
+	int parts = 0;
+	if (argCount >2) {
+		states = obj2int(args[2]);
+	}
+	if (argCount >3) {
+		parts = obj2int(args[3]);
+	}
+	ui_set_parent(obj, parent, states, parts);
+	return falseObj;
+}
+
+#if defined(COCUBE)
+static OBJ primLVGLaddgroup(int argCount, OBJ *args) {
+	char* obj_name = obj2str(args[0]);
+	lv_obj_t* obj = registry.get(obj_name);
+	lv_group_add_obj(group, obj);
+	return falseObj;
+}
+#endif
+
+static OBJ primLVGLdelObj(int argCount, OBJ *args) {
+	char* obj_name = obj2str(args[0]);
+	ui_delete_obj(obj_name);
+	return falseObj;
+}
+
+static OBJ primLVGLsetSize(int argCount, OBJ *args) {
+	char* obj_name = obj2str(args[0]);
+	int w = obj2int(args[1]);
+	int h = obj2int(args[2]);
+	ui_set_size(obj_name, w, h);
+	return falseObj;
+}
+
+static OBJ primLVGLsetPos(int argCount, OBJ *args) {
+	char* obj_name = obj2str(args[0]);
+	int pos_x = obj2int(args[1]);
+	int pos_y = obj2int(args[2]);
+	ui_set_pos(obj_name, pos_x, pos_y);
+	return falseObj;
+}
+
+static OBJ primLVGLsetScroll(int argCount, OBJ *args) {
+	char* obj_name = obj2str(args[0]);
+	char* direction = obj2str(args[1]);
+	lv_dir_t scroll_dir = LV_DIR_NONE;
+	if (strcmp(direction,"hor")==0) scroll_dir = LV_DIR_HOR;
+	else if (strcmp(direction,"ver")==0) scroll_dir = LV_DIR_VER;
+	else if (strcmp(direction,"all")==0) scroll_dir = LV_DIR_ALL;
+	ui_set_scroll(obj_name, scroll_dir);
+	return falseObj;
+}
+
+
+
+
+static OBJ primLVGLsetVal(int argCount, OBJ *args) {
+	char* obj_name = obj2str(args[0]);
+	lv_obj_t* obj = registry.get(obj_name);
+	int value;
+	if (obj) {
+		if (lv_obj_get_class(obj) == &lv_led_class) {
+			if (trueObj == args[1]) lv_led_on(obj);
+			else lv_led_off(obj);
+		} else if (lv_obj_get_class(obj) == &lv_switch_class) {
+			if (IS_TYPE(args[1], BooleanType )) {
+				if (args[1]==trueObj) value = 1; else value=0;
+			} 
+		}
+		else
+		   value = obj2int(args[1]);
+		if (lv_obj_get_class(obj) == &lv_arc_class) {
+			lv_arc_set_value(obj, value);
+		} else 
+		if (lv_obj_get_class(obj) == &lv_slider_class) {
+			lv_slider_set_value(obj, value, LV_ANIM_OFF);
+		} else
+		if (lv_obj_get_class(obj) == &lv_bar_class) {
+			lv_bar_set_value(obj, value, LV_ANIM_OFF);
+		} else
+		if (lv_obj_get_class(obj) == &lv_spinbox_class) {
+			lv_spinbox_set_value(obj, value);
+		} else
+		if (lv_obj_get_class(obj) == &lv_switch_class) {
+			if (value==0) lv_obj_remove_state(obj, LV_STATE_CHECKED);
+			else if (value>0) lv_obj_add_state(obj, LV_STATE_CHECKED);
+		}  else
+		if (lv_obj_get_class(obj) == &lv_roller_class) {
+			lv_roller_set_visible_row_count(obj,value);
+		} 
+	}
+	return falseObj;
+}
+
+static OBJ primLVGLsetnextvalue(int argCount, OBJ *args) {
+	char* series = obj2str(args[0]);
+	char *chart = obj2str(args[1]);
+	int val = obj2int(args[2]);
+	if (argCount > 3) {
+		int val2 = obj2int(args[3]);
+		ui_set_next_value2(series, chart, val, val2);
+	} else {
+		ui_set_next_value(series, chart, val);
+	}
+		return falseObj;
+}	
+
+
+static OBJ primLVGLsetText(int argCount, OBJ *args) {
+	int scale = 1;
+	char* obj_name = obj2str(args[0]);
+	char* obj_text;
+	char *font_name; 
+	OBJ value = args[1];
+	if (IS_TYPE(value, StringType)) {
+		obj_text = obj2str(value);
+	} else if (isInt(value)) {
+		char s[20];
+		sprintf(s, "%d", obj2int(value));
+		obj_text = s;
+	} else {
+		char s[1];
+		s[0]='\0';
+		obj_text=s;
+	}
+	if (argCount >2) {
+		if (IS_TYPE(args[2], StringType)) {
+			font_name = obj2str(args[2]);
+			ui_set_text_font(obj_name, obj_text, font_name);
+		} else {
+			scale = obj2int(args[2]);
+			ui_set_text(obj_name, obj_text, scale);
+		}
+	} else 
+		ui_set_text(obj_name, obj_text, scale);
+	
+	return falseObj;
+}
+
+static OBJ primLVGLsetattribute(int argCount, OBJ *args) {
+	char* attribute_name = obj2str(args[0]);
+	char* obj_name = obj2str(args[1]);
+	int to_val = obj2int(args[2]);
+	int until_val=100;	
+	if (argCount >3) {
+		until_val = obj2int(args[3]);
+	}
+	char s[100];
+	sprintf(s,"set attritube to %d until %d",to_val, until_val);
+	outputString(s);
+	ui_set_attribute(obj_name, attribute_name, to_val, until_val);
+	return falseObj;
+}
+
+
+static OBJ primLVGLsetstyle(int argCount, OBJ *args) {
+	char* style_name = obj2str(args[0]);
+	char* obj_name = obj2str(args[1]);
+	int to_val = obj2int(args[2]);
+	ui_set_style(obj_name, style_name, to_val);
+	return falseObj;
+}
+
+static OBJ primLVGLgetVal(int argCount, OBJ *args) {
+	char* obj_name = obj2str(args[0]);
+	lv_obj_t* obj = registry.get(obj_name);
+	if (obj) {
+		if (lv_obj_get_class(obj) == &lv_arc_class) {
+			return int2obj(lv_arc_get_value(obj));
+ 		} else 
+		if (lv_obj_get_class(obj) == &lv_slider_class) {
+			return int2obj(lv_slider_get_value(obj));
+		} else 
+		if (lv_obj_get_class(obj) == &lv_spinbox_class) {
+			return int2obj(lv_spinbox_get_value(obj));
+		} else 
+		if (lv_obj_get_class(obj) == &lv_textarea_class) {
+			const char * text = lv_textarea_get_text(obj);
+			return newStringFromBytes(text, strlen(text));
+		} else 
+		if (lv_obj_get_class(obj) == &lv_switch_class) {
+			return lv_obj_has_state(obj, LV_STATE_CHECKED)  ? trueObj : falseObj;
+		} else 
+		if (lv_obj_get_class(obj) == &lv_roller_class) {
+			char buf[100];
+			lv_roller_get_selected_str(obj, buf, sizeof(buf));
+			return  newStringFromBytes(buf, strlen(buf));
+		} else
+		if (lv_obj_check_type(obj, &lv_buttonmatrix_class)){
+			// used when event to retuen the id of the btn
+			char s[100];
+			sprintf(s,"btn: %s id: %d",obj_name, lv_buttonmatrix_get_selected_button(obj) );
+			outputString(s);
+			int id = lv_buttonmatrix_get_selected_button(obj);
+			int checked = 0;
+			if (lv_buttonmatrix_has_button_ctrl(obj, id, LV_BTNMATRIX_CTRL_CHECKED)) checked = 512;
+			return int2obj(id + checked);
+		} 
+		else return falseObj;
+	} else return falseObj;
+}
+
+
+
+
+static OBJ primLVGLsetColor(int argCount, OBJ *args) {
+	char* obj_name = obj2str(args[0]);
+	int color = obj2int(args[1]);
+	ui_set_color(obj_name, color);
+	if ( argCount > 2) {
+		color = obj2int(args[2]);
+		ui_set_color_2nd(obj_name, color);
+	}
+	if ( argCount > 3) {
+		color = obj2int(args[3]);
+		ui_set_color_3rd(obj_name, color);
+	}
+	
+	return falseObj;
+}
+
+
+static OBJ primLVGLgetEvent(int argCount, OBJ *args) {
+	std::string name;
+	int code = ui_get_last_event(name);
+	char s[100];
+	sprintf(s,"event: %s code: %d",name.c_str(),code);
+	outputString(s);	
+	OBJ result = newStringFromBytes(name.c_str(), name.length());
+	return result;
+}
+
+static OBJ primLVGLEvent(int argCount, OBJ *args) {
+	bool check_event = event_seen;
+	// char s[100];
+	// sprintf(s,"event %d",event_seen);
+	// outputString(s);
+	event_seen = false; // wipe event for next event
+	if (check_event) return trueObj; else return falseObj;
+}
+
+ 
+static OBJ primLVGLon(int argCount, OBJ *args) {
+	set_lvgl(trueObj == args[0]);
+	return falseObj;
+
+}
+
+static OBJ primLVGLtick(int argCount, OBJ *args) {
+	lvgl_tick();
+	return falseObj;
+
+}
+
+// dummy function for testing initialisation lvgl
+static OBJ primLVGLinit(int argCount, OBJ *args) {
+	outputString("Before setup_lvgl");
+	setup_lvgl();
+	outputString("After setup_lvgl");
+	return falseObj;
+
+}
+
+static OBJ primLVGLstate(int argCount, OBJ *args) {
+	char s[100];
+	sprintf(s,"uselvgl: %d, lvgl_initialzed: %d\n", useLVGL, LVGL_initialized);
+	outputString(s);	
+	return falseObj;
+
+}
+
+#include "esp_heap_caps.h"
+
+static OBJ primLVGLpsram(int argCount, OBJ *args) {
+	int val = heap_caps_get_free_size(MALLOC_CAP_SPIRAM); // in bytes
+
+	char s[100];
+	sprintf(s,"PSRAM total size: %d",ESP.getPsramSize());
+	outputString(s);	
+	sprintf(s,"PSRAM free: %d",val);
+    outputString(s);	
+	sprintf(s,"PSRAM largest free block: %d",heap_caps_get_largest_free_block(MALLOC_CAP_SPIRAM));
+	outputString(s);	
+	sprintf(s,"RAM heap free: %d",heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
+    outputString(s);	
+	sprintf(s,"free heap after: %d psram: %d ",  ESP.getFreeHeap(),ESP.getFreePsram());
+	outputString(s);
+	return int2obj(val);
+}
+
+#if defined(LVGL_SNAPSHOT)
+#include <WiFi.h>
+#include <HTTPClient.h>
+
+
+#define STRING_OBJ_CONST(s) \
+	struct { uint32 header = HEADER(StringType, ((sizeof(s) + 4) / 4)); char body[sizeof(s)] = s; }
+
+
+STRING_OBJ_CONST("Snapshot failed") statusSnapshotFailed;
+STRING_OBJ_CONST("PSRAM alloc failed") statusPsramAllocFailed;
+
+
+
+static OBJ primLVGLsnapshot(int argCount, OBJ *args) {
+	char *upload_url = obj2str(args[0]);
+ 	lv_obj_t *scr = lv_screen_active();
+    lv_coord_t w = lv_obj_get_width(scr);
+    lv_coord_t h = lv_obj_get_height(scr);
+    size_t buf_size = w * h * 2; // RGB565 = 2 bytes per pixel
+
+    // Allocate snapshot buffer in PSRAM
+    uint8_t *psram_buf = (uint8_t *) heap_caps_malloc(buf_size, MALLOC_CAP_SPIRAM);
+    if (!psram_buf) {
+		return (OBJ)  &statusPsramAllocFailed;
+    }
+
+    // Create LVGL image descriptor
+    lv_image_dsc_t snapshot;
+    lv_result_t res = lv_snapshot_take_to_buf(scr,
+                                              LV_COLOR_FORMAT_NATIVE,
+                                              &snapshot,
+                                              psram_buf,
+                                              buf_size);
+    if (res != LV_RESULT_OK) {
+        lv_free(psram_buf);
+        return (OBJ) &statusSnapshotFailed;
+    }
+	char s[100];
+	sprintf(s,"📸 Snapshot OK: %d x %d (%d bytes)\n", w, h, buf_size);
+	outputString(s);	
+    
+    // --- Upload to Web Server ---
+    if (WiFi.status() == WL_CONNECTED) {
+        HTTPClient http;
+        http.begin(upload_url);
+        http.addHeader("Content-Type", "application/octet-stream");
+
+        int httpResponseCode = http.POST(psram_buf, buf_size);
+        if (httpResponseCode > 0) {
+            sprintf(s,"✅ Upload OK, code: %d\n", httpResponseCode);
+			outputString(s);	
+        } else {
+			sprintf(s,"❌ Upload failed, error: %s\n", http.errorToString(httpResponseCode).c_str());
+			outputString(s);			
+        }
+        http.end();
+    } else {
+         fail(noWiFi);
+    }
+
+    // Cleanup
+    free(psram_buf);
+  	return falseObj;
+
+}
+
+
+
+#endif   // LVGL_SNAPSHOT
+
+#endif 
 // Touchscreen Primitives
 
 static OBJ primTftTouched(int argCount, OBJ *args) {
@@ -1754,6 +4047,59 @@ static PrimEntry entries[] = {
 
 	{"aruco", primAruco},
 	{"aprilTag", primAprilTag},
+
+#if defined(LVGL) 
+	{"LVGLon",primLVGLon},
+//	{"LVGLbutton",primLVGLbutton},
+	{"LVGLtick",primLVGLtick},
+	{"LVGLstate",primLVGLstate},
+	#if defined(LVGL_SNAPSHOT)
+		{"LVGLsnapshot",primLVGLsnapshot},
+	#endif
+	{"LVGLaddbtn",primLVGLaddBtn},
+	{"LVGLaddlabel",primLVGLaddLabel},
+	{"LVGLaddslider",primLVGLaddSlider},
+	{"LVGLaddarc",primLVGLaddArc},
+	{"LVGLaddtab",primLVGLaddTab},
+	{"LVGLaddseries",primLVGLaddSeries},
+	{"LVGLaddchart",primLVGLaddchart},
+	{"LVGLsetnextvalue",primLVGLsetnextvalue},
+	{"LVGLaddtile",primLVGLaddTile},
+	{"LVGLaddbuttonmatrix",primLVGLaddButtonMatrix},
+	{"LVGLaddobj",primLVGLaddObject},
+	{"LVGLdelobj",primLVGLdelObj},
+	{"LVGLsetparent",primLVGLsetParent},
+	{"LVGLsetpos",primLVGLsetPos},
+	{"LVGLsetsize",primLVGLsetSize},
+	{"LVGLsetval", primLVGLsetVal},
+	{"LVGLsettext",primLVGLsetText},
+	{"LVGLsetattribute",primLVGLsetattribute},
+	{"LVGLsetstyle",primLVGLsetstyle},
+	{"LVGLgetval", primLVGLgetVal},
+	{"LVGLloadscreen",primLVGLloadScreen},
+	{"LVGLevent",primLVGLEvent},
+	{"LVGLgetevent",primLVGLgetEvent},
+	{"LVGLsetcolor", primLVGLsetColor},
+	{"LVGLgetallobjs", primLVGLgetallobjs},
+	{"LVGLgetallfonts",primLVGLgetallfonts},
+	{"LVGLgetallstyles",primLVGLgetallstyles},
+	{"LVGLgetallseries",primLVGLgetallseries},
+	{"LVGLgetallbtnmaps",primLVGLgetallbtnmaps},
+	{"LVGLgetsymbol",primLVGLgetSymbol},
+	{"LVGLinit", primLVGLinit},
+	{"LVGLaddimg", primLVGLaddimg},
+ 	{"LVGLaddfont",primLVGLaddfont},
+	{"LVGLsetscroll",primLVGLsetScroll},
+	{"LVGLpsram",primLVGLpsram},
+	#if (defined(LMSDIAPLY) && defined(BREAKOUT))||defined(CYDROT)
+		{"fliptouch",primfliptouch},
+	#endif
+	#if defined(COCUBE)
+		{"LVGLaddgroup",primLVGLaddgroup},
+	#endif
+
+#endif
+
 };
 
 void addTFTPrims() {
