@@ -104,7 +104,7 @@ static const Entry MAP[] = {
     CFG_INT("lcd","spi",        lcd.spi,        0, 3),
     CFG_INT("lcd","mosi",       lcd.mosi,      -1, 99),
     CFG_INT("lcd","miso",       lcd.miso,      -1, 99),
-    CFG_INT("lcd","sck",        lcd.sck,       -1, 99),
+    CFG_INT("lcd","sclk",       lcd.sclk,      -1, 99),
     CFG_INT("lcd","cs",         lcd.cs,        -1, 99),
     CFG_INT("lcd","dc",         lcd.dc,        -1, 99),
     CFG_INT("lcd","rst",        lcd.rst,       -1, 99),
@@ -129,11 +129,14 @@ static const Entry MAP[] = {
     CFG_INT("touch","irq",        touch.irq,     -1, 99),
     CFG_INT("touch","miso",       touch.miso,    -1, 99),
     CFG_INT("touch","mosi",       touch.mosi,    -1, 99),
-    CFG_INT("touch","sck",        touch.sck,     -1, 99),
+    CFG_INT("touch","sclk",       touch.sclk,     -1, 99),
     CFG_INT("touch","cs",         touch.cs,      -1, 99),
     CFG_INT("touch","rotation",   touch.rotation, 0, 3),
     CFG_INT("touch","sda",        touch.sda,     -1, 99),
     CFG_INT("touch","scl",        touch.scl,     -1, 99),
+    CFG_BOOL("touch","flip_x",    touch.flip_x),
+    CFG_BOOL("touch","flip_y",    touch.flip_y),
+    CFG_BOOL("touch","flip_x_y",  touch.flip_x_y),
 
     // [other]
     CFG_INT("other","advanced_serial_commands", other.advanced_serial_commands, 0, 1),
@@ -227,7 +230,7 @@ bool loadConfig(Config* cfg) {
     }
 
     file.close();
-    Serial.println("Config loaded");
+    //Serial.println("Config loaded");
     return true;
 }
 

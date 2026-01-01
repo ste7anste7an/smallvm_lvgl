@@ -14,7 +14,7 @@
 
 typedef struct {
     char controller[16];
-    int spi, mosi, miso, sck, cs;
+    int spi, mosi, miso, sclk, cs;
     int dc, rst;
     int rotation;
     int color;
@@ -34,9 +34,10 @@ typedef struct {
     int spi;
     int i2c;
     int irq;
-    int miso, mosi, sck, cs;
+    int miso, mosi, sclk, cs;
     int rotation;
     int sda, scl;
+    bool flip_x, flip_y, flip_x_y;
 } TouchConfig;
 
 typedef struct {

@@ -586,13 +586,16 @@ static int deferUpdates = false;
 			#ifndef TFT_HEIGHT
 			#define TFT_HEIGHT (cfg.lvgl.height)
 			#endif
+			char s[100];
 			if (!LittleFS.begin()) {
-					Serial.println("LittleFS mount failed!");
+					sprintf(s,"LittleFS mount failed!\n");
+					outputString(s);
 					return;
 				}
 
 			if (!LittleFS.exists("/config.txt")) {
-				Serial.println("File does not exist!");
+					sprintf(s,"File does not exist!\n");
+					outputString(s);
 				return;
 			}
 
@@ -600,20 +603,23 @@ static int deferUpdates = false;
 			configurator::setDebug(false);
 
 			if (!configurator::loadConfig(&cfg)) {
-				Serial.println("Defaults used");
+					sprintf(s,"Defaults used");
+					outputString(s);
 			}
-			Serial.printf("DC %d, Cs %d, SCK %d, mosi %d, miso %d\n ", cfg.lcd.dc, cfg.lcd.cs,
-					cfg.lcd.sck, cfg.lcd.mosi, cfg.lcd.miso);
-			Serial.printf("ToucH interface: %s controller: %s\n",cfg.touch.interface,cfg.touch.controller);
+			sprintf(s,"DC %d, Cs %d, SCK %d, mosi %d, miso %d\n ", cfg.lcd.dc, cfg.lcd.cs,
+					cfg.lcd.sclk, cfg.lcd.mosi, cfg.lcd.miso);
+			outputString(s);
+			sprintf(s,"ToucH interface: %s controller: %s\n",cfg.touch.interface,cfg.touch.controller);
+			outputString(s);
 			bus = new Arduino_ESP32SPI(
 					cfg.lcd.dc, cfg.lcd.cs,
-					cfg.lcd.sck, cfg.lcd.mosi, cfg.lcd.miso,
+					cfg.lcd.sclk, cfg.lcd.mosi, cfg.lcd.miso,
 					cfg.lcd.spi, true
 				);
 
 
 			if (strcmp(cfg.lcd.controller, "ILI9341") == 0) {
-				gfx = new Arduino_ILI9341(bus, cfg.lcd.rst, cfg.lcd.rotation, false);
+				gfx = new Arduino_ILI9341(bus, cfg.lcd.rst, cfg.lcd.rotation, cfg.lcd.invert);
 			} else if (strcmp(cfg.lcd.controller, "ST7789") == 0) {
 				gfx = new Arduino_ST7789(bus, cfg.lcd.rst, cfg.lcd.rotation, cfg.lcd.invert,cfg.lcd.width, cfg.lcd.height,cfg.lcd.col_offset,cfg.lcd.row_offset);
 			}  else if (strcmp(cfg.lcd.controller, "ST7796") == 0) {
@@ -649,20 +655,20 @@ static int deferUpdates = false;
 		}
 
 		static void touchInit() {
-			// char s[100];
-			// sprintf(s,"touch init: %s %s ",cfg.touch.interface,cfg.touch.controller);
-			// outputString(s);
+			char s[100];
+			sprintf(s,"touch init: interf: %s contr: %s touchenabled %d\n",cfg.touch.interface,cfg.touch.controller,touchEnabled);
+			outputString(s);
 			if (touchEnabled) return;
 
 			if (isTouchXPT()) {
-			// char s[100];
-			// sprintf(s,"xpt: spi: %d, miso: %d mosi: %d cs: %d",cfg.touch.spi,cfg.touch.miso, cfg.touch.mosi,cfg.touch.cs) ;
-			// outputString(s);
+			char s[100];
+			sprintf(s,"xpt: spi: %d, miso: %d mosi: %d cs: %d",cfg.touch.spi,cfg.touch.miso, cfg.touch.mosi,cfg.touch.cs) ;
+			outputString(s);
 	
 			// Create SPI bus if not already
 			//if (!touchSPI) {
 			touchSPI = new SPIClass(cfg.touch.spi);
-			touchSPI->begin(cfg.touch.sck, cfg.touch.miso, cfg.touch.mosi, -1);
+			touchSPI->begin(cfg.touch.sclk, cfg.touch.miso, cfg.touch.mosi, cfg.touch.cs);
 			touchEnabled = true;
 		//	}
 
@@ -718,22 +724,39 @@ static int deferUpdates = false;
 
 			return 0;
 		}
+
 		static int screenTouchX() {
 		if (!touchEnabled) touchInit();
 		if (!touchEnabled) return -1;
-
+		int16_t x;
 		if (isTouchXPT()) {
 			if (!screenTouched()) return -1;  // ensures lastP is valid
-
+			if (cfg.touch.flip_x_y) 
+				x = (int)lastP.y;
+			else
+				x = (int)lastP.x;
 			// Your example mapping:
 			// uint16_t x = map(p.x, 200, 3800, cfg.tft.width, 0);
-			return (int)map((int)lastP.x, 200, 3800, (int)cfg.lvgl.width, 0);
+			if (cfg.touch.flip_x)
+				return (int)map((int)lastP.x, 200, 3800, 0,  (int)cfg.lvgl.width);
+			else
+				return (int)map((int)lastP.x, 200, 3800, (int)cfg.lvgl.width, 0);
 		}
 
 		if (isTouchCST()) {
 			if (!touchI2C) return -1;
+
 			// touchI2C->x() already calls update(); returns -1 if none
-			return touchI2C->x();
+			if (cfg.touch.flip_x_y) 
+				x = touchI2C->y();
+			else
+				x = touchI2C->x();
+			// Your example mapping:
+			// uint16_t x = map(p.x, 200, 3800, cfg.tft.width, 0);
+			if (cfg.touch.flip_x)
+				return cfg.lvgl.width - x;
+			else
+				return x;
 		}
 
 		return -1;
@@ -742,18 +765,31 @@ static int deferUpdates = false;
 		static int screenTouchY() {
 		if (!touchEnabled) touchInit();
 		if (!touchEnabled) return -1;
-
+		int16_t y;
 		if (isTouchXPT()) {
 			if (!screenTouched()) return -1;
-
+			if (cfg.touch.flip_x_y) 
+				y = (int)lastP.x;
+			else
+				y = (int)lastP.y;
 			// Your example mapping:
 			// uint16_t y = map(p.y, 300, 3900, 0, cfg.tft.height);
-			return (int)map((int)lastP.y, 300, 3900, 0, (int)cfg.lvgl.height);
+			if (cfg.touch.flip_y)
+				return (int)map((int)lastP.y, 300, 3900, (int)cfg.lvgl.height, 0);
+			else
+				return (int)map((int)lastP.y, 300, 3900, 0, (int)cfg.lvgl.height);
 		}
 
 		if (isTouchCST()) {
 			if (!touchI2C) return -1;
-			return touchI2C->y();
+			if (cfg.touch.flip_x_y) 
+				y = touchI2C->x();
+			else
+				y = touchI2C->y();
+			if (cfg.touch.flip_y)
+				return cfg.lvgl.height - y;
+			else
+				return y;
 		}
 
 		return -1;
@@ -2117,156 +2153,11 @@ void fs_init() {
 
 }
 
-/*
-bool my_ready_cb(lv_fs_drv_t *) {
-  return true;
-}
-
-void *my_open_cb(lv_fs_drv_t *, const char *path, lv_fs_mode_t mode) {
-  char full_path[64];
-  snprintf(full_path, sizeof(full_path), "/%s", path);
-  const char *fmode = (mode == LV_FS_MODE_WR) ? "w" : "r";
-  File *f = new File(LittleFS.open(full_path, fmode));
-  if (!f || !*f) {
-    delete f;
-    return nullptr;
-  }
-  outputString("file oped");
-  outputString(full_path);
-  return f;
-}
-
-lv_fs_res_t my_close_cb(lv_fs_drv_t *, void *file_p) {
-  File *f = static_cast<File *>(file_p);
-  f->close();
-  delete f;
-  return LV_FS_RES_OK;
-}
-
-lv_fs_res_t my_read_cb(lv_fs_drv_t *, void *file_p, void *buf, uint32_t btr, uint32_t *br) {
-  File *f = static_cast<File *>(file_p);
-  *br = f->read((uint8_t *)buf, btr);
-  uint8_t *cp = (uint8_t*)br;
-  return LV_FS_RES_OK;
-}
-
-lv_fs_res_t my_seek_cb(lv_fs_drv_t *, void *file_p, uint32_t pos, lv_fs_whence_t whence) {
-  File *f = static_cast<File *>(file_p);
-  if (whence == LV_FS_SEEK_CUR) f->seek(pos + f->position());
-  else if (whence == LV_FS_SEEK_END) f->seek(f->size() - pos);
-  else f->seek(pos);
-  return LV_FS_RES_OK;
-}
-
-lv_fs_res_t my_tell_cb(lv_fs_drv_t *, void *file_p, uint32_t *pos) {
-  File *f = static_cast<File *>(file_p);
-  *pos = f->position();
-  return LV_FS_RES_OK;
-}
-
-// Register LittleFS with LVGL
-void lv_fs_littlefs_init() {
-  static lv_fs_drv_t drv;
-  lv_fs_drv_init(&drv);
-  drv.letter = 'L';
-  drv.ready_cb = my_ready_cb;
-  drv.open_cb = my_open_cb;
-  drv.close_cb = my_close_cb;
-  drv.read_cb = my_read_cb;
-  drv.seek_cb = my_seek_cb;
-  drv.tell_cb = my_tell_cb;
-  lv_fs_drv_register(&drv);
-}
-
-
-uint8_t* load_file_to_psram(const char *path, size_t *out_size) {
-    // Open the file
-    fs::File f = LittleFS.open(path, "r");
-    if (!f || f.isDirectory()) {
-        outputString("Failed to open file for reading");
-        return nullptr;
-    }
-
-    size_t size = f.size();  // Get the file size
-    if (out_size) *out_size = size;
-
-    // Allocate buffer in PSRAM
-    //uint8_t *buffer = (uint8_t *)heap_caps_malloc(size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-	uint8_t *buffer = (uint8_t *)malloc(size);
-	
-    if (!buffer) {
-        outputString("Failed to allocate PSRAM buffer");
-        f.close();
-        return nullptr;
-    }
-
-    // Read file into buffer
-    size_t bytes_read = f.read(buffer, size);
-	char s[100];
-    sprintf(s,"Read %u bytes\n", bytes_read);
-	outputString(s);
-    f.close();
-
-    if (bytes_read != size) {
-		//char s[100];
-        sprintf(s,"Read %u/%u bytes\n", bytes_read, size);
-		outputString(s);
-        heap_caps_free(buffer);
-        return nullptr;
-    }
-
-    return buffer;
-}
-*/
-/* //sodb task to run lvgl on core 1; does not work
-void lvglTask(void *pvParameter) {
-    while (true) {
-        if (LVGL_initialized && useLVGL) {
-            lv_tick_inc(5);        // advance LVGL tick
-            lv_timer_handler();    // process LVGL tasks
-        }
-        //vTaskDelay(5 / portTICK_PERIOD_MS);  // let other tasks run
-		vTaskDelay(5);  // let other tasks run
-    }
-}
-*/
-
 void setup_lvgl() {
-	/*
-	#include "esp_heap_caps.h"
-
- 	size_t buf_size = TFT_WIDTH * TFT_BUFFER_LINES * sizeof(lv_color_t);
- 	char s[100];
-	 sprintf(s,"free heap before: %d psram: %d ",  ESP.getFreeHeap(),ESP.getFreePsram());
-	 outputString(s);
-    
-
-	 buf = (lv_color_t *)malloc(TFT_WIDTH * TFT_BUFFER_LINES * sizeof(lv_color_t));
-	
-	 //buf = (lv_color_t *)heap_caps_malloc(TFT_WIDTH * 10 * sizeof(lv_color_t), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-	 if (buf)  outputString("malloc succesfull");
-	 else outputString("cannot mallocsuccesfull");
-	
-	  sprintf(s,"free heap after: %d psram: %d ",  ESP.getFreeHeap(),ESP.getFreePsram());
-	  outputString(s);
-	  */
-  	lv_init();
+  	#include "esp_heap_caps.h"
+	lv_init();
 	// double buffer
-
-/* // sodb try to give Wifi more chance 
-xTaskCreatePinnedToCore(
-        lvglTask,       // Task function
-        "LVGL Task",    // Name
-        64000,           // Stack size (increase if widgets crash)
-        NULL,           // Parameters
-        1,              // Priority
-        NULL,           // Handle
-        1               // Core 1
-    );
-
-*/
-#include "esp_heap_caps.h"
-
+	
  	size_t buf_size = TFT_WIDTH * TFT_BUFFER_LINES * sizeof(lv_color_t);
  	char s[100];
 	 sprintf(s,"free heap before: %d psram: %d ",  ESP.getFreeHeap(),ESP.getFreePsram());
@@ -2331,29 +2222,18 @@ void set_lvgl(bool use_lvgl) {
 	if (use_lvgl) {
 		useLVGL=true;
 		// refresh all objects
-
 		lv_obj_invalidate(lv_scr_act());
-
-		// char s[100];
-		// sprintf(s,"set lvgl on %d\n",use_lvgl);
-		// outputString(s);
-
 	} else {
 		useLVGL=false;
 		tftClear();
-		// char s[100];
-		// sprintf(s,"set tft on \n");
-		// outputString(s);
 	}
 }
-
 
 // dummy test for generating ticks
 void lvgl_tick() {
  	lv_tick_inc(1);
      lv_timer_handler();
 }
-
 
 
 // in lvgl 9 there is no LV_EVENT_NONE defined, so define it ourselves
@@ -2447,7 +2327,7 @@ void ui_add_font(char * obj_name, const char *path) {
 }
 
 /*
-void ui_add_image(char * obj_name, const char *path, const char * parent_name) {
+ void ui_add_image(char * obj_name, const char *path, const char * parent_name) {
 	lv_obj_t* parent = registry.get(parent_name);
 	lv_obj_t* obj;
     // Create an img object
@@ -2650,7 +2530,6 @@ void ui_add_series(char * series, const char * chart, int color) {
     if (registry.get(chart) && !series_registry.get(series)) {
 		lv_chart_series_t* obj = lv_chart_add_series(registry.get(chart), lv_color_hex(color),  LV_CHART_AXIS_PRIMARY_Y);
 		//lv_obj_add_event_cb(obj, ui_log_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
-		outputString("ui_add_series");
 		series_registry.add(series, obj);
 	}
 }
@@ -2658,10 +2537,6 @@ void ui_add_series(char * series, const char * chart, int color) {
 void ui_set_next_value(char * series, char * chart, int val) {
     if (registry.get(chart) && series_registry.get(series)) {
 		lv_chart_set_next_value(registry.get(chart), series_registry.get(series), val);
-		char s[100];
-		sprintf(s,"ui_set_next_value series=%s chart=%s val = %d", series,chart,val);
-		outputString(s);
-
 	}
 }
 
@@ -2721,14 +2596,9 @@ void ui_create_style(char * obj_name, const char * parent) {
 void ui_set_parent(char * obj_name, const char * parent, int states, int parts){
 	lv_obj_t* obj =  registry.get(obj_name);
 	lv_obj_t* obj_parent =  registry.get(parent);
-	char s[100];
-	sprintf(s,"set parent: %s parent %s",obj_name,parent);
-	outputString(s);
-
 	if (obj && obj_parent) {
 		if ( (lv_obj_get_class(obj) == &lv_keyboard_class) &&
 			 (lv_obj_get_class(obj_parent) == &lv_textarea_class) ) {
-				outputString("attaching keyboard to textarea");
 			 	lv_keyboard_set_textarea(obj, obj_parent);
 			} else
 				lv_obj_set_parent(registry.get(obj_name), obj_parent);
@@ -2763,7 +2633,6 @@ void ui_delete_obj(char * obj_name) {
         registry.remove(obj_name);
     } 
 	if (font){
-			outputString("deleting font");
 			lv_binfont_destroy(font);
 			font_buffer.remove(obj_name);
 	} 
@@ -2776,7 +2645,6 @@ void ui_delete_obj(char * obj_name) {
         series_registry.remove(obj_name);
 	}
 	if (btnmap) { 
-		outputString("deleting btnmap");
 		free_btnmap(btnmap); // free structure of char** for btnmap
 		btnmap_registry.remove(obj_name); // remove entry in btnmap_registry
 	}
@@ -2785,9 +2653,6 @@ void ui_delete_obj(char * obj_name) {
 void ui_set_size(char * obj_name,  lv_coord_t w, lv_coord_t h ) {
 	lv_obj_t* obj = registry.get(obj_name);
 	if (obj) {
-		// char s[100];
-		// sprintf(s,"set_size %s, x=%d, y=%d",obj_name,w,h);
-		// outputString(s);
 		lv_obj_set_size(obj,w,h);
 	}
 }
@@ -2825,9 +2690,6 @@ void ui_set_value(char * obj_name, int value) {
 			lv_bar_set_value(obj, value, LV_ANIM_OFF);
 		} else
 		if (lv_obj_get_class(obj) == &lv_spinbox_class) {
-		char s[100];
-		sprintf(s,"set_value %s: %d",obj_name,value);
-		outputString(s);
 			lv_spinbox_set_value(obj, value);
 		} else
 		if (lv_obj_get_class(obj) == &lv_switch_class) {
@@ -3141,22 +3003,6 @@ Command lookup_cmd(const char *s) {
     return CMD_UNKNOWN;
 }
 
-/*
-static OBJ primLVGLaddimg(int argCount, OBJ *args) {
-	char* obj_name = obj2str(args[1]);
-	char* filename = obj2str(args[0]);
-	const char *parent;
-	if (argCount > 2) {
-		parent = obj2str(args[2]);
-	} else {
-		parent = "lv_scr_act";
-	}
-
-	ui_add_image(obj_name,filename,parent);
-	return falseObj;
-}
-*/
-
 static OBJ primLVGLaddfont(int argCount, OBJ *args) {
 	char* obj_name = obj2str(args[1]);
 	char* filename = obj2str(args[0]);
@@ -3302,9 +3148,6 @@ static OBJ primLVGLaddBtn(int argCount, OBJ *args) {
 	} else {
 		parent = "lv_scr_act";
 	}
-	char s[100];
-	sprintf(s,"btn: %s %s %d %s",obj_name, label_text, scale, parent );
-	outputString(s);
 	ui_create_button_label(obj_name, scale, label_text, parent);
 	return falseObj;
 }
@@ -3773,9 +3616,6 @@ static OBJ primLVGLsetattribute(int argCount, OBJ *args) {
 	if (argCount >3) {
 		until_val = obj2int(args[3]);
 	}
-	char s[100];
-	sprintf(s,"set attritube to %d until %d",to_val, until_val);
-	outputString(s);
 	ui_set_attribute(obj_name, attribute_name, to_val, until_val);
 	return falseObj;
 }
@@ -3816,9 +3656,6 @@ static OBJ primLVGLgetVal(int argCount, OBJ *args) {
 		} else
 		if (lv_obj_check_type(obj, &lv_buttonmatrix_class)){
 			// used when event to retuen the id of the btn
-			char s[100];
-			sprintf(s,"btn: %s id: %d",obj_name, lv_buttonmatrix_get_selected_button(obj) );
-			outputString(s);
 			int id = lv_buttonmatrix_get_selected_button(obj);
 			int checked = 0;
 			if (lv_buttonmatrix_has_button_ctrl(obj, id, LV_BTNMATRIX_CTRL_CHECKED)) checked = 512;
@@ -3851,9 +3688,6 @@ static OBJ primLVGLsetColor(int argCount, OBJ *args) {
 static OBJ primLVGLgetEvent(int argCount, OBJ *args) {
 	std::string name;
 	int code = ui_get_last_event(name);
-	char s[100];
-	sprintf(s,"event: %s code: %d",name.c_str(),code);
-	outputString(s);	
 	OBJ result = newStringFromBytes(name.c_str(), name.length());
 	return result;
 }
@@ -3882,9 +3716,7 @@ static OBJ primLVGLtick(int argCount, OBJ *args) {
 
 // dummy function for testing initialisation lvgl
 static OBJ primLVGLinit(int argCount, OBJ *args) {
-	outputString("Before setup_lvgl");
 	setup_lvgl();
-	outputString("After setup_lvgl");
 	return falseObj;
 
 }
