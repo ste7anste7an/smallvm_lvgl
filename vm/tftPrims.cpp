@@ -18,7 +18,6 @@
 
 int useTFT = false;
 int isOLED1106 = false;
-
 static int touchEnabled = false;
 static int deferUpdates = false;
 
@@ -579,6 +578,7 @@ static int deferUpdates = false;
 
 		void tftInit() {
 
+			useTFT = false;
 			#ifndef TFT_WIDTH
 			#define TFT_WIDTH  (cfg.lvgl.width)
 			#endif
@@ -587,246 +587,267 @@ static int deferUpdates = false;
 			#define TFT_HEIGHT (cfg.lvgl.height)
 			#endif
 			char s[100];
+			bool config_file_exists=false;
+			configurator::setWarnUnknownKeys(true);
+			configurator::setDebug(false);
+			configurator::setDefaults(&cfg);
+			
 			if (!LittleFS.begin()) {
 					sprintf(s,"LittleFS mount failed!\n");
 					outputString(s);
 					return;
 				}
 
+			
+
 			if (!LittleFS.exists("/config.txt")) {
-					sprintf(s,"File does not exist!\n");
-					outputString(s);
-				return;
+					Serial.printf("File does not exist!\n\r");
+					useTFT = false;
+					
+
+			} else config_file_exists=true;
+
+
+			if (config_file_exists) {
+				if (!configurator::loadConfig(&cfg)) {
+						sprintf(s,"Defaults used");
+
+						outputString(s);
+				}
 			}
 
-			configurator::setWarnUnknownKeys(true);
-			configurator::setDebug(false);
-
-			if (!configurator::loadConfig(&cfg)) {
-					sprintf(s,"Defaults used");
-					outputString(s);
-			}
-			sprintf(s,"DC %d, Cs %d, SCK %d, mosi %d, miso %d\n ", cfg.lcd.dc, cfg.lcd.cs,
-					cfg.lcd.sclk, cfg.lcd.mosi, cfg.lcd.miso);
+			// Serial.printf("non configured: touch.i2cL %d, touch.scl:%d  cfg.lcd.invert %d,cfg.touch.flip_x %d,cfg.touch.flip_y %d,cfg.touch.flip_x_y %d\r\n",
+			// 	 cfg.touch.i2c,cfg.touch.scl,cfg.lcd.invert,cfg.touch.flip_x,cfg.touch.flip_y,cfg.touch.flip_x_y);
+			/*
+			// other configuration
+			sprintf(s,"SCL: %d SDA: %d\n", cfg.other.scl, cfg.other.sda);
 			outputString(s);
-			sprintf(s,"ToucH interface: %s controller: %s\n",cfg.touch.interface,cfg.touch.controller);
+			sprintf(s,"SCL: %d SDA: %d\n", cfg.other.scl, cfg.other.sda);
 			outputString(s);
-			bus = new Arduino_ESP32SPI(
-					cfg.lcd.dc, cfg.lcd.cs,
-					cfg.lcd.sclk, cfg.lcd.mosi, cfg.lcd.miso,
-					cfg.lcd.spi, true
-				);
+			sprintf(s,"SCL: %d SDA: %d\n", cfg.other.scl, cfg.other.sda);
+			outputString(s);
+			if ((cfg.other.scl >= 0) && (cfg.other.sda >= 0)) 
+				{
+					sprintf(s,"SCL: %d SDA: %d\n", cfg.other.scl, cfg.other.sda);
+					outputString(s);
+					Wire.end();
+					Wire.setPins(cfg.other.sda, cfg.other.scl);
+					Wire.begin();
+					Wire.setClock(400000);
+				}
+			*/
 
+			
+			if (cfg.lcd.dc>=0 && cfg.lcd.cs>=0 && cfg.lcd.sclk>=0 && cfg.lcd.mosi>=0 && cfg.lcd.spi>=0) {
+				bus = new Arduino_ESP32SPI(
+						cfg.lcd.dc, cfg.lcd.cs,
+						cfg.lcd.sclk, cfg.lcd.mosi, cfg.lcd.miso,
+						cfg.lcd.spi, true
+					);
 
-			if (strcmp(cfg.lcd.controller, "ILI9341") == 0) {
-				gfx = new Arduino_ILI9341(bus, cfg.lcd.rst, cfg.lcd.rotation, cfg.lcd.invert);
-			} else if (strcmp(cfg.lcd.controller, "ST7789") == 0) {
-				gfx = new Arduino_ST7789(bus, cfg.lcd.rst, cfg.lcd.rotation, cfg.lcd.invert,cfg.lcd.width, cfg.lcd.height,cfg.lcd.col_offset,cfg.lcd.row_offset);
-			}  else if (strcmp(cfg.lcd.controller, "ST7796") == 0) {
-				//if (cfg.lcd.col_offset==0 && cfg.lcd.row_offset==0)
-				//  gfx = new Arduino_ST7796(bus, cfg.lcd.rst, cfg.lcd.rotation, false);
-				//else
-				gfx = new Arduino_ST7796(bus, cfg.lcd.rst, cfg.lcd.rotation, cfg.lcd.invert,cfg.lcd.width, cfg.lcd.height,cfg.lcd.col_offset,cfg.lcd.row_offset);
-			}else {
-				Serial.println("Unknown controller, defaulting to ILI9341");
-				gfx = new Arduino_ILI9341(bus, cfg.lcd.rst, cfg.lcd.rotation, false);
-			}
-		
-			tft.begin();
-			tft.fillScreen(RGB565_BLACK);
-			delay(1); 
-			useTFT = true;
+			
+				if (strcmp(cfg.lcd.controller, "ILI9341") == 0) {
+					gfx = new Arduino_ILI9341(bus, cfg.lcd.rst, cfg.lcd.rotation, cfg.lcd.invert);
+				} else if (strcmp(cfg.lcd.controller, "ST7789") == 0) {
+					gfx = new Arduino_ST7789(bus, cfg.lcd.rst, cfg.lcd.rotation, cfg.lcd.invert,cfg.lcd.width, cfg.lcd.height,cfg.lcd.col_offset,cfg.lcd.row_offset);
+				}  else if (strcmp(cfg.lcd.controller, "ST7796") == 0) {
+					//if (cfg.lcd.col_offset==0 && cfg.lcd.row_offset==0)
+					//  gfx = new Arduino_ST7796(bus, cfg.lcd.rst, cfg.lcd.rotation, false);
+					//else
+					gfx = new Arduino_ST7796(bus, cfg.lcd.rst, cfg.lcd.rotation, cfg.lcd.invert,cfg.lcd.width, cfg.lcd.height,cfg.lcd.col_offset,cfg.lcd.row_offset);
+				}else {
+					Serial.println("Unknown controller\r\n");
+					
+				}
+				if (gfx != nullptr) {
+					tft.begin();
+					tft.fillScreen(RGB565_BLACK);
+					delay(1); 
+					useTFT = true;
 
-			pinMode(cfg.lcd.backlight, OUTPUT);
-			digitalWrite(cfg.lcd.backlight, HIGH); // turn backlight ON (or LOW if your display is inverted)
-
+					pinMode(cfg.lcd.backlight, OUTPUT);
+					digitalWrite(cfg.lcd.backlight, HIGH); // turn backlight ON (or LOW if your display is inverted)
+				}
+			} 
 	
-
 		}
+	
+			// --- State flags ---
+		static bool touchInitAttempted = false;
+		static bool hasTouch = false;
 
-			static inline bool isTouchXPT(void) {
+		// --- Touch type helpers ---
+		static inline bool isTouchXPT(void) {
 			return (0 == strcmp(cfg.touch.interface, "spi")) &&
-					(0 == strcmp(cfg.touch.controller, "xpt2046"));
+				(0 == strcmp(cfg.touch.controller, "xpt2046"));
 		}
 
 		static inline bool isTouchCST(void) {
 			return (0 == strcmp(cfg.touch.interface, "i2c")) &&
-					(0 == strcmp(cfg.touch.controller, "cst820"));
+				(0 == strcmp(cfg.touch.controller, "cst820"));
 		}
 
+		// --- Initialization ---
 		static void touchInit() {
-			char s[100];
-			sprintf(s,"touch init: interf: %s contr: %s touchenabled %d\n",cfg.touch.interface,cfg.touch.controller,touchEnabled);
-			outputString(s);
+			if (touchInitAttempted) return;  // prevent endless retries
+			touchInitAttempted = true;
+
 			if (touchEnabled) return;
 
 			if (isTouchXPT()) {
-			char s[100];
-			sprintf(s,"xpt: spi: %d, miso: %d mosi: %d cs: %d",cfg.touch.spi,cfg.touch.miso, cfg.touch.mosi,cfg.touch.cs) ;
-			outputString(s);
-	
-			// Create SPI bus if not already
-			//if (!touchSPI) {
-			touchSPI = new SPIClass(cfg.touch.spi);
-			touchSPI->begin(cfg.touch.sclk, cfg.touch.miso, cfg.touch.mosi, cfg.touch.cs);
-			touchEnabled = true;
-		//	}
+				touchSPI = new SPIClass(cfg.touch.spi);
+				touchSPI->begin(cfg.touch.sclk, cfg.touch.miso, cfg.touch.mosi, cfg.touch.cs);
+				touchEnabled = true;
+				hasTouch = true;
 
-			// Create touch object if not already
-		//	if (!touch) {
-			if (cfg.touch.irq != 0) touch = new XPT2046_Touchscreen(cfg.touch.cs, cfg.touch.irq);
-			else                    touch = new XPT2046_Touchscreen(cfg.touch.cs);
-		//	}
+				if (cfg.touch.irq != 0)
+					touch = new XPT2046_Touchscreen(cfg.touch.cs, cfg.touch.irq);
+				else
+					touch = new XPT2046_Touchscreen(cfg.touch.cs);
 
-			touch->begin(*touchSPI);
-			touch->setRotation(cfg.touch.rotation);
+				touch->begin(*touchSPI);
+				touch->setRotation(cfg.touch.rotation);
+				return;
+			}
 
+			if (isTouchCST()) {
+				touchI2C = new TouchCST820();
+				touchI2C->configure(cfg.touch.i2c, cfg.touch.sda, cfg.touch.scl);
+				touchI2C->setScreenSize(cfg.lvgl.width, cfg.lvgl.height);
+				touchI2C->begin();
+				hasTouch = true;
+				touchEnabled = true;
+				return;
+			}
 			
-			return;
+			touchEnabled = false;
+			hasTouch = false;
 		}
 
-		if (isTouchCST()) {
-			Serial.println("CST820 touch initializing");
-
-			if (!touchI2C) touchI2C = new TouchCST820();          // heap
-			touchI2C->configure(cfg.touch.i2c, cfg.touch.sda, cfg.touch.scl);
-			touchI2C->setScreenSize(cfg.lvgl.width, cfg.lvgl.height);
-			touchI2C->begin();
-
-			touchEnabled = true;
-			return;
-		}
-		// char s[100];
-		// sprintf("Unknown touch config: iface=%s controller=%s\n",
-		// 				cfg.touch.interface, cfg.touch.controller);
-		// outputString(s);	
-		touchEnabled = false;
+		// --- Helper to check readiness ---
+		static inline bool touchReady() {
+			if (!touchEnabled && !touchInitAttempted)
+				touchInit();
+			return touchEnabled;
 		}
 
+		// --- Touch read functions ---
 		static int screenTouched() {
-			if (!touchEnabled) touchInit();
-			if (!touchEnabled) return 0;
+			if (!touchReady()) return 0;
 
 			if (isTouchXPT()) {
-				// optional: rate-limit reads to reduce SPI traffic
 				uint32_t now = millis();
 				if ((uint32_t)(now - lastTouchPoll) > 5) {
-				lastPTouched = (touch && touch->touched());
-				if (lastPTouched) lastP = touch->getPoint();
-				lastTouchPoll = now;
+					lastPTouched = (touch && touch->touched());
+					if (lastPTouched) lastP = touch->getPoint();
+					lastTouchPoll = now;
 				}
 				return lastPTouched ? 1 : 0;
 			}
 
 			if (isTouchCST()) {
-				return (touchI2C && touchI2C->touched()) ? 1 : 0;  // you can return points if you prefer
+				return (touchI2C && touchI2C->touched()) ? 1 : 0;
 			}
 
 			return 0;
 		}
 
 		static int screenTouchX() {
-		if (!touchEnabled) touchInit();
-		if (!touchEnabled) return -1;
-		int16_t x;
-		if (isTouchXPT()) {
-			if (!screenTouched()) return -1;  // ensures lastP is valid
-			if (cfg.touch.flip_x_y) 
-				x = (int)lastP.y;
-			else
-				x = (int)lastP.x;
-			// Your example mapping:
-			// uint16_t x = map(p.x, 200, 3800, cfg.tft.width, 0);
-			if (cfg.touch.flip_x)
-				return (int)map((int)lastP.x, 200, 3800, 0,  (int)cfg.lvgl.width);
-			else
-				return (int)map((int)lastP.x, 200, 3800, (int)cfg.lvgl.width, 0);
-		}
+			if (!touchReady()) return 0;
+			int16_t x;
 
-		if (isTouchCST()) {
-			if (!touchI2C) return -1;
+			if (isTouchXPT()) {
+				if (!screenTouched()) return 0;
+				if (cfg.touch.flip_x_y)
+					x = (int)lastP.y;
+				else
+					x = (int)lastP.x;
 
-			// touchI2C->x() already calls update(); returns -1 if none
-			if (cfg.touch.flip_x_y) 
-				x = touchI2C->y();
-			else
-				x = touchI2C->x();
-			// Your example mapping:
-			// uint16_t x = map(p.x, 200, 3800, cfg.tft.width, 0);
-			if (cfg.touch.flip_x)
-				return cfg.lvgl.width - x;
-			else
-				return x;
-		}
+				if (cfg.touch.flip_x)
+					return (int)map((int)lastP.x, 200, 3800, 0, (int)cfg.lvgl.width);
+				else
+					return (int)map((int)lastP.x, 200, 3800, (int)cfg.lvgl.width, 0);
+			}
 
-		return -1;
+			if (isTouchCST()) {
+				if (!touchI2C) return 0;
+				if (cfg.touch.flip_x_y)
+					x = touchI2C->y();
+				else
+					x = touchI2C->x();
+
+				if (cfg.touch.flip_x)
+					return cfg.lvgl.width - x;
+				else
+					return x;
+			}
+
+			return 0;
 		}
 
 		static int screenTouchY() {
-		if (!touchEnabled) touchInit();
-		if (!touchEnabled) return -1;
-		int16_t y;
-		if (isTouchXPT()) {
-			if (!screenTouched()) return -1;
-			if (cfg.touch.flip_x_y) 
-				y = (int)lastP.x;
-			else
-				y = (int)lastP.y;
-			// Your example mapping:
-			// uint16_t y = map(p.y, 300, 3900, 0, cfg.tft.height);
-			if (cfg.touch.flip_y)
-				return (int)map((int)lastP.y, 300, 3900, (int)cfg.lvgl.height, 0);
-			else
-				return (int)map((int)lastP.y, 300, 3900, 0, (int)cfg.lvgl.height);
+			if (!touchReady()) return 0;
+			int16_t y;
+
+			if (isTouchXPT()) {
+				if (!screenTouched()) return 0;
+				if (cfg.touch.flip_x_y)
+					y = (int)lastP.x;
+				else
+					y = (int)lastP.y;
+
+				if (cfg.touch.flip_y)
+					return (int)map((int)lastP.y, 300, 3900, (int)cfg.lvgl.height, 0);
+				else
+					return (int)map((int)lastP.y, 300, 3900, 0, (int)cfg.lvgl.height);
+			}
+
+			if (isTouchCST()) {
+				if (!touchI2C) return 0;
+				if (cfg.touch.flip_x_y)
+					y = touchI2C->x();
+				else
+					y = touchI2C->y();
+
+				if (cfg.touch.flip_y)
+					return cfg.lvgl.height - y;
+				else
+					return y;
+			}
+
+			return 0;
 		}
 
-		if (isTouchCST()) {
-			if (!touchI2C) return -1;
-			if (cfg.touch.flip_x_y) 
-				y = touchI2C->x();
-			else
-				y = touchI2C->y();
-			if (cfg.touch.flip_y)
-				return cfg.lvgl.height - y;
-			else
-				return y;
-		}
-
-		return -1;
-		}
 		static int screenTouchPressure() {
-		if (!touchEnabled) touchInit();
-		if (!touchEnabled) return -1;
+			if (!touchReady()) return 0;
 
-		if (isTouchXPT()) {
-			if (!screenTouched()) return -1;
-			return (int)lastP.z;
-		}
+			if (isTouchXPT()) {
+				if (!screenTouched()) return 0;
+				return (int)lastP.z;
+			}
 
-		if (isTouchCST()) {
-			if (!touchI2C) return -1;
-			return touchI2C->pressure(); // constant 1000 when touched, else -1
-		}
+			if (isTouchCST()) {
+				if (!touchI2C) return 0;
+				return touchI2C->pressure();  // 1000 when touched, -1 otherwise
+			}
 
-		return -1;
+			return 0;
 		}
 
 		static int screenTouchGesture() {
-		if (!touchEnabled) touchInit();
-		if (!touchEnabled) return -1;
+			if (!touchReady()) return 0;
 
-		if (isTouchXPT()) {
-			return -1; // XPT2046 has no gesture
+			if (isTouchXPT()) {
+				return 0;  // no gesture support
+			}
+
+			if (isTouchCST()) {
+				return touchI2C ? touchI2C->gesture() : 0;
+			}
+
+			return 0;
 		}
 
-		if (isTouchCST()) {
-			return touchI2C ? touchI2C->gesture() : -1;
-		}
-
-		return -1;
-		}
-
-		
 
 	#elif defined(SCOUT_MAKES_AZUL)
 		#undef BLACK // defined in SSD1306 header
@@ -1282,7 +1303,7 @@ static int hasTFT() {
 // set this buffer to fixed value
 // take TFT_WIDTH * 4 --> 4*320=1280
 // #define BUFFER_PIXELS_SIZE (TFT_WIDTH * 8)
-#define BUFFER_PIXELS_SIZE (1280)
+#define BUFFER_PIXELS_SIZE (8*320)
 
 uint16_t bufferPixels[BUFFER_PIXELS_SIZE]; // used by primPixelRow and primDrawBuffer
 
@@ -2154,6 +2175,8 @@ void fs_init() {
 }
 
 void setup_lvgl() {
+
+	if (useTFT) {
   	#include "esp_heap_caps.h"
 	lv_init();
 	// double buffer
@@ -2215,6 +2238,8 @@ void setup_lvgl() {
 	// store main screen object in object with name '!main_screen_default'
 	// hide this object from user in get_all_objects
 	registry.add("!main_screen_default",lv_scr_act() );
+	}
+	useLVGL=false;
 }
 
 
@@ -3716,7 +3741,8 @@ static OBJ primLVGLtick(int argCount, OBJ *args) {
 
 // dummy function for testing initialisation lvgl
 static OBJ primLVGLinit(int argCount, OBJ *args) {
-	setup_lvgl();
+	if (useTFT) // check whether TFT is active, only then setup LVGL
+		setup_lvgl();
 	return falseObj;
 
 }
