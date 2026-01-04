@@ -1009,6 +1009,32 @@ extern "C" void esp8266DeepSleep(uint64_t usecs) {
 			0, 1, 1, 1, 1, 1, 1, 1, 0, 0,
 			1, 1};
 	#endif
+#elif defined(CYDIO)
+	#define BOARD_TYPE "ESP32"
+	#define DIGITAL_PINS 40
+	#define ANALOG_PINS 40 //sodb was 16
+	#define TOTAL_PINS 40
+	static const int analogPin[] = {34}; //sodb; test for cyd LDR
+	#define PIN_LED_R 4
+	#define PIN_LED_G 16
+	#define PIN_LED_B 17
+	#define PIN_LED 4
+	#define INVERT_USER_LED true
+	
+	#if !defined(PIN_BUTTON_A)
+		#if defined(KEY_BUILTIN)
+			#define PIN_BUTTON_A KEY_BUILTIN
+		#else
+			#define PIN_BUTTON_A 0
+		#endif
+	#endif
+	static const char reservedPin[TOTAL_PINS] = {
+		//sodb remove reserved pins 7 and 8 for LMS-ESP32v2 serial port
+		
+		0, 1, 0, 1, 0, 0, 1, 0, 0, 1,
+		1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 1, 0, 0, 0, 1, 1,
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 #elif defined(ARDUINO_ARCH_ESP32)
 	#ifdef ARDUINO_IOT_BUS
@@ -1482,6 +1508,12 @@ static void initPins(void) {
 	#endif
 
 	#ifdef ARDUINO_SEEED_XIAO_RP2040
+		SET_MODE(PIN_LED_R, INPUT);
+		SET_MODE(PIN_LED_G, INPUT);
+		SET_MODE(PIN_LED_B, INPUT);
+	#endif
+
+	#if defined(CYDIO)
 		SET_MODE(PIN_LED_R, INPUT);
 		SET_MODE(PIN_LED_G, INPUT);
 		SET_MODE(PIN_LED_B, INPUT);
