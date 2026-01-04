@@ -15,6 +15,27 @@
 #if defined(LMS_ESP32)
   #include "espVersion.h"
 #endif
+#if defined(ESP32) 
+	#include "esp_heap_caps.h"
+	bool hasPSRam() {
+		return heap_caps_get_total_size(MALLOC_CAP_SPIRAM)>0;
+	}
+#endif
+
+
+#if defined(ESP32) 
+	OBJ primPSRam(int argCount, OBJ *args) {
+		return int2obj((int)heap_caps_get_total_size(MALLOC_CAP_SPIRAM));	
+	}
+
+	OBJ primPSRamFlag(int argCount, OBJ *args) {
+		#if defined(BOARD_HAS_PSRAM)
+			return trueObj;
+		#else
+			return falseObj;
+		#endif
+	}
+#endif
 
 
 #define TX_BUF_SIZE 128
@@ -206,6 +227,10 @@ static int serialWriteBytes(uint8 *buf, uint32 byteCount) {
 
 #else // use Serial1 or Serial2
 
+#if defined(ESP32_ORIGINAL)
+  #include <esp_system.h>
+#endif
+
 // Use Serial2 on original ESP32 and Pico:ed boards, Serial1 on others
 #if defined(ESP32_ORIGINAL) || defined(ESP32_S3) || defined(PICO_ED) || \
 	defined(COCUBE) || defined(DUELink) || defined(ARDUINO_WEACT)
@@ -267,18 +292,7 @@ static void serialOpen(int baudRate) {
 			SERIAL_PORT.begin(baudRate, SERIAL_8N1, RX, TX);
 		#endif
 
-	#elif defined(ESP32) && !defined(LMS_ESP32) 
-		// all ESP32 boards that do not have cases above
-		SERIAL_PORT.begin(baudRate, SERIAL_8N1, 16, 17);
-	#elif defined(LMS_ESP32)
-		// sodb: lms-esp32vw: SERIAL_PORT.begin(baudRate, SERIAL_8N1, 8, 7); rx=8, tx=7
-		// lms-esp32v1 rx=18, tx=19
-
-		if (getESPVersion() == 2) {
-			SERIAL_PORT.begin(baudRate, SERIAL_8N1, 8, 7);	
-		} else {
-			SERIAL_PORT.begin(baudRate, SERIAL_8N1, 18, 19);
-		}
+	
 	#elif defined(DUELink)
 		if (DUE_HAS_EDGE_CONNECTOR) {
 			// Edge connector pins 0 and 1
@@ -290,6 +304,29 @@ static void serialOpen(int baudRate) {
 			SERIAL_PORT.setTx(8); // PA_9, D8, edge pin 21 is UART1_TX
 		}
 		SERIAL_PORT.begin(baudRate);
+	
+	#elif defined(ESP32)
+		// all other ESP32 boards that do not have cases above
+		#if defined(LMS_ESP32)
+			// sodb: lms-esp32vw: SERIAL_PORT.begin(baudRate, SERIAL_8N1, 8, 7); rx=8, tx=7
+			// lms-esp32v1 rx=18, tx=19
+
+			if (getESPVersion() == 2) {
+				SERIAL_PORT.begin(baudRate, SERIAL_8N1, 8, 7);	
+			} else {
+				SERIAL_PORT.begin(baudRate, SERIAL_8N1, 18, 19);
+			}
+		#elif defined(CYDIO)
+			SERIAL_PORT.begin(baudRate, SERIAL_8N1, 22, 35);	
+		#elif defined(ESP32_ORIGINAL)
+
+			if (hasPSRam())  // do not use GPIO16 and GPIO17
+				SERIAL_PORT.begin(baudRate, SERIAL_8N1, 21, 22);
+			else
+				SERIAL_PORT.begin(baudRate, SERIAL_8N1, 16, 17);
+		#else
+			SERIAL_PORT.begin(baudRate, SERIAL_8N1, 16, 17);
+		#endif
 	#else
 		SERIAL_PORT.begin(baudRate);
 	#endif
@@ -587,11 +624,8 @@ static OBJ primMIDIRecv(int argCount, OBJ *args) { return falseObj; }
 	OBJ primSerialESPVersion (int argCount, OBJ *args) {
 		return int2obj(getESPVersion() );
 	}
-
-
-
-
 #endif
+
 
 // DUELink Downlink Primitives
 
@@ -686,6 +720,10 @@ static PrimEntry entries[] = {
 	{"read", primSerialRead},
 	{"available",primSerialAvailable},
 	{"readNr", primSerialReadNr},
+#if defined(ESP32) 
+	{"psram",primPSRam},
+	{"checkPSRamFlag",primPSRamFlag},
+#endif
 #if defined(LMS_ESP32)
 	{"espversion", primSerialESPVersion},
 #endif
