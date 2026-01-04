@@ -20,6 +20,7 @@ public:
   // Optional: adjust mapping
   void setScreenSize(int width, int height) { _w = width; _h = height; }
   void setPollIntervalMs(uint32_t ms) { _pollMs = ms; }
+  
 
 private:
   TwoWire* wire();

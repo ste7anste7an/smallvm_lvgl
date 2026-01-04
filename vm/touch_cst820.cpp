@@ -2,18 +2,16 @@
 #include "touch_cst820.h"
 #include <Wire.h>
 
+TwoWire I2C_1(1);
+
 TwoWire* TouchCST820::wire() {
   switch (_i2cIf) {
-    case 1:  return &Wire1;
-#if defined(Wire2)
-    case 2:  return &Wire2;
-#endif
-#if defined(Wire3)
-    case 3:  return &Wire3;
-#endif
+    case 1:  return &I2C_1;
+    case 0:
     default: return &Wire;
   }
 }
+
 
 void TouchCST820::configure(int i2c_interface, int sda, int scl, uint32_t clock_hz) {
   _i2cIf = i2c_interface;
@@ -29,7 +27,7 @@ void TouchCST820::configure(int i2c_interface, int sda, int scl, uint32_t clock_
 
 void TouchCST820::startWire() {
   if (_wireStarted) return;
-  TwoWire *TW = wire();
+  TwoWire *TW = &I2C_1;
   TW->end();
   TW->setPins(_sda, _scl);
   TW->begin();
@@ -103,7 +101,7 @@ void TouchCST820::update() {
     int rawY = (int)((((d[2] & 0x0F) << 8) | d[3]));
     int rawX = (int)((((d[4] & 0x0F) << 8) | d[5]));
 
-    _y = _w - rawY;   // flip vs width (keeps your behavior)
+    _y = rawY;   // flip vs width (keeps your behavior)
     _x = rawX;
 
   } else {
