@@ -1,4 +1,6 @@
 #include "configurator.h"
+#include <cstring>
+#include <cstdlib>
 
 namespace configurator {
 
@@ -10,247 +12,196 @@ void setDebug(bool enable) { g_debug = enable; }
 
 // ---------- Helpers ----------
 
-void trim(char* s) {
+static void trim(char* s) {
     if (!s) return;
-
     char* p = s;
-    while (*p == ' ' || *p == '\t' || *p == '\r' || *p == '\n') p++;
+    while (*p && isspace(*p)) p++;
     if (p != s) memmove(s, p, strlen(p) + 1);
-
     size_t n = strlen(s);
-    while (n > 0) {
-        char c = s[n - 1];
-        if (c == ' ' || c == '\t' || c == '\r' || c == '\n') s[--n] = '\0';
-        else break;
-    }
+    while (n && isspace(s[n - 1])) s[--n] = '\0';
 }
 
 static bool parse_bool(const char* v) {
-    if (!v) return false;
-    return (strcasecmp(v, "true") == 0) ||
-           (strcasecmp(v, "yes")  == 0) ||
-           (strcasecmp(v, "on")   == 0) ||
-           (strcmp(v, "1") == 0);
+    return v &&
+           (!strcasecmp(v, "true") ||
+            !strcasecmp(v, "yes")  ||
+            !strcasecmp(v, "on")   ||
+            !strcmp(v, "1"));
 }
 
-static void strip_quotes(char* v) {
-    if (!v) return;
-    size_t n = strlen(v);
-    if (n >= 2) {
-        char a = v[0], b = v[n - 1];
-        if ((a == '"' && b == '"') || (a == '\'' && b == '\'')) {
-            v[n - 1] = '\0';
-            memmove(v, v + 1, n - 1);
-        }
+static bool parse_gpio(const char* v, int& out) {
+    if (!v) return false;
+
+    if (!strncmp(v, "gpio_", 5)) {
+        int p = atoi(v + 5);
+        out = (p == 0) ? PIN_ZERO : p;
+        return true;
     }
+
+    out = atoi(v);
+    return true;
 }
 
 static bool split_kv(char* line, char* key, size_t ksz, char* val, size_t vsz) {
     char* eq = strchr(line, '=');
     if (!eq) return false;
     *eq = '\0';
-
-    strncpy(key, line, ksz); key[ksz - 1] = '\0';
-    strncpy(val, eq + 1, vsz); val[vsz - 1] = '\0';
-
+    strncpy(key, line, ksz);
+    strncpy(val, eq + 1, vsz);
+    key[ksz - 1] = val[vsz - 1] = '\0';
     trim(key);
     trim(val);
-    strip_quotes(val);
-    return key[0] != '\0';
+    return key[0];
 }
 
 // ---------- Table-driven mapping ----------
 
-enum class Type : uint8_t { Int, Bool, Str };
+enum class Type : uint8_t { Int, Bool, Str, Pin };
 
 struct Entry {
     const char* section;
     const char* key;
     Type type;
-
-    size_t offset;   // offsetof(Config, field)
-    size_t str_len;  // for strings only, else 0
-
-    int min_i;       // clamp if min_i != max_i
-    int max_i;
+    size_t offset;
+    size_t str_len;
 };
 
-#define DST(cfg_ptr, entry) (reinterpret_cast<uint8_t*>(cfg_ptr) + (entry).offset)
+#define DST(cfg, e) (reinterpret_cast<uint8_t*>(cfg) + (e).offset)
 
-// ---- Macros to declare entries cleanly ----
-//
-// Usage examples:
-//   CFG_INT("tft","spi", tft.spi, 0, 3)
-//   CFG_INT_NC("tft","foo", tft.foo)   // NC = no clamp
-//   CFG_BOOL("tft","invert", tft.invert)
-//   CFG_STR("tft","controller", tft.controller)
-//
-#define CFG_INT(sec, key, field, minv, maxv) \
-    { (sec), (key), Type::Int,  offsetof(Config, field), 0, (minv), (maxv) }
+#define CFG_INT(sec,key,field) \
+    { sec, key, Type::Int, offsetof(Config, field), 0 }
 
-#define CFG_INT_NC(sec, key, field) \
-    { (sec), (key), Type::Int,  offsetof(Config, field), 0, 0, 0 }  /* min==max => no clamp */
+#define CFG_BOOL(sec,key,field) \
+    { sec, key, Type::Bool, offsetof(Config, field), 0 }
 
-#define CFG_BOOL(sec, key, field) \
-    { (sec), (key), Type::Bool, offsetof(Config, field), 0, 0, 0 }
+#define CFG_STR(sec,key,field) \
+    { sec, key, Type::Str, offsetof(Config, field), sizeof(((Config*)0)->field) }
 
-#define CFG_STR(sec, key, field) \
-    { (sec), (key), Type::Str,  offsetof(Config, field), sizeof(((Config*)0)->field), 0, 0 }
+#define CFG_PIN(sec,key,field) \
+    { sec, key, Type::Pin, offsetof(Config, field), 0 }
 
-// One line per key:
+// ---------- Config map ----------
+
 static const Entry MAP[] = {
-    // [lcd]
-    CFG_STR("lcd","controller", lcd.controller),
-    CFG_INT("lcd","spi",        lcd.spi,        -1, 3),
-    CFG_INT("lcd","mosi",       lcd.mosi,      -1, 99),
-    CFG_INT("lcd","miso",       lcd.miso,      -1, 99),
-    CFG_INT("lcd","sclk",       lcd.sclk,      -1, 99),
-    CFG_INT("lcd","cs",         lcd.cs,        -1, 99),
-    CFG_INT("lcd","dc",         lcd.dc,        -1, 99),
-    CFG_INT("lcd","rst",        lcd.rst,       -1, 99),
-    CFG_INT("lcd","rotation",   lcd.rotation,   0, 3),
-    CFG_INT("lcd","color",      lcd.color,      -1, 1),
-    CFG_BOOL("lcd","invert",    lcd.invert),
-    CFG_INT("lcd","backlight",  lcd.backlight, -1, 99),
-    CFG_INT("lcd","width",      lcd.width,      1, 8000),
-    CFG_INT("lcd","height",     lcd.height,     1, 8000),
-    CFG_INT("lcd","col_offset", lcd.col_offset, -999, 999),
-    CFG_INT("lcd","row_offset", lcd.row_offset, -999, 999),
 
-    // [lvgl]
-    CFG_INT("lvgl","width",     lvgl.width,     -1, 8000),
-    CFG_INT("lvgl","height",    lvgl.height,    -1, 8000),
+    // lcd
+    CFG_STR ("lcd","controller", lcd.controller),
+    CFG_INT ("lcd","spi",        lcd.spi),
+    CFG_PIN ("lcd","mosi",       lcd.mosi),
+    CFG_PIN ("lcd","miso",       lcd.miso),
+    CFG_PIN ("lcd","sclk",       lcd.sclk),
+    CFG_PIN ("lcd","cs",         lcd.cs),
+    CFG_PIN ("lcd","dc",         lcd.dc),
+    CFG_PIN ("lcd","rst",        lcd.rst),
+    CFG_INT ("lcd","rotation",   lcd.rotation),
+    CFG_INT ("lcd","color",      lcd.color),
+    CFG_BOOL("lcd","invert",     lcd.invert),
+    CFG_PIN ("lcd","backlight",  lcd.backlight),
+    CFG_INT ("lcd","width",      lcd.width),
+    CFG_INT ("lcd","height",     lcd.height),
+    CFG_INT ("lcd","col_offset", lcd.col_offset),
+    CFG_INT ("lcd","row_offset", lcd.row_offset),
 
-    // [touch]
-    CFG_STR("touch","controller", touch.controller),
-    CFG_STR("touch","interface",  touch.interface),
-    CFG_INT("touch","spi",        touch.spi,      -1, 3),
-    CFG_INT("touch","i2c",        touch.i2c, -1, 3),
-    CFG_INT("touch","irq",        touch.irq,     -1, 99),
-    CFG_INT("touch","miso",       touch.miso,    -1, 99),
-    CFG_INT("touch","mosi",       touch.mosi,    -1, 99),
-    CFG_INT("touch","sclk",       touch.sclk,     -1, 99),
-    CFG_INT("touch","cs",         touch.cs,      -1, 99),
-    CFG_INT("touch","rotation",   touch.rotation, -1, 3),
-    CFG_INT("touch","sda",        touch.sda,     -1, 99),
-    CFG_INT("touch","scl",        touch.scl,     -1, 99),
-    CFG_BOOL("touch","flip_x",    touch.flip_x),
-    CFG_BOOL("touch","flip_y",    touch.flip_y),
-    CFG_BOOL("touch","flip_x_y",  touch.flip_x_y),
+    // lvgl
+    CFG_INT ("lvgl","width",     lvgl.width),
+    CFG_INT ("lvgl","height",    lvgl.height),
 
-    // [other]
-    CFG_INT("other","sda",       other.sda,     -1, 99),
-    CFG_INT("other","scl",       other.scl,     -1, 99),
-    CFG_INT("other","rx_pin",       other.rx_pin,     -1, 99),
-    CFG_INT("other","tx_pin",       other.tx_pin,     -1, 99),
+    // touch
+    CFG_STR ("touch","controller", touch.controller),
+    CFG_STR ("touch","interface",  touch.interface),
+    CFG_INT ("touch","spi",        touch.spi),
+    CFG_INT ("touch","i2c",        touch.i2c),
+    CFG_PIN ("touch","irq",        touch.irq),
+    CFG_PIN ("touch","miso",       touch.miso),
+    CFG_PIN ("touch","mosi",       touch.mosi),
+    CFG_PIN ("touch","sclk",       touch.sclk),
+    CFG_PIN ("touch","cs",         touch.cs),
+    CFG_INT ("touch","rotation",   touch.rotation),
+    CFG_PIN ("touch","sda",        touch.sda),
+    CFG_PIN ("touch","scl",        touch.scl),
+    CFG_BOOL("touch","flip_x",     touch.flip_x),
+    CFG_BOOL("touch","flip_y",     touch.flip_y),
+    CFG_BOOL("touch","flip_x_y",   touch.flip_x_y),
+
+    // other
+    CFG_PIN ("other","sda",     other.sda),
+    CFG_PIN ("other","scl",     other.scl),
+    CFG_PIN ("other","rx_pin", other.rx_pin),
+    CFG_PIN ("other","tx_pin", other.tx_pin),
 };
 
-static void set_entry(Config* cfg, const Entry& e, const char* value) {
-    uint8_t* dst = DST(cfg, e);
+// ---------- Apply ----------
 
-    switch (e.type) {
-        case Type::Int: {
-            long x = strtol(value, nullptr, 0); // supports 0x..
-            if (e.min_i != e.max_i) {
-                if (x < e.min_i) x = e.min_i;
-                if (x > e.max_i) x = e.max_i;
+static bool apply_kv(Config* cfg, const char* sec, const char* key, const char* val) {
+    for (const auto& e : MAP) {
+        if (!strcmp(e.section, sec) && !strcmp(e.key, key)) {
+
+            uint8_t* dst = DST(cfg, e);
+
+            switch (e.type) {
+                case Type::Int:
+                    *reinterpret_cast<int*>(dst) = atoi(val);
+                    break;
+
+                case Type::Bool:
+                    *reinterpret_cast<bool*>(dst) = parse_bool(val);
+                    break;
+
+                case Type::Str:
+                    strncpy((char*)dst, val, e.str_len);
+                    ((char*)dst)[e.str_len - 1] = '\0';
+                    break;
+
+                case Type::Pin: {
+                    int p;
+                    if (parse_gpio(val, p)) {
+                        *reinterpret_cast<int*>(dst) = p;
+                    }
+                    break;
+                }
             }
-            *reinterpret_cast<int*>(dst) = static_cast<int>(x);
-            break;
-        }
-        case Type::Bool:
-            *reinterpret_cast<bool*>(dst) = parse_bool(value);
-            break;
 
-        case Type::Str:
-            if (e.str_len == 0) break;
-            strncpy(reinterpret_cast<char*>(dst), value, e.str_len);
-            reinterpret_cast<char*>(dst)[e.str_len - 1] = '\0';
-            break;
-    }
-}
-
-static bool apply_kv(Config* cfg, const char* section, const char* key, const char* val) {
-    for (size_t i = 0; i < (sizeof(MAP) / sizeof(MAP[0])); i++) {
-        const Entry& e = MAP[i];
-        if (strcmp(e.section, section) == 0 && strcmp(e.key, key) == 0) {
             if (g_debug) {
-                Serial.print("CFG: ["); Serial.print(section);
-                Serial.print("] "); Serial.print(key);
-                Serial.print("="); Serial.println(val);
+                Serial.printf("CFG [%s] %s = %s\n", sec, key, val);
             }
-            set_entry(cfg, e, val);
+
             return true;
         }
     }
     return false;
 }
 
-// ---------- Public loader ----------
+// ---------- Loader ----------
 
 bool loadConfig(Config* cfg) {
-    File file = LittleFS.open(CONFIG_FILE, "r");
-    if (!file) {
-        //Serial.println("Config file not found");
-        return false;
-    }
+    File f = LittleFS.open("/config.txt", "r");
+    if (!f) return false;
 
-    char line[160];
-    char section[32] = "";
+    char line[160], section[32] = "";
 
-    while (file.available()) {
-        size_t len = file.readBytesUntil('\n', line, sizeof(line) - 1);
-        line[len] = '\0';
+    while (f.available()) {
+        size_t n = f.readBytesUntil('\n', line, sizeof(line) - 1);
+        line[n] = '\0';
         trim(line);
 
-        if (line[0] == '\0' || line[0] == '#') continue;
+        if (!line[0] || line[0] == '#') continue;
 
-        // inline comments
-        char* hash = strchr(line, '#');
-        if (hash) {
-            *hash = '\0';
-            trim(line);
-            if (line[0] == '\0') continue;
-        }
-
-        // [section]
         if (line[0] == '[') {
-            if (sscanf(line, "[%31[^]]", section) == 1) trim(section);
-            else section[0] = '\0';
+            sscanf(line, "[%31[^]]", section);
+            trim(section);
             continue;
         }
 
-        char key[64], val[96];
-        if (!split_kv(line, key, sizeof(key), val, sizeof(val))) continue;
+        char k[64], v[96];
+        if (!split_kv(line, k, sizeof(k), v, sizeof(v))) continue;
 
-        if (!apply_kv(cfg, section, key, val)) {
-            if (g_warn_unknown) {
-                Serial.print("Unknown key: ["); Serial.print(section);
-                Serial.print("] "); Serial.print(key);
-                Serial.print("="); Serial.println(val);
-            }
+        if (!apply_kv(cfg, section, k, v) && g_warn_unknown) {
+            Serial.printf("Unknown key [%s] %s\n", section, k);
         }
     }
 
-    file.close();
-    //Serial.println("Config loaded");
+    f.close();
     return true;
 }
 
-void setDefaults(Config* cfg) {
-    // Zero everything first:
-    //  - bool -> false
-    //  - strings -> "" (first byte is '\0')
-    //  - ints -> 0 (we'll override the int ones next)
-    memset(cfg, 0, sizeof(*cfg));
-
-    // Now set ONLY integer fields to -1
-    for (size_t i = 0; i < (sizeof(MAP) / sizeof(MAP[0])); ++i) {
-        const Entry& e = MAP[i];
-        if (e.type == Type::Int) {
-            *reinterpret_cast<int*>(DST(cfg, e)) = -1;   // no clamping
-        }
-    }
-}
-
-} // namespace cfg
+} // namespace configurator

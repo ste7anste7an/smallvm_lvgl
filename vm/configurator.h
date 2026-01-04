@@ -2,61 +2,103 @@
 
 #include <Arduino.h>
 #include <LittleFS.h>
-#include <stddef.h>   // offsetof
-#include <string.h>
-#include <stdlib.h>
+#include <stdint.h>
 
 #ifndef CONFIG_FILE
 #define CONFIG_FILE "/config.txt"
 #endif
 
-// ---- Your config structs (as provided) ----
 
-typedef struct {
-    char controller[16];
-    int spi, mosi, miso, sclk, cs;
-    int dc, rst;
-    int rotation;
-    int color;
-    bool invert;
-    int backlight;
-    int width, height;
-    int col_offset, row_offset;
-} LCDConfig;
+// ---------------- Pin semantics ----------------
+//
+//  0   = unused (default / zero-init)
+// -1   = GPIO 0 (explicit)
+// >0   = GPIO N
+//
+using Pin = int;
 
-typedef struct {
-    int width, height;
-} LVGLConfig;
+constexpr Pin PIN_UNUSED = 0;
+constexpr Pin PIN_ZERO   = -1;
 
-typedef struct {
-    char controller[16];
-    char interface[8];    // "i2c" or "spi"
-    int spi;
-    int i2c;
-    int irq;
-    int miso, mosi, sclk, cs;
-    int rotation;
-    int sda, scl;
-    bool flip_x, flip_y, flip_x_y;
-} TouchConfig;
+// ---------------- Pin adapter ----------------
+//
+// Converts internal pin semantics to driver semantics
+//   internal 0   -> -1 (unused)
+//   internal -1  ->  0 (GPIO 0)
+//   internal N   ->  N
+//
+constexpr int GPIO(Pin p) {
+    return (p == PIN_UNUSED) ? -1
+         : (p == PIN_ZERO)   ?  0
+         : p;
+}
 
-typedef struct {
-    int sda, scl;
-    int rx_pin, tx_pin;
-} OtherConfig;
+// ---------------- Config structures ----------------
 
-typedef struct {
-    LCDConfig lcd;
-    LVGLConfig lvgl;
-    TouchConfig touch;
-    OtherConfig other;
-} Config;
+struct Config {
 
-// ---- API ----
+    struct {
+        char controller[16];
+        int  spi;
+        Pin  mosi;
+        Pin  miso;
+        Pin  sclk;
+        Pin  cs;
+        Pin  dc;
+        Pin  rst;
+        int  rotation;
+        int  color;
+        bool invert;
+        Pin  backlight;
+        int  width;
+        int  height;
+        int  col_offset;
+        int  row_offset;
+    } lcd;
+
+    struct {
+        int width;
+        int height;
+    } lvgl;
+
+    struct {
+        char controller[16];
+        char interface[8];
+        int  spi;
+        int  i2c;
+        Pin  irq;
+        Pin  miso;
+        Pin  mosi;
+        Pin  sclk;
+        Pin  cs;
+        int  rotation;
+        Pin  sda;
+        Pin  scl;
+        bool flip_x;
+        bool flip_y;
+        bool flip_x_y;
+    } touch;
+
+    struct {
+        Pin sda;
+        Pin scl;
+        Pin rx_pin;
+        Pin tx_pin;
+    } other;
+};
+
+// ---------------- API ----------------
+
 namespace configurator {
-void trim(char* s);
-bool loadConfig(Config* cfg);
+
 void setWarnUnknownKeys(bool enable);
 void setDebug(bool enable);
-void setDefaults(Config* cfg);
-} // namespace cfg
+
+bool loadConfig(Config* cfg);
+
+// helper
+inline int resolvePin(Pin p) {
+    return (p == PIN_ZERO) ? 0 : p;
+}
+
+} // namespace configurator

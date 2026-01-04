@@ -588,9 +588,9 @@ static int deferUpdates = false;
 			#endif
 			char s[100];
 			bool config_file_exists=false;
-			configurator::setWarnUnknownKeys(true);
-			configurator::setDebug(false);
-			configurator::setDefaults(&cfg);
+			Config cfg = {};          // pure zero-initialization
+			// configurator::loadConfig(&cfg);
+			// configurator::setDefaults(&cfg);
 			
 			if (!LittleFS.begin()) {
 					sprintf(s,"LittleFS mount failed!\n");
@@ -598,15 +598,11 @@ static int deferUpdates = false;
 					return;
 				}
 
-			
-
 			if (!LittleFS.exists("/config.txt")) {
 					Serial.printf("File does not exist!\n\r");
 					useTFT = false;
 					
-
 			} else config_file_exists=true;
-
 
 			if (config_file_exists) {
 				if (!configurator::loadConfig(&cfg)) {
@@ -616,8 +612,8 @@ static int deferUpdates = false;
 				}
 			}
 
-			// Serial.printf("non configured: touch.i2cL %d, touch.scl:%d  cfg.lcd.invert %d,cfg.touch.flip_x %d,cfg.touch.flip_y %d,cfg.touch.flip_x_y %d\r\n",
-			// 	 cfg.touch.i2c,cfg.touch.scl,cfg.lcd.invert,cfg.touch.flip_x,cfg.touch.flip_y,cfg.touch.flip_x_y);
+			 Serial.printf("non configured: touch.i2cL %d, touch.scl:%d  cfg.lcd.invert %d,cfg.touch.flip_x %d,cfg.touch.flip_y %d,cfg.touch.flip_x_y %d\r\n",
+			 	 cfg.touch.i2c,GPIO(cfg.touch.scl),cfg.lcd.invert,cfg.touch.flip_x,cfg.touch.flip_y,cfg.touch.flip_x_y);
 			/*
 			// other configuration
 			sprintf(s,"SCL: %d SDA: %d\n", cfg.other.scl, cfg.other.sda);
@@ -638,23 +634,23 @@ static int deferUpdates = false;
 			*/
 
 			
-			if (cfg.lcd.dc>=0 && cfg.lcd.cs>=0 && cfg.lcd.sclk>=0 && cfg.lcd.mosi>=0 && cfg.lcd.spi>=0) {
+			if (cfg.lcd.dc != PIN_UNUSED && cfg.lcd.cs != PIN_UNUSED && cfg.lcd.sclk != PIN_UNUSED && cfg.lcd.mosi != PIN_UNUSED && cfg.lcd.spi>=0) {
 				bus = new Arduino_ESP32SPI(
-						cfg.lcd.dc, cfg.lcd.cs,
-						cfg.lcd.sclk, cfg.lcd.mosi, cfg.lcd.miso,
+						GPIO(cfg.lcd.dc), GPIO(cfg.lcd.cs),
+						GPIO(cfg.lcd.sclk), GPIO(cfg.lcd.mosi), GPIO(cfg.lcd.miso),
 						cfg.lcd.spi, true
 					);
 
 			
 				if (strcmp(cfg.lcd.controller, "ILI9341") == 0) {
-					gfx = new Arduino_ILI9341(bus, cfg.lcd.rst, cfg.lcd.rotation, cfg.lcd.invert);
+					gfx = new Arduino_ILI9341(bus, GPIO(cfg.lcd.rst), cfg.lcd.rotation, cfg.lcd.invert);
 				} else if (strcmp(cfg.lcd.controller, "ST7789") == 0) {
-					gfx = new Arduino_ST7789(bus, cfg.lcd.rst, cfg.lcd.rotation, cfg.lcd.invert,cfg.lcd.width, cfg.lcd.height,cfg.lcd.col_offset,cfg.lcd.row_offset);
+					gfx = new Arduino_ST7789(bus, GPIO(cfg.lcd.rst), cfg.lcd.rotation, cfg.lcd.invert,cfg.lcd.width, cfg.lcd.height,cfg.lcd.col_offset,cfg.lcd.row_offset);
 				}  else if (strcmp(cfg.lcd.controller, "ST7796") == 0) {
 					//if (cfg.lcd.col_offset==0 && cfg.lcd.row_offset==0)
 					//  gfx = new Arduino_ST7796(bus, cfg.lcd.rst, cfg.lcd.rotation, false);
 					//else
-					gfx = new Arduino_ST7796(bus, cfg.lcd.rst, cfg.lcd.rotation, cfg.lcd.invert,cfg.lcd.width, cfg.lcd.height,cfg.lcd.col_offset,cfg.lcd.row_offset);
+					gfx = new Arduino_ST7796(bus, GPIO(cfg.lcd.rst), cfg.lcd.rotation, cfg.lcd.invert,cfg.lcd.width, cfg.lcd.height,cfg.lcd.col_offset,cfg.lcd.row_offset);
 				}else {
 					Serial.println("Unknown controller\r\n");
 					
@@ -696,14 +692,14 @@ static int deferUpdates = false;
 
 			if (isTouchXPT()) {
 				touchSPI = new SPIClass(cfg.touch.spi);
-				touchSPI->begin(cfg.touch.sclk, cfg.touch.miso, cfg.touch.mosi, cfg.touch.cs);
+				touchSPI->begin(GPIO(cfg.touch.sclk), GPIO(cfg.touch.miso), GPIO(cfg.touch.mosi), GPIO(cfg.touch.cs));
 				touchEnabled = true;
 				hasTouch = true;
 
-				if (cfg.touch.irq != 0)
-					touch = new XPT2046_Touchscreen(cfg.touch.cs, cfg.touch.irq);
+				if (cfg.touch.irq != PIN_UNUSED)
+					touch = new XPT2046_Touchscreen(GPIO(cfg.touch.cs), GPIO(cfg.touch.irq));
 				else
-					touch = new XPT2046_Touchscreen(cfg.touch.cs);
+					touch = new XPT2046_Touchscreen(GPIO(cfg.touch.cs));
 
 				touch->begin(*touchSPI);
 				touch->setRotation(cfg.touch.rotation);
@@ -712,7 +708,7 @@ static int deferUpdates = false;
 
 			if (isTouchCST()) {
 				touchI2C = new TouchCST820();
-				touchI2C->configure(cfg.touch.i2c, cfg.touch.sda, cfg.touch.scl);
+				touchI2C->configure(cfg.touch.i2c, GPIO(cfg.touch.sda), GPIO(cfg.touch.scl));
 				touchI2C->setScreenSize(cfg.lvgl.width, cfg.lvgl.height);
 				touchI2C->begin();
 				hasTouch = true;
