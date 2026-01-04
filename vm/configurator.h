@@ -41,7 +41,8 @@ typedef struct {
 } TouchConfig;
 
 typedef struct {
-    int advanced_serial_commands;
+    int sda, scl;
+    int rx_pin, tx_pin;
 } OtherConfig;
 
 typedef struct {
@@ -57,4 +58,5 @@ void trim(char* s);
 bool loadConfig(Config* cfg);
 void setWarnUnknownKeys(bool enable);
 void setDebug(bool enable);
+void setDefaults(Config* cfg);
 } // namespace cfg

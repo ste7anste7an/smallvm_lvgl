@@ -101,7 +101,7 @@ struct Entry {
 static const Entry MAP[] = {
     // [lcd]
     CFG_STR("lcd","controller", lcd.controller),
-    CFG_INT("lcd","spi",        lcd.spi,        0, 3),
+    CFG_INT("lcd","spi",        lcd.spi,        -1, 3),
     CFG_INT("lcd","mosi",       lcd.mosi,      -1, 99),
     CFG_INT("lcd","miso",       lcd.miso,      -1, 99),
     CFG_INT("lcd","sclk",       lcd.sclk,      -1, 99),
@@ -109,7 +109,7 @@ static const Entry MAP[] = {
     CFG_INT("lcd","dc",         lcd.dc,        -1, 99),
     CFG_INT("lcd","rst",        lcd.rst,       -1, 99),
     CFG_INT("lcd","rotation",   lcd.rotation,   0, 3),
-    CFG_INT("lcd","color",      lcd.color,      0, 1),
+    CFG_INT("lcd","color",      lcd.color,      -1, 1),
     CFG_BOOL("lcd","invert",    lcd.invert),
     CFG_INT("lcd","backlight",  lcd.backlight, -1, 99),
     CFG_INT("lcd","width",      lcd.width,      1, 8000),
@@ -118,20 +118,20 @@ static const Entry MAP[] = {
     CFG_INT("lcd","row_offset", lcd.row_offset, -999, 999),
 
     // [lvgl]
-    CFG_INT("lvgl","width",     lvgl.width,     1, 8000),
-    CFG_INT("lvgl","height",    lvgl.height,    1, 8000),
+    CFG_INT("lvgl","width",     lvgl.width,     -1, 8000),
+    CFG_INT("lvgl","height",    lvgl.height,    -1, 8000),
 
     // [touch]
     CFG_STR("touch","controller", touch.controller),
     CFG_STR("touch","interface",  touch.interface),
-    CFG_INT("touch","spi",        touch.spi,      0, 3),
-    CFG_INT("touch","i2c",        touch.i2c, 0, 3),
+    CFG_INT("touch","spi",        touch.spi,      -1, 3),
+    CFG_INT("touch","i2c",        touch.i2c, -1, 3),
     CFG_INT("touch","irq",        touch.irq,     -1, 99),
     CFG_INT("touch","miso",       touch.miso,    -1, 99),
     CFG_INT("touch","mosi",       touch.mosi,    -1, 99),
     CFG_INT("touch","sclk",       touch.sclk,     -1, 99),
     CFG_INT("touch","cs",         touch.cs,      -1, 99),
-    CFG_INT("touch","rotation",   touch.rotation, 0, 3),
+    CFG_INT("touch","rotation",   touch.rotation, -1, 3),
     CFG_INT("touch","sda",        touch.sda,     -1, 99),
     CFG_INT("touch","scl",        touch.scl,     -1, 99),
     CFG_BOOL("touch","flip_x",    touch.flip_x),
@@ -139,7 +139,10 @@ static const Entry MAP[] = {
     CFG_BOOL("touch","flip_x_y",  touch.flip_x_y),
 
     // [other]
-    CFG_INT("other","advanced_serial_commands", other.advanced_serial_commands, 0, 1),
+    CFG_INT("other","sda",       other.sda,     -1, 99),
+    CFG_INT("other","scl",       other.scl,     -1, 99),
+    CFG_INT("other","rx_pin",       other.rx_pin,     -1, 99),
+    CFG_INT("other","tx_pin",       other.tx_pin,     -1, 99),
 };
 
 static void set_entry(Config* cfg, const Entry& e, const char* value) {
@@ -188,7 +191,7 @@ static bool apply_kv(Config* cfg, const char* section, const char* key, const ch
 bool loadConfig(Config* cfg) {
     File file = LittleFS.open(CONFIG_FILE, "r");
     if (!file) {
-        Serial.println("Config file not found");
+        //Serial.println("Config file not found");
         return false;
     }
 
@@ -232,6 +235,22 @@ bool loadConfig(Config* cfg) {
     file.close();
     //Serial.println("Config loaded");
     return true;
+}
+
+void setDefaults(Config* cfg) {
+    // Zero everything first:
+    //  - bool -> false
+    //  - strings -> "" (first byte is '\0')
+    //  - ints -> 0 (we'll override the int ones next)
+    memset(cfg, 0, sizeof(*cfg));
+
+    // Now set ONLY integer fields to -1
+    for (size_t i = 0; i < (sizeof(MAP) / sizeof(MAP[0])); ++i) {
+        const Entry& e = MAP[i];
+        if (e.type == Type::Int) {
+            *reinterpret_cast<int*>(DST(cfg, e)) = -1;   // no clamping
+        }
+    }
 }
 
 } // namespace cfg
