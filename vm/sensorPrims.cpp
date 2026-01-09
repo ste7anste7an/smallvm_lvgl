@@ -58,9 +58,9 @@
 #elif defined(LMS_ESP32)
 	#define PIN_WIRE_SCL 4 
 	#define PIN_WIRE_SDA 5 
-#elif defined(CYDIO)
-	#define PIN_WIRE_SCL 27 
-	#define PIN_WIRE_SDA 22
+// #elif defined(CYDIO)
+// 	#define PIN_WIRE_SCL 27 
+// 	#define PIN_WIRE_SDA 22
 #elif defined(UNIHIKER) 
 	#define PIN_WIRE_SCL 48	
 	#define PIN_WIRE_SDA 47 

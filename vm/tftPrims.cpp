@@ -474,7 +474,7 @@ static int deferUpdates = false;
 		#include <XPT2046_Touchscreen.h>
 		#include <SPI.h>
 
-		#define HAS_TOUCH_SCREEN 1
+		//#define HAS_TOUCH_SCREEN 1
 		#define TOUCH_CS_PIN 16
 		XPT2046_Touchscreen ts(TOUCH_CS_PIN);
 
@@ -554,17 +554,96 @@ static int deferUpdates = false;
 		#include <FS.h>
 
 
-		Config cfg;
+		inline void applyPreferred(Config& c) {
+			#if defined(LMS_ESP32) && defined(ST7789)
+			useTFT = true;
+			
+			// [lcd]
+			strcpy(c.lcd.controller, "ST7789");
+			c.lcd.spi = 3;
+			c.lcd.mosi = 26;
+			c.lcd.sclk = 15;
+			c.lcd.cs = 14;
+			c.lcd.dc = 27;
+			c.lcd.rst = 13;
+			c.lcd.rotation = 1;
+			c.lcd.invert = true;
+			c.lcd.backlight = 12;
+			c.lcd.width = 240;
+			c.lcd.height = 280;
+			c.lcd.row_offset = 20;
 
-		Arduino_DataBus *bus = nullptr;
-		Arduino_GFX *gfx = nullptr;
+			// [lvgl]
+			c.lvgl.width = 280;
+			c.lvgl.height = 240;
+
+			// [touch]
+			strcpy(c.touch.controller, "cst820");
+			strcpy(c.touch.interface, "i2c");
+			c.touch.i2c = 1;
+			c.touch.sda = 32;
+			c.touch.scl = 33;
+			c.touch.rotation = 0;
+			c.touch.flip_y = true;
+			#elif defined(S3_ELECROW) 
+			Serial.printf("configured S3_ELECROW\r\n");
+			useTFT = true;
+			
+			// [lcd]
+			strcpy(c.lcd.controller, "ELECROW");
+			c.lcd.backlight = 2;
+			c.lcd.width = 480;
+			c.lcd.height = 277;
+			
+			// [lvgl]
+			c.lvgl.width = 480;
+			c.lvgl.height = 277;
+
+			// [touch]
+			strcpy(c.touch.controller, "xpt2046");
+			strcpy(c.touch.interface, "spi");
+			c.touch.spi = 1;
+			c.touch.miso = 13;
+			c.touch.mosi = 11;
+			c.touch.sclk = 12;
+			c.touch.cs = PIN_ZERO;
+			c.touch.irq=36;
+			c.touch.rotation = 0;
+			// [other]
+			#else
+				// empty cfg
+				 (void)c;
+			#endif
+		}
+
+		
+		Config cfg = {};              // zero-init (PIN_UNUSED, false, "")
+    	
+
+		static Arduino_DataBus *bus = nullptr;
+		// static Arduino_ESP32RGBPanel *rgbpanel =  new Arduino_ESP32RGBPanel(
+		// 		40 /* DE */, 41 /* VSYNC */, 39 /* HSYNC */, 42 /* PCLK */,
+		// 		45 /* R0 */, 48 /* R1 */, 47 /* R2 */, 21 /* R3 */, 14 /* R4 */,
+		// 		5 /* G0 */, 6 /* G1 */, 7 /* G2 */, 15 /* G3 */, 16 /* G4 */, 4 /* G5 */,
+		// 		8 /* B0 */, 3 /* B1 */, 46 /* B2 */, 9 /* B3 */, 1 /* B4 */,
+		// 		0 /* hsync_polarity */, 8 /* hsync_front_porch */, 4 /* hsync_pulse_width */, 43 /* hsync_back_porch */,
+		// 		0 /* vsync_polarity */, 8 /* vsync_front_porch */, 4 /* vsync_pulse_width */, 12 /* vsync_back_porch */,
+		// 		1 /* pclk_active_neg */, 7000000 /* prefer_speed */);
+
+    	// Arduino_RGB_Display tft = Arduino_RGB_Display(
+		//  		 480 /* width */, 272 /* height */, rgbpanel, 0 /* rotation */, true /* auto_flush */);
+
+		static Arduino_GFX *gfx = nullptr;
+		//static Arduino_RGB_Display *rgb_tft = nullptr; 
+		//Arduino_RGB_Display *tft2=nullptr;
+		//Arduino_RGB_Display tft
 		#define tft (*gfx)
 		//Arduino_GFX& tft = *gfx;
 		XPT2046_Touchscreen *touch = nullptr;
 		SPIClass* touchSPI = nullptr;
 
 
-		#define HAS_TOUCH_SCREEN 1
+		//#define HAS_TOUCH_SCREEN 1
 
 		// New (I2C/CST820):
 		static TouchCST820 *touchI2C = nullptr;
@@ -577,6 +656,7 @@ static int deferUpdates = false;
 	
 
 		void tftInit() {
+			Serial.println("starting tftinit\r\n");
 
 			useTFT = false;
 			#ifndef TFT_WIDTH
@@ -588,85 +668,100 @@ static int deferUpdates = false;
 			#endif
 			char s[100];
 			bool config_file_exists=false;
-			Config cfg = {};          // pure zero-initialization
+			        // pure zero-initialization
 			// configurator::loadConfig(&cfg);
 			// configurator::setDefaults(&cfg);
 			
 			if (!LittleFS.begin()) {
 					sprintf(s,"LittleFS mount failed!\n");
 					outputString(s);
-					return;
+					//return;
 				}
 
 			if (!LittleFS.exists("/config.txt")) {
-					Serial.printf("File does not exist!\n\r");
-					useTFT = false;
-					
-			} else config_file_exists=true;
+				Serial.printf("File does not exist!\n\r");
+				useTFT = false;
+				applyPreferred(cfg);  		
+			} else {
+				config_file_exists=true;
+				cfg={};
+			}  
+
+			 Serial.printf("non configured: touch.i2c %d, touch.scl:%d touch:sda %d,  cfg.lcd.invert %d,cfg.touch.flip_x %d,cfg.touch.flip_y %d,cfg.touch.flip_x_y %d\r\n",
+			 	 cfg.touch.i2c,toGPIO(cfg.touch.scl),toGPIO(cfg.touch.scl),cfg.lcd.invert,cfg.touch.flip_x,cfg.touch.flip_y,cfg.touch.flip_x_y);
+
+			 Serial.printf("cfg.lcd.controller %s , cfg.touch.interface %s, cfg.touch.controller %s\r\n", cfg.lcd.controller,cfg.touch.interface,cfg.touch.controller);
+
+			 Serial.printf("toGPIO(cfg.lcd.dc) %d, toGPIO(cfg.lcd.cs) %d,toGPIO(cfg.lcd.sclk) %d, toGPIO(cfg.lcd.mosi) %d, toGPIO(cfg.lcd.miso) %d, cfg.lcd.spi %d \r\n",
+					toGPIO(cfg.lcd.dc), toGPIO(cfg.lcd.cs),	toGPIO(cfg.lcd.sclk), toGPIO(cfg.lcd.mosi), toGPIO(cfg.lcd.miso),
+						cfg.lcd.spi);
+			 Serial.printf(" toGPIO(cfg.lcd.rst) %d, cfg.lcd.rotation %d, cfg.lcd.invert %d,cfg.lcd.width %d, cfg.lcd.height %d,cfg.lcd.col_offset %d,cfg.lcd.row_offset %d\r\n",
+				 toGPIO(cfg.lcd.rst), cfg.lcd.rotation, cfg.lcd.invert,cfg.lcd.width, cfg.lcd.height,cfg.lcd.col_offset,cfg.lcd.row_offset);
 
 			if (config_file_exists) {
 				if (!configurator::loadConfig(&cfg)) {
 						sprintf(s,"Defaults used");
-
+						
 						outputString(s);
 				}
 			}
 
-			 Serial.printf("non configured: touch.i2cL %d, touch.scl:%d  cfg.lcd.invert %d,cfg.touch.flip_x %d,cfg.touch.flip_y %d,cfg.touch.flip_x_y %d\r\n",
-			 	 cfg.touch.i2c,GPIO(cfg.touch.scl),cfg.lcd.invert,cfg.touch.flip_x,cfg.touch.flip_y,cfg.touch.flip_x_y);
-			/*
-			// other configuration
-			sprintf(s,"SCL: %d SDA: %d\n", cfg.other.scl, cfg.other.sda);
-			outputString(s);
-			sprintf(s,"SCL: %d SDA: %d\n", cfg.other.scl, cfg.other.sda);
-			outputString(s);
-			sprintf(s,"SCL: %d SDA: %d\n", cfg.other.scl, cfg.other.sda);
-			outputString(s);
-			if ((cfg.other.scl >= 0) && (cfg.other.sda >= 0)) 
-				{
-					sprintf(s,"SCL: %d SDA: %d\n", cfg.other.scl, cfg.other.sda);
-					outputString(s);
-					Wire.end();
-					Wire.setPins(cfg.other.sda, cfg.other.scl);
-					Wire.begin();
-					Wire.setClock(400000);
-				}
-			*/
+			//  Serial.printf("non configured: touch.i2c %d, touch.scl:%d touch:sda %d,  cfg.lcd.invert %d,cfg.touch.flip_x %d,cfg.touch.flip_y %d,cfg.touch.flip_x_y %d\r\n",
+			//  	 cfg.touch.i2c,toGPIO(cfg.touch.scl),toGPIO(cfg.touch.scl),cfg.lcd.invert,cfg.touch.flip_x,cfg.touch.flip_y,cfg.touch.flip_x_y);
 
-			
+			//  Serial.printf("cfg.lcd.controller %s , cfg.touch.interface %s, cfg.touch.controller %s\r\n", cfg.lcd.controller,cfg.touch.interface,cfg.touch.controller);
+
+			//  Serial.printf("toGPIO(cfg.lcd.dc) %d, toGPIO(cfg.lcd.cs) %d,toGPIO(cfg.lcd.sclk) %d, toGPIO(cfg.lcd.mosi) %d, toGPIO(cfg.lcd.miso) %d, cfg.lcd.spi %d \r\n",
+			// 		toGPIO(cfg.lcd.dc), toGPIO(cfg.lcd.cs),	toGPIO(cfg.lcd.sclk), toGPIO(cfg.lcd.mosi), toGPIO(cfg.lcd.miso),
+			// 			cfg.lcd.spi);
+			//  Serial.printf(" toGPIO(cfg.lcd.rst) %d, cfg.lcd.rotation %d, cfg.lcd.invert %d,cfg.lcd.width %d, cfg.lcd.height %d,cfg.lcd.col_offset %d,cfg.lcd.row_offset %d\r\n",
+			// 	 toGPIO(cfg.lcd.rst), cfg.lcd.rotation, cfg.lcd.invert,cfg.lcd.width, cfg.lcd.height,cfg.lcd.col_offset,cfg.lcd.row_offset);
+			 	 
+		
+		// 	if (strcmp(cfg.lcd.controller, "ELECROW") == 0) {	
+		// 		rgb_tft = nullptr;
+
+				
+					
+		// } else {
 			if (cfg.lcd.dc != PIN_UNUSED && cfg.lcd.cs != PIN_UNUSED && cfg.lcd.sclk != PIN_UNUSED && cfg.lcd.mosi != PIN_UNUSED && cfg.lcd.spi>=0) {
 				bus = new Arduino_ESP32SPI(
-						GPIO(cfg.lcd.dc), GPIO(cfg.lcd.cs),
-						GPIO(cfg.lcd.sclk), GPIO(cfg.lcd.mosi), GPIO(cfg.lcd.miso),
+						toGPIO(cfg.lcd.dc), toGPIO(cfg.lcd.cs),
+						toGPIO(cfg.lcd.sclk), toGPIO(cfg.lcd.mosi), toGPIO(cfg.lcd.miso),
 						cfg.lcd.spi, true
 					);
 
 			
 				if (strcmp(cfg.lcd.controller, "ILI9341") == 0) {
-					gfx = new Arduino_ILI9341(bus, GPIO(cfg.lcd.rst), cfg.lcd.rotation, cfg.lcd.invert);
+					gfx = new Arduino_ILI9341(bus, toGPIO(cfg.lcd.rst), cfg.lcd.rotation, cfg.lcd.invert);
 				} else if (strcmp(cfg.lcd.controller, "ST7789") == 0) {
-					gfx = new Arduino_ST7789(bus, GPIO(cfg.lcd.rst), cfg.lcd.rotation, cfg.lcd.invert,cfg.lcd.width, cfg.lcd.height,cfg.lcd.col_offset,cfg.lcd.row_offset);
+					Serial.printf("ST7789 controller configured\r\n");
+					gfx = new Arduino_ST7789(bus, toGPIO(cfg.lcd.rst), cfg.lcd.rotation, cfg.lcd.invert,cfg.lcd.width, cfg.lcd.height,cfg.lcd.col_offset,cfg.lcd.row_offset);
 				}  else if (strcmp(cfg.lcd.controller, "ST7796") == 0) {
 					//if (cfg.lcd.col_offset==0 && cfg.lcd.row_offset==0)
 					//  gfx = new Arduino_ST7796(bus, cfg.lcd.rst, cfg.lcd.rotation, false);
 					//else
-					gfx = new Arduino_ST7796(bus, GPIO(cfg.lcd.rst), cfg.lcd.rotation, cfg.lcd.invert,cfg.lcd.width, cfg.lcd.height,cfg.lcd.col_offset,cfg.lcd.row_offset);
+					gfx = new Arduino_ST7796(bus, toGPIO(cfg.lcd.rst), cfg.lcd.rotation, cfg.lcd.invert,cfg.lcd.width, cfg.lcd.height,cfg.lcd.col_offset,cfg.lcd.row_offset);
 				}else {
 					Serial.println("Unknown controller\r\n");
 					
 				}
+				
 				if (gfx != nullptr) {
+						Serial.printf("tft.begin()\r\n");
+						delay(100); 
 					tft.begin();
 					tft.fillScreen(RGB565_BLACK);
 					delay(1); 
 					useTFT = true;
-
-					pinMode(cfg.lcd.backlight, OUTPUT);
-					digitalWrite(cfg.lcd.backlight, HIGH); // turn backlight ON (or LOW if your display is inverted)
+					Serial.printf("backlight %d\r\n",cfg.lcd.backlight);
+					pinMode(toGPIO(cfg.lcd.backlight), OUTPUT);
+					digitalWrite(toGPIO(cfg.lcd.backlight), HIGH); // turn backlight ON (or LOW if your display is inverted)
+					Serial.printf("TFT completely initilaized\r\n");
 				}
-			} 
-	
+			} else Serial.printf("No TFT used\r\n");
 		}
+		
 	
 			// --- State flags ---
 		static bool touchInitAttempted = false;
@@ -685,6 +780,7 @@ static int deferUpdates = false;
 
 		// --- Initialization ---
 		static void touchInit() {
+			//Serial.printf("touchinit entered\r\n");
 			if (touchInitAttempted) return;  // prevent endless retries
 			touchInitAttempted = true;
 
@@ -692,14 +788,14 @@ static int deferUpdates = false;
 
 			if (isTouchXPT()) {
 				touchSPI = new SPIClass(cfg.touch.spi);
-				touchSPI->begin(GPIO(cfg.touch.sclk), GPIO(cfg.touch.miso), GPIO(cfg.touch.mosi), GPIO(cfg.touch.cs));
+				touchSPI->begin(toGPIO(cfg.touch.sclk), toGPIO(cfg.touch.miso), toGPIO(cfg.touch.mosi), toGPIO(cfg.touch.cs));
 				touchEnabled = true;
 				hasTouch = true;
 
 				if (cfg.touch.irq != PIN_UNUSED)
-					touch = new XPT2046_Touchscreen(GPIO(cfg.touch.cs), GPIO(cfg.touch.irq));
+					touch = new XPT2046_Touchscreen(toGPIO(cfg.touch.cs), toGPIO(cfg.touch.irq));
 				else
-					touch = new XPT2046_Touchscreen(GPIO(cfg.touch.cs));
+					touch = new XPT2046_Touchscreen(toGPIO(cfg.touch.cs));
 
 				touch->begin(*touchSPI);
 				touch->setRotation(cfg.touch.rotation);
@@ -707,8 +803,9 @@ static int deferUpdates = false;
 			}
 
 			if (isTouchCST()) {
+				Serial.printf("initialize CST820\r\n");
 				touchI2C = new TouchCST820();
-				touchI2C->configure(cfg.touch.i2c, GPIO(cfg.touch.sda), GPIO(cfg.touch.scl));
+				touchI2C->configure(cfg.touch.i2c, toGPIO(cfg.touch.sda), toGPIO(cfg.touch.scl));
 				touchI2C->setScreenSize(cfg.lvgl.width, cfg.lvgl.height);
 				touchI2C->begin();
 				hasTouch = true;
@@ -729,6 +826,7 @@ static int deferUpdates = false;
 
 		// --- Touch read functions ---
 		static int screenTouched() {
+			//Serial.printf("screentouched entered\r\n");
 			if (!touchReady()) return 0;
 
 			if (isTouchXPT()) {
@@ -749,6 +847,7 @@ static int deferUpdates = false;
 		}
 
 		static int screenTouchX() {
+			//Serial.printf("screentouchX entered\r\n");
 			if (!touchReady()) return 0;
 			int16_t x;
 
@@ -782,6 +881,7 @@ static int deferUpdates = false;
 		}
 
 		static int screenTouchY() {
+			//Serial.printf("screentouchY entered\r\n");
 			if (!touchReady()) return 0;
 			int16_t y;
 
@@ -2285,9 +2385,9 @@ void ui_log_event_cb(lv_event_t *e) {
 		last_event.id = lv_buttonmatrix_get_selected_button(last_event.target);
 	}
 	last_event.name = registry.findNameFor( last_event.target);
-		char s[100];
-		sprintf(s,"Event %d on obj name %s id %d", last_event.code, last_event.name.c_str(),last_event.id);
-		outputString(s);
+		// char s[100];
+		// sprintf(s,"Event %d on obj name %s id %d", last_event.code, last_event.name.c_str(),last_event.id);
+		// outputString(s);
 	// // send broadcast
 	event_seen = true; // set to false in getevent
 	
@@ -2325,8 +2425,8 @@ void ui_add_image(char * obj_name, const char *path, const char * parent_name) {
 		lv_obj_t *obj = lv_img_create(lv_screen_active());
 		// Set image source from file
 		lv_img_set_src(obj, path);
-		outputString("ui_add_image");
-		outputString(path);
+		// outputString("ui_add_image");
+		// outputString(path);
 		// Optional: align or move the image
 		//lv_obj_center(img);
 		registry.add(obj_name, obj);
@@ -2564,7 +2664,7 @@ void ui_set_next_value(char * series, char * chart, int val) {
 void ui_set_next_value2(char * series, char * chart, int val, int val2) {
     if (registry.get(chart) && series_registry.get(series)) {
 		lv_chart_set_next_value2(registry.get(chart), series_registry.get(series), val, val2);
-		outputString("lv_chart_set_next_value2");
+		//outputString("lv_chart_set_next_value2");
 	}
 }
 
@@ -2627,7 +2727,7 @@ void ui_set_parent(char * obj_name, const char * parent, int states, int parts){
 	if (style_registry.get(obj_name) && obj_parent) {
 		lv_style_t* style =  style_registry.get(obj_name);
 		lv_obj_add_style(obj_parent, style, states + parts);
-		outputString("style added");
+		//outputString("style added");
 		
 	}
 }
@@ -2795,7 +2895,7 @@ void ui_set_attribute(char * obj_name, char * attribute_name, int to_val, int un
 			else if (strstr(attribute_name,"angles")) lv_arc_set_bg_angles(obj, to_val, until_val);
 			else if (strstr(attribute_name,"rotation")) lv_arc_set_rotation(obj, to_val);
 			else if (strstr(attribute_name,"line width")) {
-				outputString("line width");
+				//outputString("line width");
 				lv_obj_set_style_arc_width(obj,to_val,LV_PART_MAIN);
 				lv_obj_set_style_arc_width(obj,to_val,LV_PART_INDICATOR);
 			}
@@ -2827,7 +2927,7 @@ void ui_set_attribute(char * obj_name, char * attribute_name, int to_val, int un
 		if (lv_obj_get_class(obj) == &lv_chart_class) {
 			if (strcmp(attribute_name,"points")==0) {
 				lv_chart_set_point_count(obj,to_val );
-				outputString("lv_chart_set_point_count");
+				//outputString("lv_chart_set_point_count");
 			}
 			if (strcmp(attribute_name,"range")==0) {
 				lv_chart_set_range(obj, LV_CHART_AXIS_PRIMARY_Y, to_val, until_val);
@@ -2917,9 +3017,9 @@ void print_class_hierarchy(const lv_obj_t *obj) {
 
     const lv_obj_class_t *cls = lv_obj_get_class(obj);
 
-    char s[100];
-			sprintf(s,"class name - %s (%p)", get_class_name(cls), cls);
-			outputString(s);
+    // char s[100];
+	// sprintf(s,"class name - %s (%p)", get_class_name(cls), cls);
+	// outputString(s);
 }
 
 void ui_set_color(char * obj_name, int color) {
@@ -2936,7 +3036,7 @@ void ui_set_color(char * obj_name, int color) {
 			lv_obj_set_style_bg_opa(obj, LV_OPA_COVER,LV_PART_MAIN |LV_STATE_DEFAULT);
 	    } else
 		if  ((lv_obj_get_class(obj) == &lv_arc_class) || (lv_obj_get_class(obj) == &lv_spinner_class)) {
-			outputString("change color arc or spinner");
+			//outputString("change color arc or spinner");
 			lv_obj_set_style_arc_color(obj, lv_color_hex(color), LV_PART_MAIN);
  		} else
 			lv_obj_set_style_bg_color(obj, lv_color_hex(color), LV_PART_MAIN);
@@ -3299,7 +3399,7 @@ static OBJ primLVGLaddButtonMatrix(int argCount, OBJ *args) {
 				OBJ field =  FIELD(obj, i);
 				char* string_n = obj2str(field);
 				size_t len = strlen(string_n);
-				outputString(string_n);
+				//outputString(string_n);
 				if (len==0) {
 						btnmap[i-1] = (char *)malloc(2);
 						strcpy(btnmap[i-1], "\n");
@@ -3335,69 +3435,69 @@ static OBJ primLVGLaddObject(int argCount, OBJ *args) {
 	Command cmd = lookup_cmd(obj_type);
 	switch (cmd) {
 		case CMD_BUTTON:
-			outputString("Handle BUTTON");
+			//outputString("Handle BUTTON");
 			ui_create_button(obj_name, parent);
 			break;
 		case CMD_ARC:
-			outputString("Handle ARC");
+			//outputString("Handle ARC");
 			ui_create_arc(obj_name, parent);
 			break;
 		case CMD_SLIDER:
-			outputString("Handle SLIDER");
+			//outputString("Handle SLIDER");
 			ui_create_slider(obj_name, parent);
 			break;
 		case CMD_LED:
-			outputString("Handle LED");
+			//outputString("Handle LED");
 			ui_create_led(obj_name, parent);
 			break;
 		case CMD_SWITCH:
-			outputString("Handle SWITCH");
+			//outputString("Handle SWITCH");
 			ui_create_switch(obj_name, parent);
 			break;
 		case CMD_BAR:
-			outputString("Handle BAR");
+			//outputString("Handle BAR");
 			ui_create_bar(obj_name, parent);
 			break;
 		case CMD_TABVIEW:
-			outputString("Handle TABVIEW");
+			//outputString("Handle TABVIEW");
 			ui_create_tabview(obj_name, parent);
 			break;
 		case CMD_TILEVIEW:
-			outputString("Handle TILEVIEW");
+			//outputString("Handle TILEVIEW");
 			ui_create_tileview(obj_name, parent);
 			break;
 		case CMD_LIST:
-			outputString("Handle LIST");
+			//outputString("Handle LIST");
 			ui_create_list(obj_name, parent);
 			break;
 		case CMD_ROLLER:
-			outputString("Handle ROLLER");
+			//outputString("Handle ROLLER");
 			ui_create_roller(obj_name, parent);
 			break;
 		case CMD_SCREEN:
-			outputString("Handle SCREEN");
+			//outputString("Handle SCREEN");
 			ui_create_screen(obj_name, parent);
 			break;
 		case CMD_STYLE:
-		 	outputString("Handle STYLE");
+		 	//outputString("Handle STYLE");
 		 	ui_create_style(obj_name, parent);
 		 	break;
 		case CMD_SPINBOX:
-		 	outputString("Handle SPINBOX");
+		 	//outputString("Handle SPINBOX");
 		 	ui_create_spinbox(obj_name, parent);
 		 	break;
 		case CMD_SPINNER:
-		 	outputString("Handle SPINNER");
+		 	//outputString("Handle SPINNER");
 		 	ui_create_spinner(obj_name, parent);
 		 	break;
 		case CMD_SCALE:
-		 	ui_create_scale(obj_name, parent);
+		 	//ui_create_scale(obj_name, parent);
 		 	break;
 		case CMD_TEXTAREA:
-		 	ui_create_textarea(obj_name, parent);
+		 	//ui_create_textarea(obj_name, parent);
 		 	break;
 		case CMD_KEYBOARD:
-		 	ui_create_keyboard(obj_name, parent);
+		 	//ui_create_keyboard(obj_name, parent);
 		 	break;
 		default:
 			outputString("Unknown command");;

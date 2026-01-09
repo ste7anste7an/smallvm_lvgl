@@ -27,7 +27,7 @@ constexpr Pin PIN_ZERO   = -1;
 //   internal -1  ->  0 (GPIO 0)
 //   internal N   ->  N
 //
-constexpr int GPIO(Pin p) {
+constexpr int toGPIO(Pin p) {
     return (p == PIN_UNUSED) ? -1
          : (p == PIN_ZERO)   ?  0
          : p;
