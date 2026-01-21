@@ -492,6 +492,8 @@ void updateMicrobitDisplay() {
 
 #elif defined(HAS_LED_MATRIX)
 
+	#define HAS_NEOPIXEL_MATRIX
+
 	static void updateNeoPixelDisplay(); // forward reference
 
 	static int displaySnapshot = 0;
@@ -520,11 +522,11 @@ void updateMicrobitDisplay() {
 
 OBJ primMBSetColor(int argCount, OBJ *args) {
 	mbDisplayColor = evalInt(args[0]);
-#if defined(HAS_LED_MATRIX)
-	displaySnapshot = 0; // update the display on the next cycle
-#else
-	tftSetHugePixelBits(microBitDisplayBits);
-#endif
+	#if defined(HAS_NEOPIXEL_MATRIX)
+		displaySnapshot = -1; // update the display on the next cycle
+	#else
+		tftSetHugePixelBits(microBitDisplayBits);
+	#endif
 	return falseObj;
 }
 

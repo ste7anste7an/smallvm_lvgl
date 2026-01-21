@@ -1158,6 +1158,7 @@ method fixScripterLayout MicroBlocksEditor {
 // gear menu
 
 method gearMenu MicroBlocksEditor {
+	isConnected = ('connected' == (updateConnection (smallRuntime)))
 	menu = (menu 'MicroBlocks' this)
 	setIsTopMenu menu true
 	addItem menu 'about...' (action 'showAboutBox' (smallRuntime))
@@ -1181,12 +1182,16 @@ method gearMenu MicroBlocksEditor {
 		addItem menu 'install ESP firmware from microblocks.fun' (action 'installESPFirmwareFromRepo' (smallRuntime))
 		addItem menu 'erase flash and update firmware on ESP board' (action 'installVM' (smallRuntime) true false) // wipe flash first, do not download VM from server
 		addLine menu
-		addItem menu 'compact code store' (action 'sendMsg' (smallRuntime) 'systemResetMsg' 2 nil)
-
-		if (boardIsBLECapable (smallRuntime)) {
-			addLine menu
-			addItem menu 'enable or disable BLE' (action 'setBLEFlag' (smallRuntime))
+		if (and
+				isConnected
+				(boardIsBLECapable (smallRuntime))
+				(not (connectedViaBLE (smallRuntime)))
+			) {
+				addLine menu
+				addItem menu 'enable or disable BLE' (action 'setBLEFlag' (smallRuntime))
 		}
+		addLine menu
+		addItem menu 'show program size on board' (action 'sendMsg' (smallRuntime) 'systemResetMsg' 2 nil) nil nil true (not isConnected)
 
 // Let's deprecate the HTTP server since it doesn't work in browser?
 // Don't think anyone is using it now that we have so many other ways to communicate.
@@ -1473,7 +1478,7 @@ method projectMenu MicroBlocksEditor {
 	if ('connected' != (updateConnection (smallRuntime))) {
 		addItem menu 'Open from board' 'openFromBoard'
 	} else {
-			checkBoardType (smallRuntime)
+		checkBoardType (smallRuntime)
 	}
 	addLine menu
 	addItem menu 'Copy project URL to clipboard' 'copyProjectURLToClipboard'

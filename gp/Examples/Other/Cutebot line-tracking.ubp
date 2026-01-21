@@ -32,10 +32,10 @@ forever {
 
 module Cutebot Output
 author wwj718
-version 1 6 
+version 1 8 
 depends 'Distance (HC-SR04)' NeoPixel 
-choices cutebot_side left right 
-choices cutebot_light left right both 
+choices cutebot_side 'cutebotside;left' 'cutebotside;right' 
+choices cutebot_light 'cutebotlight;left' 'cutebotlight;right' 'cutebotlight;both' 
 description 'Cutebot is a rear-drive smart car driven by dual high speed motors.
 
 It features two RGB headlights, left and right line-following sensors, an ultrasonic distance sensor, and two downward-facing NeoPixels.
@@ -44,18 +44,19 @@ Add the IR Remote library to use the IR receiver (pin 16).
 
 The Cutebot can work with the AILens library.
 
-https://www.elecfreaks.com/learn-en/microbitKit/smart_cutebot/cutebot_car.html'
+https://www.elecfreaks.com/learn-en/microbitKit/smart_cutebot/cutebot_car.html
+'
 
-  spec ' ' 'cutebot_setWheelSpeed' 'Cutebot set wheel left _ right _ (-100 to 100)' 'num num' 100 -100
+  spec ' ' 'cutebot_setWheelSpeed' 'Cutebot set wheel left _ right _ (-100 to 100)' 'num num' 25 -25
   spec ' ' 'cutebot_stopWheels' 'Cutebot stop wheels'
   space
-  spec ' ' 'cutebot_setServo' 'Cutebot set servo _ to _ degrees (-90 to 90)' 'menu.range:1-2 num' 1 90
-  spec ' ' 'cutebot_setServoSpeed' 'Cutebot set servo _ to speed _ (-100 to 100)' 'menu.range:1-2 num' 1 100
+  spec ' ' 'cutebot_setServo' 'Cutebot set servo _ to _ degrees (-90 to 90)' 'menu num' 1 25
+  spec ' ' 'cutebot_setServoSpeed' 'Cutebot set servo _ to speed _ (-100 to 100)' 'menu num' 1 25
   space
-  spec ' ' 'cutebot_setHeadlightColor' 'Cutebot set headlight _ to _' 'menu.cutebot_light color' 'both'
-  spec ' ' 'cutebot_setNeopixels' 'Cutebot set NeoPixel _ to _' 'menu.cutebot_light color' 'both'
+  spec ' ' 'cutebot_setHeadlightColor' 'Cutebot set headlight _ to _' 'menu.cutebot_light color' 'cutebotlight;both'
+  spec ' ' 'cutebot_setNeopixels' 'Cutebot set NeoPixel _ to _' 'menu.cutebot_light color' 'cutebotlight;both'
   space
-  spec 'r' 'cutebot_lineSensor' 'Cutebot _ line sensor' 'menu.cutebot_side' 'left'
+  spec 'r' 'cutebot_lineSensor' 'Cutebot _ line sensor' 'menu.cutebot_side' 'cutebotside;left'
   spec 'r' 'cutebot_seesLine' 'Cutebot sees line on left _ right _' 'bool bool' true true
   spec 'r' 'cutebot_distance' 'Cutebot distance (cm)'
   space
@@ -78,7 +79,7 @@ to cutebot_lineSensor side {
   comment 'Return true if a black line is detected on the given side.'
   local 'left_pin' 13
   local 'right_pin' 14
-  if (side == 'left') {
+  if (side == 'cutebotside;left') {
     return (not (digitalReadOp left_pin))
   } else {
     return (not (digitalReadOp right_pin))
@@ -86,7 +87,7 @@ to cutebot_lineSensor side {
 }
 
 to cutebot_seesLine leftSide rightSide {
-  return (and (leftSide == (cutebot_lineSensor 'left')) (rightSide == (cutebot_lineSensor 'right')))
+  return (and (leftSide == (cutebot_lineSensor 'cutebotside;left')) (rightSide == (cutebot_lineSensor 'cutebotside;right')))
 }
 
 to cutebot_setHeadlightColor which color {
@@ -95,9 +96,9 @@ to cutebot_setHeadlightColor which color {
   local 'b' ((color >> b) & 255)
   local 'left_LED' 4
   local 'right_LED' 8
-  if (which == 'left') {
+  if (which == 'cutebotlight;left') {
     '_cutebot_sendCmd' ('[data:makeList]' left_LED r g b)
-  } (which == 'right') {
+  } (which == 'cutebotlight;right') {
     '_cutebot_sendCmd' ('[data:makeList]' right_LED r g b)
   } else {
     '_cutebot_sendCmd' ('[data:makeList]' left_LED r g b)
@@ -107,9 +108,9 @@ to cutebot_setHeadlightColor which color {
 
 to cutebot_setNeopixels which_NeoPixel color {
   if (0 == _np_pixels) {neoPixelAttach 2 15}
-  if (which_NeoPixel == 'left') {
+  if (which_NeoPixel == 'cutebotlight;left') {
     atPut 1 _np_pixels color
-  } (which_NeoPixel == 'right') {
+  } (which_NeoPixel == 'cutebotlight;right') {
     atPut 2 _np_pixels color
   } else {
     atPut 1 _np_pixels color
@@ -159,36 +160,56 @@ to cutebot_stopWheels {
 
 
 module 'Distance (HC-SR04)' Input
-author 'Joan Guillén & Josep Ferràndiz'
-version 1 4 
+author MicroBlocks
+version 1 5 
 tags sensor 'hc-sr04' distance ultrasound 
-description 'Support for the HC-SR04 ultrasound distance sensor.'
-variables _sr04_last 
+description 'Support for the HC-SR04 ultrasound distance sensor.
+
+Originally written by Joan Guillén & Josep Ferràndiz.
+Rewritten to use the new pulse capture mechanism.'
+variables _sr04_last _sr04_misses 
 
   spec 'r' 'distance (cm)' 'distance (cm) trigger _ echo _' 'num num' 2 4
   spec 'r' 'sr04_distanceOnePin' 'distance (cm) pin _' 'num' 0
+  spec 'r' '_sr04_getEchoData' '_getEchoData _ echo _' 'auto auto' 0 1
 
-to 'distance (cm)' trig ech {
-  comment 'Contributed by Joan Guillén and Josep Ferràndiz'
+to '_sr04_getEchoData' trig echo {
+  comment 'Output a 50 usec pulse on trigger pin to
+start distance measurement.'
   digitalWriteOp trig false
   waitMicros 2
   digitalWriteOp trig true
   waitMicros 50
   digitalWriteOp trig false
-  local 'start' (microsOp)
-  waitUntil (or (not (digitalReadOp ech)) (((microsOp) - start) > 23320))
-  waitUntil (or (digitalReadOp ech) (((microsOp) - start) > 23320))
-  if (((microsOp) - start) > 23320) {
-    comment 'Distance sensor not ready; return the last distance reading'
-    return _sr04_last
+  comment 'Capture the distance pulse. Width of
+pulse is proportional to the distance.'
+  '[sensors:captureStart]' echo
+  local 'start' (millisOp)
+  repeatUntil (('[sensors:captureCount]') >= 2) {
+    if ((millisSince start) > 24) {exitLoop}
+    waitMillis 1
   }
-  comment 'Pulse sent. Measure time until echo is detected.'
-  start = (microsOp)
-  waitUntil (or (not (digitalReadOp ech)) (((microsOp) - start) > 23320))
-  _sr04_last = ((10 * ((microsOp) - start)) / 583)
-  comment 'Leave some time for reverberations to die away.'
-  waitMillis 10
-  return _sr04_last
+  return ('[sensors:captureEnd]')
+}
+
+to 'distance (cm)' trig echo {
+  comment 'Take a distance measurement. Pulses will be two element
+list if successful. If no echo detected it will have only one
+element. In rare error cases the second item will be negative.'
+  local 'pulses' ('_sr04_getEchoData' trig echo)
+  if (and ((size pulses) >= 2) ((at 2 pulses) > 0)) {
+    _sr04_misses = 0
+    comment 'The divisor was determined empirically. It is
+less than the expected 2 * 343 meter/sec.'
+    _sr04_last = ((10 * (at 2 pulses)) / 583)
+    return _sr04_last
+  } else {
+    comment 'No echo, probably because target is out of range.
+To avoid short-term glitches, return the last distance
+unless the are N misses in a row, then return 400.'
+    _sr04_misses += 1
+    return (ifExpression (_sr04_misses < 10) _sr04_last 400)
+  }
 }
 
 to sr04_distanceOnePin pin {
@@ -198,7 +219,7 @@ to sr04_distanceOnePin pin {
 
 module NeoPixel Output
 author MicroBlocks
-version 1 14 
+version 1 15 
 description 'Control NeoPixel (WS2812) RGB LED strips and rings.
 '
 variables _np_pixels _np_pin _np_haswhite 
@@ -257,7 +278,7 @@ to '_NeoPixel_ensureInitialized' {
   } ((boardType) == 'D1-Mini') {
     comment 'D1 mini kit'
     neoPixelAttach 7 15 false
-  } ((boardType) == 'FOXBIT') {
+  } ((boardType) == 'Foxbit') {
     neoPixelAttach 35 '' false
   } ((boardType) == 'CodingBox') {
     neoPixelAttach 35 '' false
@@ -384,115 +405,16 @@ to setNeoPixelColor i color {
 
 to setNeoPixelColors10 c1 c2 c3 c4 c5 c6 c7 c8 c9 c10 {
   '_NeoPixel_ensureInitialized'
-  if ((size _np_pixels) >= 1) {
-    atPut 1 _np_pixels c1
-  }
-  if ((size _np_pixels) >= 2) {
-    atPut 2 _np_pixels c2
-  }
-  if ((size _np_pixels) >= 3) {
-    atPut 3 _np_pixels c3
-  }
-  if ((size _np_pixels) >= 4) {
-    atPut 4 _np_pixels c4
-  }
-  if ((size _np_pixels) >= 5) {
-    atPut 5 _np_pixels c5
-  }
-  if ((size _np_pixels) >= 6) {
-    atPut 6 _np_pixels c6
-  }
-  if ((size _np_pixels) >= 7) {
-    atPut 7 _np_pixels c7
-  }
-  if ((size _np_pixels) >= 8) {
-    atPut 8 _np_pixels c8
-  }
-  if ((size _np_pixels) >= 9) {
-    atPut 9 _np_pixels c9
-  }
-  if ((size _np_pixels) >= 10) {
-    atPut 10 _np_pixels c10
+  for i (minimum (size _np_pixels) (pushArgCount)) {
+    atPut i _np_pixels (getArg i)
   }
   '_NeoPixel_update'
 }
 
 to setNeoPixelColors25 c1 c2 c3 c4 c5 c6 c7 c8 c9 c10 c11 c12 c13 c14 c15 c16 c17 c18 c19 c20 c21 c22 c23 c24 c25 {
   '_NeoPixel_ensureInitialized'
-  if ((size _np_pixels) >= 1) {
-    atPut 1 _np_pixels c1
-  }
-  if ((size _np_pixels) >= 2) {
-    atPut 2 _np_pixels c2
-  }
-  if ((size _np_pixels) >= 3) {
-    atPut 3 _np_pixels c3
-  }
-  if ((size _np_pixels) >= 4) {
-    atPut 4 _np_pixels c4
-  }
-  if ((size _np_pixels) >= 5) {
-    atPut 5 _np_pixels c5
-  }
-  if ((size _np_pixels) >= 6) {
-    atPut 6 _np_pixels c6
-  }
-  if ((size _np_pixels) >= 7) {
-    atPut 7 _np_pixels c7
-  }
-  if ((size _np_pixels) >= 8) {
-    atPut 8 _np_pixels c8
-  }
-  if ((size _np_pixels) >= 9) {
-    atPut 9 _np_pixels c9
-  }
-  if ((size _np_pixels) >= 10) {
-    atPut 10 _np_pixels c10
-  }
-  if ((size _np_pixels) >= 11) {
-    atPut 11 _np_pixels c11
-  }
-  if ((size _np_pixels) >= 12) {
-    atPut 12 _np_pixels c12
-  }
-  if ((size _np_pixels) >= 13) {
-    atPut 13 _np_pixels c13
-  }
-  if ((size _np_pixels) >= 14) {
-    atPut 14 _np_pixels c14
-  }
-  if ((size _np_pixels) >= 15) {
-    atPut 15 _np_pixels c15
-  }
-  if ((size _np_pixels) >= 16) {
-    atPut 16 _np_pixels c16
-  }
-  if ((size _np_pixels) >= 17) {
-    atPut 17 _np_pixels c17
-  }
-  if ((size _np_pixels) >= 18) {
-    atPut 18 _np_pixels c18
-  }
-  if ((size _np_pixels) >= 19) {
-    atPut 19 _np_pixels c19
-  }
-  if ((size _np_pixels) >= 20) {
-    atPut 20 _np_pixels c20
-  }
-  if ((size _np_pixels) >= 21) {
-    atPut 21 _np_pixels c21
-  }
-  if ((size _np_pixels) >= 22) {
-    atPut 22 _np_pixels c22
-  }
-  if ((size _np_pixels) >= 23) {
-    atPut 23 _np_pixels c23
-  }
-  if ((size _np_pixels) >= 24) {
-    atPut 24 _np_pixels c24
-  }
-  if ((size _np_pixels) >= 25) {
-    atPut 25 _np_pixels c25
+  for i (minimum (size _np_pixels) (pushArgCount)) {
+    atPut i _np_pixels (getArg i)
   }
   '_NeoPixel_update'
 }

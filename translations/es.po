@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: interest@microblocks.fun\n"
 "POT-Creation-Date: 2024-10-28 16:23+0200\n"
-"PO-Revision-Date: 2025-11-17 19:51+0000\n"
+"PO-Revision-Date: 2026-01-19 23:58+0000\n"
 "Last-Translator: Josep Ferràndiz <josep.ferrandiz@gmail.com>\n"
 "Language-Team: Spanish <https://hosted.weblate.org/projects/microblocks/ide/"
 "es/>\n"
@@ -12,7 +12,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.15-dev\n"
+"X-Generator: Weblate 5.16-dev\n"
 
 #. Block part type, while making a new block
 msgid "input"
@@ -2297,7 +2297,7 @@ msgstr "exporta funciones como biblioteca"
 
 #. Wukong robot library block
 msgid "Wukong set motor _ to _ (-100 to 100)"
-msgstr "pon el motor _ a _ (-100 a 100)"
+msgstr "Wukong pon el motor _ a _ (-100 a 100)"
 
 #. Elecfreaks Octopus sensor library block
 msgid "Octopus LED pin _ brightness _ %"
@@ -3143,19 +3143,19 @@ msgstr "Wukong"
 
 #. Wukong robot library block
 msgid "Wukong stop motor _"
-msgstr "detén el motor _"
+msgstr "Wukong detén el motor _"
 
 #. Wukong robot library block
 msgid "Wukong stop all"
-msgstr "detén todos los motores"
+msgstr "Wukong detén todos los motores"
 
 #. Wukong robot library block
 msgid "Wukong set NeoPixels _ _ _ _"
-msgstr "pon los NeoPíxeles del Wukong a _ _ _ _"
+msgstr "Wukong pon los NeoPíxeles del Wukong a _ _ _ _"
 
 #. Wukong robot library block
 msgid "Wukong set LED brightness to _"
-msgstr "fija el brillo del LED a _"
+msgstr "Wukong fija el brillo del LED a _"
 
 #. Joystick:bit library block
 msgid "button _ is pressed"
@@ -3522,7 +3522,7 @@ msgstr "Home apaga Neopixels"
 
 #. Wukong robot library block
 msgid "Wukong set servo _ to speed _ (-100 to 100)"
-msgstr "pon el servo _ a velocidad _ (-100 a 100)"
+msgstr "Wukong pon el servo _ a velocidad _ (-100 a 100)"
 
 #. In MicroBlocks IDE connection menu. Select "other..." serial port
 msgid "other..."
@@ -4972,7 +4972,7 @@ msgstr "derecho"
 
 #. Wukong robot library block
 msgid "Wukong set servo _ to _ degrees (-90 to 90)"
-msgstr "pon el servo _ a _ grados (-90 a 90)"
+msgstr "Wukong pon el servo _ a _ grados (-90 a 90)"
 
 #. Sphero-RVR robot library block
 msgid "drive with speed _ and heading _"
@@ -5671,7 +5671,7 @@ msgstr "360 grados"
 
 #. Cutebot Pro library block
 msgid "CBPro set NeoPixel _ to _"
-msgstr "fija NeoPíxel _ del CBPro a _"
+msgstr "CBPro fija NeoPíxel _ del CBPro a _"
 
 #. Cutebot Pro library block dropdown option
 #. as in turn "left" on your axis
@@ -5724,15 +5724,15 @@ msgstr "180 grados"
 
 #. Cutebot Pro library block
 msgid "CBPro speed of _ wheel (cm/s)"
-msgstr "velocidad de la rueda _ (cm/s)"
+msgstr "CBPro velocidad de la rueda _ (cm/s)"
 
 #. Cutebot Pro library block
 msgid "CBPro stop all"
-msgstr "deténlo todo"
+msgstr "CBPro detenlo todo"
 
 #. Cutebot Pro library block
 msgid "CBPro distance (cm)"
-msgstr "distancia frontal (cm)"
+msgstr "CBPro distancia frontal (cm)"
 
 #. Cutebot Pro library block dropdown option
 msgid "90 degrees"
@@ -5740,7 +5740,7 @@ msgstr "90 grados"
 
 #. Cutebot Pro library block
 msgid "CBPro move _ (-255 to 255 cm)"
-msgstr "mueve _ (-255 a 255 cm)"
+msgstr "CBPro mueve _ (-255 a 255 cm)"
 
 #. MQTT library block
 msgid "Last will!"
@@ -5774,15 +5774,16 @@ msgstr "derecha (sobre su eje)"
 #. Cutebot Pro library block
 msgid "CBPro set wheel speed left _ right _ (-60 to 60 cm/s)"
 msgstr ""
-"fija la velocidad de la rueda izquierda a _ y derecha a _ (-60 a 60 cm/s)"
+"CBPro fija la velocidad de la rueda izquierda a _ y derecha a _ (-60 a 60 cm/"
+"s)"
 
 #. Cutebot Pro library block
 msgid "CBPro turn _ degrees"
-msgstr "gira _ grados"
+msgstr "CBPro gira _ grados"
 
 #. Cutebot Pro library block
 msgid "CBPro set headlight _ to _"
-msgstr "pon el faro _ a _"
+msgstr "CBPro pon el faro _ a _"
 
 #. Octostudio communication library block
 msgid "Octo last beam"
@@ -5798,7 +5799,7 @@ msgstr "fija grupo de Octo a _ (0-99)"
 
 #. Cutebot Pro library block
 msgid "CBPro stop wheel _"
-msgstr "detén rueda _"
+msgstr "CBPro detén rueda _"
 
 #. Chiptune library block
 msgid "tom for _ ms pitch shifted by _ on pin _"
@@ -5907,11 +5908,11 @@ msgstr ""
 
 #. Cutebot Pro library block
 msgid "CBPro set _ servo _ angle to _ deg"
-msgstr "fija servo de _ número _ a _ grados"
+msgstr "CBPro fija servo de _ número _ a _ grados"
 
 #. WuKong2040 robot library block
 msgid "WuKong2040 clear all rainbowLED"
-msgstr "apaga LEDs multicolor"
+msgstr "WuKong2040 apaga LEDs multicolor"
 
 #. Cutebot Pro library block
 msgid "CBPro IR code received?"
@@ -5932,11 +5933,11 @@ msgstr "carga bibliotecas de placa automáticamente"
 
 #. WuKong2040 robot library block
 msgid "WuKong2040 stop all motors"
-msgstr "detén todos los motores"
+msgstr "WuKong2040 detén todos los motores"
 
 #. Cutebot Pro library block
 msgid "CBPro stop external motor"
-msgstr "detén motor externo"
+msgstr "CBPro detén motor externo"
 
 #. Cutebot Pro library block
 msgid "CBPro version"
@@ -5944,7 +5945,7 @@ msgstr "versión del CBPro"
 
 #. WuKong2040 robot library block
 msgid "WuKong2040 rainbowLED _ R _ G _ B _ (0~255)"
-msgstr "pon LED multicolor _ a rojo _ verde _ azul _ (0~255)"
+msgstr "WuKong2040 pon LED multicolor _ a rojo _ verde _ azul _ (0~255)"
 
 #. WuKong2040 robot library label
 msgid "WuKong2040"
@@ -5956,43 +5957,43 @@ msgstr "auto-PlugShare en proyectos vacíos"
 
 #. Cutebot Pro library block
 msgid "CBPro tracking state"
-msgstr "estado del seguimiento de línea"
+msgstr "CBPro estado del seguimiento de línea"
 
 #. Cutebot Pro library block
 msgid "CBPro set external motor power to _ (-100 to 100)"
-msgstr "fija la potencia del motor externo a _ (-100 a 100)"
+msgstr "CBPro fija la potencia del motor externo a _ (-100 a 100)"
 
 #. Cutebot Pro library block
 msgid "CBPro servo _ speed to _ (-100 to 100)"
-msgstr "pon servo _ a velocidad _ (-100 a 100)"
+msgstr "CBPro pon servo _ a velocidad _ (-100 a 100)"
 
 #. Cutebot Pro library block
 msgid "CBPro tracking state is (L - - R) _ _ _ _"
-msgstr "el estado del seguimiento de línea es (I--D) _ _ _ _"
+msgstr "CBPro el estado del seguimiento de línea es (I--D) _ _ _ _"
 
 #. Cutebot Pro library block
 msgid "CBPro tracking offset"
-msgstr "desfase del seguimiento de línea"
+msgstr "CBPro desfase del seguimiento de línea"
 
 #. Cutebot Pro library block
 msgid "CBPro IR code"
-msgstr "código IR"
+msgstr "CBPro código IR"
 
 #. WuKong2040 robot library block
 msgid "WuKong2040 motor _ speed to _ (-100~100)"
-msgstr "pon el motor _ a velocidad _ (-100~100)"
+msgstr "WuKong2040 pon el motor _ a velocidad _ (-100~100)"
 
 #. WuKong2040 robot library block
 msgid "WuKong2040 stop motor _"
-msgstr "detén el motor _"
+msgstr "WuKong2040 detén el motor _"
 
 #. WuKong2040 robot library block
 msgid "WuKong2040 buzzer beep _ ms"
-msgstr "pita durante _ ms"
+msgstr "WuKong2040 pita durante _ ms"
 
 #. WuKong2040 robot library block
 msgid "WuKong2040 rainbowLED _ color to _"
-msgstr "pon LED multicolor _ a _"
+msgstr "WuKong2040 pon LED multicolor _ a _"
 
 #. Settings menu tooltip
 msgid "make the IDE darker"
@@ -6260,7 +6261,7 @@ msgstr "ambos"
 
 #. Wukong robot library block
 msgid "Wukong set _ servo _ to _ degrees"
-msgstr "fija el servo de _ grados _ a _ grados"
+msgstr "Wukong fija el servo de _ grados _ a _ grados"
 
 #. CoCube library block
 msgid "move _ at _ speed (0-50) for _ msecs"
@@ -6458,7 +6459,7 @@ msgstr "LCD escribe _ en la línea _ desde _ hasta _"
 
 #. Calliope Servoboard library block
 msgid "Calliope stop motor _"
-msgstr "Calliope para el motor _"
+msgstr "Calliope detén el motor _"
 
 #. Gas (SCD40) library block
 msgid "°C"
@@ -7646,3 +7647,248 @@ msgstr "MakerPort"
 #. Option in dropdown menu of editable input slots on mobile devices:
 msgid "edit"
 msgstr "edita"
+
+#. Generic servo type
+msgid "180°"
+msgstr "180°"
+
+#. Generic servo type
+msgid "270°"
+msgstr "270°"
+
+#. Generic servo type
+msgid "360°"
+msgstr "360°"
+
+#. Calliope MotionKit library block
+msgid "MotionKit set motor _ _ speed _ (0~100)"
+msgstr "MotionKit motor _ _ velocidad _ (0~100)"
+
+#. Calliope MotionKit library block
+msgid "MotionKit stop all"
+msgstr "MotionKit detén todos los motores"
+
+#. Calliope MotionKit library block
+msgid "MotionKit set led _ _"
+msgstr "MotionKit led _ _"
+
+#. Calliope MotionKit library block
+msgid "MotionKit set servo _ to _ degrees (0-180)"
+msgstr "MotionKit pon el servo _ a _ grados (0-180)"
+
+#. Calliope MotionKit library block
+msgid "MotionKit set _ servo _ to _ degrees"
+msgstr "MotionKit pon el servo de _ _ a _ grados"
+
+#. Calliope MotionKit library block
+msgid "MotionKit rotate servo _ _ speed _ (0~100)"
+msgstr "MotionKit gira el servo _ _ velocidad _ (0~100)"
+
+#. Calliope Callibot library choice
+msgid "callibot;left front"
+msgstr "izquierda frontal"
+
+#. Calliope Callibot library choice
+msgid "callibot;right front"
+msgstr "derecha frontal"
+
+#. Calliope Callibot library choice
+msgid "callibot;left back"
+msgstr "izquierda posterior"
+
+#. Calliope Callibot library choice
+msgid "callibot;right back"
+msgstr "derecha posterior"
+
+#. Calliope Callibot library choice
+msgid "violett"
+msgstr "violeta"
+
+#. Calliope Callibot library choice
+msgid "aqua"
+msgstr "azul claro"
+
+#. Calliope Callibot library choice
+msgid "callibot;bright"
+msgstr "claro"
+
+#. Calliope Callibot library choice
+msgid "callibot;dark"
+msgstr "oscuro"
+
+#. Calliope Callibot library choice
+msgid "callibot;S1"
+msgstr "S1"
+
+#. Calliope Callibot library choice
+msgid "callibot;S2"
+msgstr "S2"
+
+#. Calliope Callibot library block
+msgid "Callibot2E encoder _"
+msgstr "Callibot2E codificador rotativo _"
+
+#. Calliope Callibot library block
+msgid "Callibot2E reset encoder _"
+msgstr "Callibot2E reinicia codificador rotativo _"
+
+#. Calliope Callibot library block
+msgid "Callibot2 battery (mV)"
+msgstr "Callibot2 batería (mV)"
+
+#. Calliope Callibot library block
+msgid "Callibot2 bumper _ _"
+msgstr "Callibot2 sensor de contacto _ _"
+
+#. Calliope Callibot library block
+msgid "Callibot clear NeoPixels"
+msgstr "Callibot apaga NeoPíxeles"
+
+#. Calliope Callibot library block
+msgid "Callibot distance (cm)"
+msgstr "Callibot distancia (cm)"
+
+#. Calliope Callibot library block
+msgid "Callibot line sensor _ _"
+msgstr "Callibot sensor de línea _ _"
+
+#. Calliope Callibot library block
+msgid "Callibot set led _ _"
+msgstr "Callibot led _ _"
+
+#. Calliope Callibot library block
+msgid "Callibot set motor _ _ speed _ (0~100)"
+msgstr "Callibot motor _ _ velocidad _ (0~100)"
+
+#. Calliope Callibot library block
+msgid "Callibot set neopixel _ to _ intensity _"
+msgstr "Callibot pon Neopíxel _ a _ intensidad _"
+
+#. Calliope Callibot library block
+msgid "Callibot set servo _ to _ ° (0~180)"
+msgstr "Callibot pon el servo _ a _ ° (0~180)"
+
+#. Calliope Callibot library block
+msgid "Callibot set _ servo _ to _ °"
+msgstr "Callibot pon el servo _ _ a _ °"
+
+#. Calliope Callibot library block
+msgid "Callibot rotate servo _ _ speed _ (0~100)"
+msgstr "Callibot gira el servo _ _ velocidad _ (0~100)"
+
+#. Calliope Callibot library block
+msgid "Callibot stop all"
+msgstr "Callibot detén todos los motores"
+
+#. Calliope Callibot library block
+msgid "Callibot stop motor _"
+msgstr "Callibot detén motor _"
+
+#. Nezha Pro library block
+msgid "np stop all motors"
+msgstr "np detén todos los motores"
+
+#. Nezha Pro library label
+msgid "Nezha Pro"
+msgstr "Nezha Pro"
+
+#. Nehza Pro library choice
+msgid "M1"
+msgstr "M1"
+
+#. Nehza Pro library choice
+msgid "M2"
+msgstr "M2"
+
+#. Nehza Pro library choice
+msgid "M3"
+msgstr "M3"
+
+#. Nehza Pro library choice
+msgid "M4"
+msgstr "M4"
+
+#. Nehza Pro library choice
+msgid "nezhaPro;by shortest path"
+msgstr "por el camino más corto"
+
+#. Nezha Pro library block
+msgid "np angle _"
+msgstr "np ángulo _"
+
+#. Nezha Pro library block
+msgid "np move _ for _ mm speed _ %"
+msgstr "np mueve _ _ mm velocidad _ %"
+
+#. Nezha Pro library block
+msgid "np speed _"
+msgstr "np velocidad _"
+
+#. Nezha Pro library block
+msgid "np total angle _"
+msgstr "np ángulo total _"
+
+#. Nezha Pro library block
+msgid "np reset total angle _"
+msgstr "np reinicia el ángulo total _"
+
+#. Nezha Pro library block
+msgid "np rotate _ _ by _ degrees speed _ %"
+msgstr "np gira _ _ grados _ velocidad _ %"
+
+#. Nezha Pro library block
+msgid "np rotate _ _ to _ degrees speed _ %"
+msgstr "np gira _ _ a _ grados velocidad _ %"
+
+#. Nezha Pro library block
+msgid "np run motor _ _ speed _ %"
+msgstr "np motor _ _ velocidad _ %"
+
+#. Nezha Pro library block
+msgid "np set _ angle _ to _ degrees"
+msgstr "np pon _ ángulo _ a _ grados"
+
+#. Nezha Pro library block
+msgid "np set wheels left _ right _ #BR# circumference _ mm axle _ mm"
+msgstr ""
+"np pon las ruedas izquierda _ derecha _ #BR# circunferencia _ mm eje _ mm"
+
+#. Nezha Pro library block
+msgid "np stop motor _"
+msgstr "np detén motor _"
+
+#. Nezha Pro library block
+msgid "np turn _ by _ degrees speed _ %"
+msgstr "np gira _ grados _ velocidad _ %"
+
+#. Nezha Pro library block
+msgid "np version"
+msgstr "np versión"
+
+#. 5x5 LED Display library block
+msgid "LED image #BR# _"
+msgstr "imagen LED #BR# _"
+
+#. Settings menu option
+msgid "open vm folder on microblocks.fun"
+msgstr "abre la carpeta de las máquinas virtuales en microblocks.fun"
+
+#. Settings menu option
+msgid "show program size on board"
+msgstr "muestra el tamaño del programa de la placa"
+
+#. Program size information
+msgid "Using %1 out of %2 bytes"
+msgstr "Ocupando %1 de los %2 bytes disponibles"
+
+#. Graph context menu option
+msgid "increase range"
+msgstr "aumenta el rango"
+
+#. Graph context menu option
+msgid "decrease range"
+msgstr "reduce el rango"
+
+#. Script right-click context menu
+msgid "copy callable name"
+msgstr "copia el nombre de la función"

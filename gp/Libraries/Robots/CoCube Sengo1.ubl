@@ -211,7 +211,10 @@ to 'Sengo1 read card' {
   } ((i2cGet _sg1_i2c_address (hexToInt '34')) != 0) {
     i2cSet _sg1_i2c_address (hexToInt '20') 6
     i2cSet _sg1_i2c_address (hexToInt '35') 1
-    return (at ('_sg1_read_reg_byte' (hexToInt '88')) _sg1_card_classes)
+    local 'var' ('_sg1_read_reg_byte' (hexToInt '88'))
+    if (and (var <= 10) (var >= 1)) {
+      return (at var _sg1_card_classes)
+    }
   }
 }
 

@@ -76,3 +76,6 @@ cp .pio/build/rp2350/firmware.uf2 extraVMs/vm_rp2350.uf2
 
 pio run -e rp2350-w
 cp .pio/build/rp2350-w/firmware.uf2 extraVMs/vm_rp2350_w.uf2
+
+pio run -e iot-bus
+cp .pio/build/iot-bus/firmware.bin extraVMs/vm_iot-bus.bin

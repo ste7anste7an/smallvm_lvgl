@@ -147,14 +147,16 @@ whenBroadcastReceived 'k'
 
 module CoCube
 author 'Liang Shuai'
-version 2 11 
-depends Tone Display TFT 'Motors/PID' 
+version 2 17 
+depends Tone Display TFT '_Motors/PID' 'Robots/CoCube Module' 
 tags 'cocube robot' 
 choices cocube_rotate_Menu 'cocube;left' 'cocube;right' 
 choices cocube_move_Menu 'cocube;forward' 'cocube;backward' 
 description 'CoCube Robot library
+
 CoCube is a tabletop modular multi-robot platform for education and research.
 https://www.cocubefun.com/
+https://wiki.cocube.fun/
 sliang23@m.fudan.edu.cn
 
 v1.0 Basic functions
@@ -166,8 +168,14 @@ v2.4 Unify positioning accuracy to 1/64
 v2.5 Adjust blocks order and delete RingTone
 v2.6 Adjust blocks order, name and default parameters
 v2.11 Improve the "CoCube move to" function logic
+v2.12 Optimize PID implementation
+v2.13 Optimize "set wheel" function
+v2.14 Improve the accuracy of move_to_target and optimize the loop exit mechanism
+v2.15 Remove "set TFT backlight" function
+v2.16 Change PID global variables into local
+v2.17 Modify the movement function on the map
 '
-variables _cocube_set_right_speed _cocube_set_left_speed _cocube_error_angle _cocube_pid_i _cocube_pid_ratio _cocube_pid_initialized _cocube_pid_d _cocube_pid_p _cocube_error_distance _cocube_error_y _cocube_error_x _cocube_target_angle 
+variables _cocube_set_right_speed _cocube_set_left_speed _cocube_error_angle _cocube_pid_flag _cocube_error_distance _cocube_error_y _cocube_error_x _cocube_target_angle 
 
   spec ' ' 'CoCube move for msecs' 'move _ at _ speed (0-50) for _ msecs' 'menu.cocube_move_Menu num num' 'cocube;forward' 40 1000
   spec ' ' 'CoCube rotate for msecs' 'rotate _ at _ speed (0-50) for _ msecs' 'menu.cocube_rotate_Menu num num' 'cocube;left' 30 1000
@@ -195,16 +203,17 @@ variables _cocube_set_right_speed _cocube_set_left_speed _cocube_error_angle _co
   space
   spec ' ' 'CoCube draw ArUco marker on TFT' 'draw ArUco marker on TFT _' 'num' 0
   spec ' ' 'CoCube draw AprilTag on TFT' 'draw AprilTag on TFT _' 'num' 0
-  spec ' ' 'CoCube set TFT backlight' 'set TFT backlight _' 'bool' false
   space
   spec 'r' 'CoCube battery percentage' 'battery percentage'
   space
   spec ' ' '_cocube_motors_speed' '_cocube_motors_speed left _ right _' 'num num' 10 10
-  spec ' ' '_cocube_pid_init' '_cocube_pid_init'
-  spec ' ' '_cocube_pid_left_motor' '_cocube_pid_left_motor'
-  spec ' ' '_cocube_pid_right_motor' '_cocube_pid_right_motor'
+  spec ' ' '_cocube_pid_control' '_cocube_pid_control'
   spec ' ' '_cocube_calculate_angle_error_' '_cocube_calculate_angle_error angle _' 'num' 0
   spec ' ' '_cocube_calculate_distance_error target_x _ target_y _' '_cocube_calculate_distance_error Target_X _ Target_Y _' 'num num' 0 0
+  spec ' ' 'CoCube set TFT backlight' 'obsolete obsolete set TFT backlight _' 'bool' false
+  spec ' ' '_cocube_pid_init' 'obsolete obsolete _cocube_pid_init'
+  spec ' ' '_cocube_pid_right_motor' 'obsolete obsolete _cocube_pid_right_motor'
+  spec ' ' '_cocube_pid_left_motor' 'obsolete obsolete _cocube_pid_left_motor'
 
 to 'CoCube battery percentage' {
   return (minimum (((254 * ('[misc:rescale]' (analogReadOp 34) 0 1023 0 3300)) - 680000) / 1600) 100)
@@ -245,22 +254,26 @@ to 'CoCube move' direction speed {
 }
 
 to 'CoCube move by step' direction speed steps {
+  _cocube_move_flag = (booleanConstant true)
   if ('CoCube on the mat') {
     local 'begin_x' ('CoCube position_X')
     local 'begin_y' ('CoCube position_Y')
     'CoCube move' direction speed
     forever {
-      '_cocube_calculate_distance_error target_x _ target_y _' begin_x begin_y
-      if ((steps - _cocube_error_distance) < 2) {
-        'CoCube wheels break'
-        comment 'wait for break function 200ms'
-        waitMillis 210
-        return 0
+      if _cocube_move_flag {
+        '_cocube_calculate_distance_error target_x _ target_y _' begin_x begin_y
+        if ((steps - _cocube_error_distance) < 2) {
+          'CoCube wheels break'
+          exitLoop
+        }
+      } else {
+        exitLoop
       }
     }
   } else {
-    sayIt 'Please put CoCube on Mat'
+    sayIt 'Please put CoCube on CoMaps'
   }
+  _cocube_move_flag = (booleanConstant false)
 }
 
 to 'CoCube move for msecs' direction speed time {
@@ -270,24 +283,24 @@ to 'CoCube move for msecs' direction speed time {
 }
 
 to 'CoCube move to' target_x target_y speed {
-  if ('CoCube on the mat') {
-    speed = speed
-    '_cocube_calculate_distance_error target_x _ target_y _' target_x target_y
-    if (_cocube_error_distance > 7) {
-      'CoCube point towards' target_x target_y speed
-      repeatUntil (_cocube_error_distance < 7) {
+  _cocube_move_flag = (booleanConstant true)
+  '_cocube_calculate_distance_error target_x _ target_y _' target_x target_y
+  if (_cocube_error_distance > 3) {
+    'CoCube point towards' target_x target_y speed
+    repeatUntil (_cocube_error_distance < 3) {
+      if _cocube_move_flag {
         '_cocube_calculate_distance_error target_x _ target_y _' target_x target_y
         _cocube_target_angle = (('[misc:atan2]' _cocube_error_y _cocube_error_x) / 100)
         '_cocube_calculate_angle_error_' _cocube_target_angle
         'CoCube set wheel' (speed - ((speed * _cocube_error_angle) / 20)) (speed + ((speed * _cocube_error_angle) / 20))
         waitMillis 10
+      } else {
+        exitLoop
       }
-      'CoCube wheels break'
-      return 0
     }
-  } else {
-    sayIt 'Please put CoCube on Mat'
+    'CoCube wheels break'
   }
+  _cocube_move_flag = (booleanConstant false)
 }
 
 to 'CoCube on the mat' {
@@ -316,29 +329,35 @@ to 'CoCube rotate' direction speed {
 }
 
 to 'CoCube rotate by degree' direction speed degree {
+  _cocube_move_flag = (booleanConstant true)
   if ('CoCube on the mat') {
     local 'begin_degree' ('CoCube direction')
     forever {
-      if (direction == 'cocube;left') {
-        '_cocube_calculate_angle_error_' (begin_degree + degree)
+      if _cocube_move_flag {
+        if (direction == 'cocube;left') {
+          '_cocube_calculate_angle_error_' (begin_degree + degree)
+        } else {
+          '_cocube_calculate_angle_error_' (begin_degree - degree)
+        }
+        if (_cocube_error_angle > 1) {
+          comment 'turn left'
+          '_cocube_motors_speed' (0 - speed) speed
+        } (_cocube_error_angle < -1) {
+          comment 'turn right'
+          '_cocube_motors_speed' speed (0 - speed)
+        } else {
+          comment 'motors break'
+          'CoCube wheels break'
+          exitLoop
+        }
       } else {
-        '_cocube_calculate_angle_error_' (begin_degree - degree)
-      }
-      if (_cocube_error_angle > 1) {
-        comment 'turn left'
-        '_cocube_motors_speed' (0 - speed) speed
-      } (_cocube_error_angle < -1) {
-        comment 'turn right'
-        '_cocube_motors_speed' speed (0 - speed)
-      } else {
-        comment 'motors break'
-        '_cocube_motors_speed' -99 -99
-        return 0
+        exitLoop
       }
     }
   } else {
-    sayIt 'Please put CoCube on Mat'
+    sayIt 'Please put CoCube on CoMaps'
   }
+  _cocube_move_flag = (booleanConstant false)
 }
 
 to 'CoCube rotate for msecs' direction speed time {
@@ -348,9 +367,10 @@ to 'CoCube rotate for msecs' direction speed time {
 }
 
 to 'CoCube rotate to angle' angle speed {
-  if ('CoCube on the mat') {
-    local 'abs_speed' (absoluteValue speed)
-    forever {
+  local 'abs_speed' (absoluteValue speed)
+  _cocube_move_flag = (booleanConstant true)
+  forever {
+    if _cocube_move_flag {
       '_cocube_calculate_angle_error_' angle
       if (_cocube_error_angle > 1) {
         comment 'turn left'
@@ -360,36 +380,59 @@ to 'CoCube rotate to angle' angle speed {
         '_cocube_motors_speed' abs_speed (0 - abs_speed)
       } else {
         comment 'motors break'
-        '_cocube_motors_speed' -99 -99
-        return 0
+        digitalWriteOp 9 true
+        digitalWriteOp 10 true
+        digitalWriteOp 26 true
+        digitalWriteOp 25 true
+        waitMillis 99
+        digitalWriteOp 9 false
+        digitalWriteOp 10 false
+        digitalWriteOp 26 false
+        digitalWriteOp 25 false
+        exitLoop
       }
+    } else {
+      exitLoop
     }
-  } else {
-    sayIt 'Please put CoCube on Mat'
-  }
-}
-
-to 'CoCube set TFT backlight' state {
-  if state {
-    '[tft:setBacklight]' 10
-  } else {
-    '[tft:setBacklight]' 0
   }
 }
 
 to 'CoCube set wheel' speed_left speed_right {
-  _cocube_set_left_speed = speed_left
-  _cocube_set_right_speed = speed_right
-  sendBroadcast '_cocube_pid_left_motor'
-  sendBroadcast '_cocube_pid_right_motor'
+  if (and (speed_left == 0) (speed_right == 0)) {
+    'CoCube wheels stop'
+  } (and (speed_left == -99) (speed_right == -99)) {
+    'CoCube wheels break'
+  } else {
+    _cocube_pid_flag = (booleanConstant true)
+    _cocube_set_left_speed = speed_left
+    _cocube_set_right_speed = speed_right
+    sendBroadcast '_cocube_pid_control'
+  }
 }
 
 to 'CoCube wheels break' {
-  'CoCube set wheel' -99 -99
+  _cocube_pid_flag = (booleanConstant false)
+  _cocube_move_flag = (booleanConstant false)
+  waitMillis 1
+  digitalWriteOp 9 true
+  digitalWriteOp 10 true
+  digitalWriteOp 26 true
+  digitalWriteOp 25 true
+  waitMillis 99
+  digitalWriteOp 9 false
+  digitalWriteOp 10 false
+  digitalWriteOp 26 false
+  digitalWriteOp 25 false
 }
 
 to 'CoCube wheels stop' {
-  'CoCube set wheel' 0 0
+  _cocube_pid_flag = (booleanConstant false)
+  _cocube_move_flag = (booleanConstant false)
+  waitMillis 1
+  digitalWriteOp 9 false
+  digitalWriteOp 10 false
+  digitalWriteOp 26 false
+  digitalWriteOp 25 false
 }
 
 to '_cocube_calculate_angle_error_' angle {
@@ -410,108 +453,57 @@ to '_cocube_calculate_distance_error target_x _ target_y _' target_x target_y {
 to '_cocube_motors_speed' left_speed right_speed {
   comment 'without pid control'
   if (and (left_speed == 0) (right_speed == 0)) {
-    digitalWriteOp 9 false
-    digitalWriteOp 10 false
-    digitalWriteOp 26 false
-    digitalWriteOp 25 false
-  } (and (left_speed == -99) (right_speed == -99)) {
-    digitalWriteOp 9 true
-    digitalWriteOp 10 true
-    digitalWriteOp 26 true
-    digitalWriteOp 25 true
-    waitMillis 200
-    digitalWriteOp 9 false
-    digitalWriteOp 10 false
-    digitalWriteOp 26 false
-    digitalWriteOp 25 false
+    'CoCube wheels stop'
   } else {
+    local 'var_left' ((4 * (absoluteValue left_speed)) + 36)
+    local 'var_right' ((4 * (absoluteValue right_speed)) + 36)
     if (left_speed > 0) {
-      analogWriteOp 9 ((4 * (absoluteValue left_speed)) + 36)
+      analogWriteOp 9 var_left
       digitalWriteOp 10 false
     } else {
       digitalWriteOp 9 false
-      analogWriteOp 10 ((4 * (absoluteValue left_speed)) + 36)
+      analogWriteOp 10 var_left
     }
     if (right_speed > 0) {
-      analogWriteOp 26 ((4 * (absoluteValue right_speed)) + 36)
+      analogWriteOp 26 var_right
       digitalWriteOp 25 false
     } else {
       digitalWriteOp 26 false
-      analogWriteOp 25 ((4 * (absoluteValue right_speed)) + 36)
+      analogWriteOp 25 var_right
     }
   }
 }
 
-to '_cocube_pid_init' {
-  if (not _cocube_pid_initialized) {
-    _cocube_pid_p = 320
-    _cocube_pid_i = 1
-    _cocube_pid_d = 3
-    _cocube_pid_ratio = 1000
-    _cocube_pid_initialized = 1
-  }
-}
-
-to '_cocube_pid_left_motor' {
-  '_cocube_pid_init'
+to '_cocube_pid_control' {
   pid_resetPID 1
-  local 'var' 0
+  pid_resetPID 2
+  local 'pid_p' 320
+  local 'pid_i' 1
+  local 'pid_d' 3
+  local 'pid_ratio' 1000
+  local 'var_right' 0
+  local 'var_left' 0
   forever {
-    if (_cocube_set_left_speed == 0) {
-      comment 'speed = 0 :motor stop'
-      digitalWriteOp 9 false
-      digitalWriteOp 10 false
-      return 0
-    } (_cocube_set_left_speed == -99) {
-      comment 'speed = -99 : motor break'
-      digitalWriteOp 9 true
-      digitalWriteOp 10 true
-      waitMillis 200
-      digitalWriteOp 9 false
-      digitalWriteOp 10 false
-      return 0
-    } else {
+    if _cocube_pid_flag {
       comment 'PID control'
-      var = ((((4 * (absoluteValue _cocube_set_left_speed)) + 36) + (pid_computePID 1 ((18 * (absoluteValue _cocube_set_left_speed)) - (callCustomReporter '[sensors:speed_left]')) _cocube_pid_p _cocube_pid_i _cocube_pid_d 0)) / _cocube_pid_ratio)
+      var_left = ((((4 * (absoluteValue _cocube_set_left_speed)) + 36) + (pid_computePID 1 ((18 * (absoluteValue _cocube_set_left_speed)) - (callCustomReporter '[sensors:speed_left]')) pid_p pid_i pid_d 0)) / pid_ratio)
+      var_right = ((((4 * (absoluteValue _cocube_set_right_speed)) + 36) + (pid_computePID 2 ((18 * (absoluteValue _cocube_set_right_speed)) - (callCustomReporter '[sensors:speed_right]')) pid_p pid_i pid_d 0)) / pid_ratio)
       if (_cocube_set_left_speed > 0) {
-        analogWriteOp 9 var
+        analogWriteOp 9 var_left
         digitalWriteOp 10 false
       } else {
-        analogWriteOp 10 var
         digitalWriteOp 9 false
+        analogWriteOp 10 var_left
       }
-    }
-  }
-}
-
-to '_cocube_pid_right_motor' {
-  '_cocube_pid_init'
-  pid_resetPID 2
-  local 'var' 0
-  forever {
-    if (_cocube_set_right_speed == 0) {
-      comment 'speed = 0 :motor stop'
-      digitalWriteOp 26 false
-      digitalWriteOp 25 false
-      return 0
-    } (_cocube_set_right_speed == -99) {
-      comment 'speed = -99 : motor break'
-      digitalWriteOp 26 true
-      digitalWriteOp 25 true
-      waitMillis 200
-      digitalWriteOp 26 false
-      digitalWriteOp 25 false
-      return 0
-    } else {
-      comment 'PID control'
-      var = ((((4 * (absoluteValue _cocube_set_right_speed)) + 36) + (pid_computePID 2 ((18 * (absoluteValue _cocube_set_right_speed)) - (callCustomReporter '[sensors:speed_right]')) _cocube_pid_p _cocube_pid_i _cocube_pid_d 0)) / _cocube_pid_ratio)
       if (_cocube_set_right_speed > 0) {
-        analogWriteOp 26 var
         digitalWriteOp 25 false
+        analogWriteOp 26 var_right
       } else {
-        analogWriteOp 25 var
+        analogWriteOp 25 var_right
         digitalWriteOp 26 false
       }
+    } else {
+      exitLoop
     }
   }
 }
@@ -519,21 +511,23 @@ to '_cocube_pid_right_motor' {
 
 module 'CoCube Module'
 author 'Liang Shuai'
-version 1 9 
-depends Servo NeoPixel 'Robots/CoCube' 'Sensing/Distance (VL53L0X)' 'Sensing/Gesture (PAJ7620)' 
+version 1 13 
+depends _Servo NeoPixel 
 description 'External modules of CoCube.
 
 CoCube is a tabletop modular multi-robot platform for education and research.
 https://www.cocubefun.com/
+https://wiki.cocube.fun/
 sliang23@m.fudan.edu.cn
 
 Note: All functions start by turning on pin 13 to power the module.
 The power pin is off by default and is also turned off by the IDE stop button.'
-variables ccmodule_lastDistance 
+variables _cc_cam_init_flag _cc_asr_snc 
 
   spec ' ' 'ccmodule_gripper open' 'gripper open'
   spec ' ' 'ccmodule_gripper close' 'gripper close'
   spec ' ' 'ccmodule_gripper degree' 'gripper degrees _ (0 to 70)' 'num' 0
+  spec ' ' 'ccmodule_gripper stop' 'gripper stop'
   space
   spec ' ' 'ccmodule_attach NeoPixels' 'attach NeoPixels'
   spec ' ' 'ccmodule_set all NeoPixels color' 'set all NeoPixels color _' 'color'
@@ -542,65 +536,92 @@ variables ccmodule_lastDistance
   spec 'r' 'ccmodule_ToF connected' 'ToF connected'
   spec 'r' 'ccmodule_ToF distance' 'ToF distance (mm)'
   space
-  spec 'r' 'ccmodule_gesture connected' '3D gesture connected'
-  spec 'r' 'ccmodule_gesture read' '3D gesture read'
+  spec 'r' 'ccmodule_DLight level' 'DLight level'
+  space
+  spec 'r' 'ccmodule_ASR get command' 'ASR get command'
+  spec ' ' 'ccmodule_ASR play command' 'ASR play command _' 'num' 19
   space
   spec ' ' 'ccmodule_power on module' 'power on module'
   space
-  spec 'r' '_ccmodule_ultrasonic distance' 'ultrasonic distance (mm)'
+  spec ' ' '_ccmodule_check_camera' 'check_camera'
+  spec 'r' 'ccmodule_gesture connected' 'obsolete 3D gesture connected'
+  spec 'r' 'ccmodule_gesture read' 'obsolete 3D gesture read'
+  spec 'r' '_ccmodule_ultrasonic distance' 'obsolete obsolete ultrasonic distance (mm)'
 
-to '_ccmodule_ultrasonic distance' {
-  local 'trig' 21
-  local 'echo' 22
-  comment 'Reset pulse capture system.'
-  local 'ignore' ('[sensors:captureEnd]')
-  digitalWriteOp trig false
-  waitMicros 2
-  digitalWriteOp trig true
-  waitMicros 50
-  digitalWriteOp trig false
-  comment 'Wait for a low-to-high edge on the echo pin.
-Timeout if an edge is not detected. '
-  local 'start' (millisOp)
-  waitUntil (or (not (digitalReadOp echo)) ((millisSince start) > 2))
-  waitUntil (or (digitalReadOp echo) ((millisSince start) > 2))
-  if ((millisSince start) > 2) {
-    comment 'Distance sensor not ready; return the last distance reading'
-    return ccmodule_lastDistance
+to '_ccmodule_check_camera' {
+  if (_cc_cam_init_flag == 1) {
+    '[sensors:i2cWrite]' (hexToInt '58') ('[data:asByteArray]' ('[data:makeList]' (hexToInt '3') 255))
+  } else {
+    stopServo 22
+    digitalWriteOp 13 true
   }
-  comment 'Starting pulse was sent. Measure time until echo is detected.'
-  '[sensors:captureStart]' echo
-  start = (millisOp)
-  waitUntil (or (('[sensors:captureCount]') > 0) ((millisSince start) > 25))
-  comment 'Default value of 23320 usecs reports 4000 mm
-when no echo is detected.'
-  local 'echoMicrosecs' 23320
-  if (('[sensors:captureCount]') > 0) {
-    echoMicrosecs = (absoluteValue (at 1 ('[sensors:captureEnd]')))
+}
+
+to 'ccmodule_ASR get command' {
+  '_ccmodule_check_camera'
+  waitMillis 30
+  '[sensors:i2cWrite]' (hexToInt '64') (hexToInt '2') false
+  local 'data' (newList 2)
+  '[sensors:i2cRead]' (hexToInt '64') data
+  local 'new_asr_snc' (at 1 data)
+  if (_cc_asr_snc != new_asr_snc) {
+    _cc_asr_snc = new_asr_snc
+    return (at 2 data)
+  } else {
+    return 0
   }
-  ccmodule_lastDistance = ((100 * echoMicrosecs) / 583)
-  comment 'Leave some time for reverberations to die away.'
-  waitMillis 10
-  return ccmodule_lastDistance
+}
+
+to 'ccmodule_ASR play command' id {
+  '_ccmodule_check_camera'
+  '[sensors:i2cWrite]' (hexToInt '64') ('[data:asByteArray]' ('[data:makeList]' (hexToInt '3') id (id + 3) (hexToInt '5A')))
+}
+
+to 'ccmodule_DLight level' {
+  if (_cc_cam_init_flag == 1) {
+    '[sensors:i2cWrite]' (hexToInt '58') ('[data:asByteArray]' ('[data:makeList]' (hexToInt '3') 255))
+  } else {
+    stopServo 22
+    digitalWriteOp 13 true
+  }
+  i2cSet (hexToInt '23') 23 (hexToInt '21')
+  read = (newList 2)
+  '[sensors:i2cRead]' (hexToInt '23') read
+  return (((at 1 read) << 8) | (at 2 read))
 }
 
 to 'ccmodule_ToF connected' {
-  stopServo 22
-  digitalWriteOp 13 true
-  return ('VL53L0X connected')
+  '_ccmodule_check_camera'
+  return ((i2cGet 41 (hexToInt 'C0')) == (hexToInt 'EE'))
 }
 
 to 'ccmodule_ToF distance' {
-  stopServo 22
-  digitalWriteOp 13 true
-  return ('VL53L0X distance (mm)')
+  '_ccmodule_check_camera'
+  i2cSet 41 0 1
+  waitMillis 70
+  if (((i2cGet 41 (hexToInt '14')) & 1) == 1) {
+    '[sensors:i2cWrite]' 41 ('[data:makeList]' (hexToInt '14'))
+    local 'buf' (newList 12)
+    '[sensors:i2cRead]' 41 buf
+    if ((at 1 buf) == 95) {
+      return (((at 11 buf) << 8) | (at 12 buf))
+    } else {
+      return -1
+    }
+  } else {
+    return -2
+  }
 }
 
 to 'ccmodule_attach NeoPixels' {
-  stopServo 22
-  digitalWriteOp 13 true
-  waitMillis 10
-  neoPixelAttach 48 22
+  if (_cc_cam_init_flag == 1) {
+    sayIt 'AI camera doesn''t support this module. Please connect directly.'
+  } else {
+    stopServo 22
+    digitalWriteOp 13 true
+    waitMillis 10
+    neoPixelAttach 48 22
+  }
 }
 
 to 'ccmodule_clear NeoPixels' {
@@ -608,38 +629,49 @@ to 'ccmodule_clear NeoPixels' {
   clearNeoPixels
 }
 
-to 'ccmodule_gesture connected' {
-  stopServo 22
-  digitalWriteOp 13 true
-  return ('paj7620 connected')
-}
-
-to 'ccmodule_gesture read' {
-  stopServo 22
-  digitalWriteOp 13 true
-  return ('paj7620 read')
-}
-
 to 'ccmodule_gripper close' {
-  digitalWriteOp 13 true
-  setServoAngle 22 -70
+  if (_cc_cam_init_flag == 1) {
+    '[sensors:i2cWrite]' (hexToInt '58') ('[data:asByteArray]' ('[data:makeList]' (hexToInt '2') 0 28))
+  } else {
+    digitalWriteOp 13 true
+    setServoAngle 22 -70
+  }
 }
 
 to 'ccmodule_gripper degree' degree {
-  digitalWriteOp 13 true
-  local 'var' (degree - 70)
-  if (var < -70) {
-    setServoAngle 22 -70
-  } (var > 0) {
-    setServoAngle 22 0
+  if (_cc_cam_init_flag == 1) {
+    stopServo 22
+    local 'hex' (7168 - ((degree * 2048) / 70))
+    '[sensors:i2cWrite]' (hexToInt '58') ('[data:asByteArray]' ('[data:makeList]' (hexToInt '2') (hex & (hexToInt 'FF')) (hex >> 8)))
   } else {
-    setServoAngle 22 var
+    digitalWriteOp 13 true
+    local 'var' (degree - 70)
+    if (var < -70) {
+      setServoAngle 22 -70
+    } (var > 0) {
+      setServoAngle 22 0
+    } else {
+      setServoAngle 22 var
+    }
   }
 }
 
 to 'ccmodule_gripper open' {
-  digitalWriteOp 13 true
-  setServoAngle 22 0
+  if (_cc_cam_init_flag == 1) {
+    '[sensors:i2cWrite]' (hexToInt '58') ('[data:asByteArray]' ('[data:makeList]' (hexToInt '2') 0 20))
+  } else {
+    digitalWriteOp 13 true
+    setServoAngle 22 0
+  }
+}
+
+to 'ccmodule_gripper stop' {
+  if (_cc_cam_init_flag == 1) {
+    '[sensors:i2cWrite]' (hexToInt '58') ('[data:asByteArray]' ('[data:makeList]' (hexToInt '2') 0 0))
+  } else {
+    digitalWriteOp 13 true
+    stopServo 22
+  }
 }
 
 to 'ccmodule_power on module' {
@@ -986,7 +1018,7 @@ to 'paj7620 read' {
 
 module 'LED Display' Output
 author MicroBlocks
-version 1 13 
+version 1 14 
 choices led_imageMenu heart 'small heart' yes no happy sad confused angry asleep surprised silly fabulous meh 't-shirt' 'roller skate' duck house tortoise butterfly 'stick figure' ghost sword giraffe skull umbrella snake rabbit cow 'quarter note' 'eight note' pitchfork target triangle 'left triangle' 'chess board' diamond 'small diamond' square 'small square' scissors 
 description 'Display primitives for the 5x5 LED display on the BBC micro:bit, Calliope mini and M5Atom Matrix. Boards with TFT displays (such as the Citilab ED1 or the M5Stack family) support these primitives with a simulated "fat pixel" display.
 '
@@ -1004,7 +1036,7 @@ variables _stop_scrolling_text
   spec ' ' 'stopScrollingText' 'stop scrolling'
   advanced
   spec ' ' 'set display color' 'set display color _' 'color'
-  spec 'r' 'led_image' 'led image _' 'microbitDisplay' 15237440
+  spec 'r' 'led_image' 'LED image #BR# _' 'microbitDisplay' 15237440
   space
   spec 'r' '_led_namedImage' '_led_namedImage _' 'menu.led_imageMenu' 'happy'
   spec 'r' '_led_imageData' '_led_imageData'
@@ -1094,7 +1126,7 @@ to stopScrollingText {
 
 module NeoPixel Output
 author MicroBlocks
-version 1 14 
+version 1 15 
 description 'Control NeoPixel (WS2812) RGB LED strips and rings.
 '
 variables _np_pixels _np_pin _np_haswhite 
@@ -1153,7 +1185,7 @@ to '_NeoPixel_ensureInitialized' {
   } ((boardType) == 'D1-Mini') {
     comment 'D1 mini kit'
     neoPixelAttach 7 15 false
-  } ((boardType) == 'FOXBIT') {
+  } ((boardType) == 'Foxbit') {
     neoPixelAttach 35 '' false
   } ((boardType) == 'CodingBox') {
     neoPixelAttach 35 '' false
@@ -1280,115 +1312,16 @@ to setNeoPixelColor i color {
 
 to setNeoPixelColors10 c1 c2 c3 c4 c5 c6 c7 c8 c9 c10 {
   '_NeoPixel_ensureInitialized'
-  if ((size _np_pixels) >= 1) {
-    atPut 1 _np_pixels c1
-  }
-  if ((size _np_pixels) >= 2) {
-    atPut 2 _np_pixels c2
-  }
-  if ((size _np_pixels) >= 3) {
-    atPut 3 _np_pixels c3
-  }
-  if ((size _np_pixels) >= 4) {
-    atPut 4 _np_pixels c4
-  }
-  if ((size _np_pixels) >= 5) {
-    atPut 5 _np_pixels c5
-  }
-  if ((size _np_pixels) >= 6) {
-    atPut 6 _np_pixels c6
-  }
-  if ((size _np_pixels) >= 7) {
-    atPut 7 _np_pixels c7
-  }
-  if ((size _np_pixels) >= 8) {
-    atPut 8 _np_pixels c8
-  }
-  if ((size _np_pixels) >= 9) {
-    atPut 9 _np_pixels c9
-  }
-  if ((size _np_pixels) >= 10) {
-    atPut 10 _np_pixels c10
+  for i (minimum (size _np_pixels) (pushArgCount)) {
+    atPut i _np_pixels (getArg i)
   }
   '_NeoPixel_update'
 }
 
 to setNeoPixelColors25 c1 c2 c3 c4 c5 c6 c7 c8 c9 c10 c11 c12 c13 c14 c15 c16 c17 c18 c19 c20 c21 c22 c23 c24 c25 {
   '_NeoPixel_ensureInitialized'
-  if ((size _np_pixels) >= 1) {
-    atPut 1 _np_pixels c1
-  }
-  if ((size _np_pixels) >= 2) {
-    atPut 2 _np_pixels c2
-  }
-  if ((size _np_pixels) >= 3) {
-    atPut 3 _np_pixels c3
-  }
-  if ((size _np_pixels) >= 4) {
-    atPut 4 _np_pixels c4
-  }
-  if ((size _np_pixels) >= 5) {
-    atPut 5 _np_pixels c5
-  }
-  if ((size _np_pixels) >= 6) {
-    atPut 6 _np_pixels c6
-  }
-  if ((size _np_pixels) >= 7) {
-    atPut 7 _np_pixels c7
-  }
-  if ((size _np_pixels) >= 8) {
-    atPut 8 _np_pixels c8
-  }
-  if ((size _np_pixels) >= 9) {
-    atPut 9 _np_pixels c9
-  }
-  if ((size _np_pixels) >= 10) {
-    atPut 10 _np_pixels c10
-  }
-  if ((size _np_pixels) >= 11) {
-    atPut 11 _np_pixels c11
-  }
-  if ((size _np_pixels) >= 12) {
-    atPut 12 _np_pixels c12
-  }
-  if ((size _np_pixels) >= 13) {
-    atPut 13 _np_pixels c13
-  }
-  if ((size _np_pixels) >= 14) {
-    atPut 14 _np_pixels c14
-  }
-  if ((size _np_pixels) >= 15) {
-    atPut 15 _np_pixels c15
-  }
-  if ((size _np_pixels) >= 16) {
-    atPut 16 _np_pixels c16
-  }
-  if ((size _np_pixels) >= 17) {
-    atPut 17 _np_pixels c17
-  }
-  if ((size _np_pixels) >= 18) {
-    atPut 18 _np_pixels c18
-  }
-  if ((size _np_pixels) >= 19) {
-    atPut 19 _np_pixels c19
-  }
-  if ((size _np_pixels) >= 20) {
-    atPut 20 _np_pixels c20
-  }
-  if ((size _np_pixels) >= 21) {
-    atPut 21 _np_pixels c21
-  }
-  if ((size _np_pixels) >= 22) {
-    atPut 22 _np_pixels c22
-  }
-  if ((size _np_pixels) >= 23) {
-    atPut 23 _np_pixels c23
-  }
-  if ((size _np_pixels) >= 24) {
-    atPut 24 _np_pixels c24
-  }
-  if ((size _np_pixels) >= 25) {
-    atPut 25 _np_pixels c25
+  for i (minimum (size _np_pixels) (pushArgCount)) {
+    atPut i _np_pixels (getArg i)
   }
   '_NeoPixel_update'
 }

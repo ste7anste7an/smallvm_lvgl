@@ -300,6 +300,173 @@ method allBroadcasts MicroBlocksProject {
 	return (toList (sorted (keys result)))
 }
 
+// Collect unused functions
+
+method unusedFunctions MicroBlocksProject paletteBlock {
+	// Return a list of functions that are not used by this project (directly or indirectly).
+	// If the project contains a custom call block, trace the function call if the argument
+	// to the call block is a string constant. Otherise, assume that any function could be
+	// called so there are no unused functions.
+	// The optional paletteBlock argument supports running blocks in the palette.
+
+	// create dictionary with all functions
+	functionCalled = (dictionary)
+	for f (allFunctions this) {
+		atPut functionCalled (functionName f) false
+	}
+
+	scriptsToScan = (toList (copy (scripts main)))
+	if (notNil paletteBlock) {
+		add scriptsToScan (list 0 0 (expression paletteBlock))
+	}
+
+	// mark functions called by scripts
+	todo = (list)
+	for entry scriptsToScan {
+		// a script entry is a three-element list: x, y, script
+		for b (allBlocks (at entry 3)) {
+			op = (primName b)
+			if (isOneOf op 'callCustomCommand' 'callCustomReporter' 'sendBroadcast') {
+				// if argument is a string the call is known; otherwise any function could be called
+				callArg = (first (argList b))
+				if (isClass callArg 'String') {
+					op = callArg
+				} else {
+					return (list)
+				}
+			}
+			if ((at functionCalled op 'notAFunction') == false) {
+				atPut functionCalled op true
+				add todo op
+			}
+		}
+	}
+
+	// mark all reachable functions
+	while (notEmpty todo) {
+		f = (functionNamed this (removeFirst todo))
+		for b (allBlocks (cmdList f)) {
+			op = (primName b)
+			if (isOneOf op 'callCustomCommand' 'callCustomReporter' 'sendBroadcast') {
+				// if argument is a string the call is known; otherwise any function could be called
+				callArg = (first (argList b))
+				if (isClass callArg 'String') {
+					op = callArg
+				} else {
+					return (list)
+				}
+			}
+			if ((at functionCalled op 'notAFunction') == false) {
+				atPut functionCalled op true
+				add todo op
+			}
+		}
+	}
+
+	// remove project user functions from unused list so the decompiler can recover them
+	for f (functions main) {
+		remove functionCalled (functionName f)
+	}
+
+	// return list of uncalled functions
+	result = (list)
+	for k (keys functionCalled) {
+		if (not (at functionCalled k)) { add result k }
+	}
+	return result
+}
+
+method unusedGlobals MicroBlocksProject {
+	// Return a list of global variables that are not used by this project.
+
+	// make a list of globals not owned by any library
+	unusedGlobals = (toList (variableNames main))
+	for lib (values libraries) {
+		for varName (variableNames lib) {
+			remove unusedGlobals varName
+		}
+	}
+
+	// scan scripts
+	for entry (scripts main) {
+		// a script entry is a three-element list: x, y, script
+		for b (allBlocks (at entry 3)) {
+			op = (primName b)
+			if (isOneOf op 'v' '=' '+=') {
+				varName = (first (argList b))
+				remove unusedGlobals varName
+			}
+		}
+	}
+
+	// scan functions
+	for f (allFunctions this) {
+		for b (allBlocks (cmdList f)) {
+			op = (primName b)
+			if (isOneOf op 'v' '=' '+=') {
+				varName = (first (argList b))
+				if (not (or
+					(contains (argNames f) varName)
+					(contains (localNames f) varName))) {
+						remove unusedGlobals varName
+				}
+			}
+		}
+	}
+
+	return unusedGlobals
+}
+
+method globalVarRefsByFunction MicroBlocksProject {
+	// Return a string showing the number of scripts and/or functions use each global variable.
+
+	// make a dictionary of globals not owned by any library
+	// each entry is a list, initially empty, of the functions that use the variable
+	varUsers = (dictionary)
+	for v (variableNames main) {
+		atPut varUsers v (list)
+	}
+	for lib (values libraries) {
+		for varName (variableNames lib) {
+			remove varUsers varName
+		}
+	}
+
+	// scan scripts
+	for entry (scripts main) {
+		// a script entry is a three-element list: x, y, script
+		for b (allBlocks (at entry 3)) {
+			op = (primName b)
+			if (isOneOf op 'v' '=' '+=') {
+				varName = (first (argList b))
+				varUserList = (at varUsers varName)
+				if (notNil varUserList) {
+					add varUserList 'script'
+				}
+			}
+		}
+	}
+
+	// scan functions
+	for f (allFunctions this) {
+		for v (globalVarsUsed f) {
+			varUserList = (at varUsers v)
+			if (notNil varUserList) {
+				add varUserList (functionName f)
+			}
+		}
+	}
+
+	result = (list)
+	for v (sorted (keys varUsers)) {
+		varUserList = (at varUsers v)
+		if ((count varUserList) < 2) {
+			add result (join '''' v ''' -> ' (joinStrings varUserList ' '))
+		}
+	}
+	return (joinStrings result (newline))
+}
+
 // Loading
 
 method loadFromOldProjectClassAndSpecs MicroBlocksProject aClass specList {

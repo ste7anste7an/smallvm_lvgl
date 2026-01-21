@@ -655,7 +655,7 @@ static void runTask(Task *task) {
 			}
 			goto suspend;
 		}
-		// tmp encodes the error location: <22 bit ip><8 bit chunkIndex>
+		// tmp encodes the error location: <16 bit ip><8 bit chunkIndex>
 		tmp = ((ip - (int16 *) task->code) << 8) | (task->currentChunkIndex & 0xFF);
 		sendTaskError(task->taskChunkIndex, errorCode, tmp);
 		task->status = unusedTask;

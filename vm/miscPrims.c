@@ -804,7 +804,6 @@ static PrimEntry entries[] = {
 	{"rescale", primRescale},
 	{"connectedToIDE", primConnectedToIDE},
 	{"broadcastToIDE", primBroadcastToIDEOnly},
-	{"bme680GasResistance", primBMP680GasResistance},
 	{"shapeforChar", primShapeforChar},
 	{"clearGraph", primClearGraph},
 	{"functionExists", primFunctionExists},
@@ -825,6 +824,7 @@ static PrimEntry entries[] = {
 	{"brightness", primColorBrightness},
 	{"atan2", primArctan},
 	{"pressureToAltitude", primPressureToAltitude},
+	{"bme680GasResistance", primBMP680GasResistance},
 #endif
 	{"jsonGet", primJSONGet},
 	{"jsonCount", primJSONCount},

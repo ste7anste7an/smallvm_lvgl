@@ -51,7 +51,7 @@ to 'happy-birthday' {
   waitMillis half
 }
 
-script 55 50 {
+script 50 50 {
 whenButtonPressed 'A'
 comment 'On a micro:bit, attach a piezo speaker between pin 0 and ground'
 comment 'This will use the built-in speaker on boards that have one
@@ -61,19 +61,19 @@ sendBroadcast 'show message'
 'and-many-more'
 }
 
-script 267 181 {
+script 284 199 {
 comment 'To see what each of these block does, right click
 on it and select "show block definition..."'
 'happy-birthday'
 'and-many-more'
 }
 
-script 438 250 {
+script 450 252 {
 whenBroadcastReceived 'show message'
 scroll_text 'HAPPY BIRTHDAY!'
 }
 
-script 55 301 {
+script 50 301 {
 whenStarted
 comment 'Works out of the box on the Adafruit Circuit Playground Express.
 
@@ -93,7 +93,7 @@ forever {
 
 module 'LED Display' Output
 author MicroBlocks
-version 1 13 
+version 1 14 
 choices led_imageMenu heart 'small heart' yes no happy sad confused angry asleep surprised silly fabulous meh 't-shirt' 'roller skate' duck house tortoise butterfly 'stick figure' ghost sword giraffe skull umbrella snake rabbit cow 'quarter note' 'eight note' pitchfork target triangle 'left triangle' 'chess board' diamond 'small diamond' square 'small square' scissors 
 description 'Display primitives for the 5x5 LED display on the BBC micro:bit, Calliope mini and M5Atom Matrix. Boards with TFT displays (such as the Citilab ED1 or the M5Stack family) support these primitives with a simulated "fat pixel" display.
 '
@@ -111,7 +111,7 @@ variables _stop_scrolling_text
   spec ' ' 'stopScrollingText' 'stop scrolling'
   advanced
   spec ' ' 'set display color' 'set display color _' 'color'
-  spec 'r' 'led_image' 'led image _' 'microbitDisplay' 15237440
+  spec 'r' 'led_image' 'LED image #BR# _' 'microbitDisplay' 15237440
   space
   spec 'r' '_led_namedImage' '_led_namedImage _' 'menu.led_imageMenu' 'happy'
   spec 'r' '_led_imageData' '_led_imageData'
@@ -201,7 +201,7 @@ to stopScrollingText {
 
 module NeoPixel Output
 author MicroBlocks
-version 1 14 
+version 1 15 
 description 'Control NeoPixel (WS2812) RGB LED strips and rings.
 '
 variables _np_pixels _np_pin _np_haswhite 
@@ -260,7 +260,7 @@ to '_NeoPixel_ensureInitialized' {
   } ((boardType) == 'D1-Mini') {
     comment 'D1 mini kit'
     neoPixelAttach 7 15 false
-  } ((boardType) == 'FOXBIT') {
+  } ((boardType) == 'Foxbit') {
     neoPixelAttach 35 '' false
   } ((boardType) == 'CodingBox') {
     neoPixelAttach 35 '' false
@@ -387,115 +387,16 @@ to setNeoPixelColor i color {
 
 to setNeoPixelColors10 c1 c2 c3 c4 c5 c6 c7 c8 c9 c10 {
   '_NeoPixel_ensureInitialized'
-  if ((size _np_pixels) >= 1) {
-    atPut 1 _np_pixels c1
-  }
-  if ((size _np_pixels) >= 2) {
-    atPut 2 _np_pixels c2
-  }
-  if ((size _np_pixels) >= 3) {
-    atPut 3 _np_pixels c3
-  }
-  if ((size _np_pixels) >= 4) {
-    atPut 4 _np_pixels c4
-  }
-  if ((size _np_pixels) >= 5) {
-    atPut 5 _np_pixels c5
-  }
-  if ((size _np_pixels) >= 6) {
-    atPut 6 _np_pixels c6
-  }
-  if ((size _np_pixels) >= 7) {
-    atPut 7 _np_pixels c7
-  }
-  if ((size _np_pixels) >= 8) {
-    atPut 8 _np_pixels c8
-  }
-  if ((size _np_pixels) >= 9) {
-    atPut 9 _np_pixels c9
-  }
-  if ((size _np_pixels) >= 10) {
-    atPut 10 _np_pixels c10
+  for i (minimum (size _np_pixels) (pushArgCount)) {
+    atPut i _np_pixels (getArg i)
   }
   '_NeoPixel_update'
 }
 
 to setNeoPixelColors25 c1 c2 c3 c4 c5 c6 c7 c8 c9 c10 c11 c12 c13 c14 c15 c16 c17 c18 c19 c20 c21 c22 c23 c24 c25 {
   '_NeoPixel_ensureInitialized'
-  if ((size _np_pixels) >= 1) {
-    atPut 1 _np_pixels c1
-  }
-  if ((size _np_pixels) >= 2) {
-    atPut 2 _np_pixels c2
-  }
-  if ((size _np_pixels) >= 3) {
-    atPut 3 _np_pixels c3
-  }
-  if ((size _np_pixels) >= 4) {
-    atPut 4 _np_pixels c4
-  }
-  if ((size _np_pixels) >= 5) {
-    atPut 5 _np_pixels c5
-  }
-  if ((size _np_pixels) >= 6) {
-    atPut 6 _np_pixels c6
-  }
-  if ((size _np_pixels) >= 7) {
-    atPut 7 _np_pixels c7
-  }
-  if ((size _np_pixels) >= 8) {
-    atPut 8 _np_pixels c8
-  }
-  if ((size _np_pixels) >= 9) {
-    atPut 9 _np_pixels c9
-  }
-  if ((size _np_pixels) >= 10) {
-    atPut 10 _np_pixels c10
-  }
-  if ((size _np_pixels) >= 11) {
-    atPut 11 _np_pixels c11
-  }
-  if ((size _np_pixels) >= 12) {
-    atPut 12 _np_pixels c12
-  }
-  if ((size _np_pixels) >= 13) {
-    atPut 13 _np_pixels c13
-  }
-  if ((size _np_pixels) >= 14) {
-    atPut 14 _np_pixels c14
-  }
-  if ((size _np_pixels) >= 15) {
-    atPut 15 _np_pixels c15
-  }
-  if ((size _np_pixels) >= 16) {
-    atPut 16 _np_pixels c16
-  }
-  if ((size _np_pixels) >= 17) {
-    atPut 17 _np_pixels c17
-  }
-  if ((size _np_pixels) >= 18) {
-    atPut 18 _np_pixels c18
-  }
-  if ((size _np_pixels) >= 19) {
-    atPut 19 _np_pixels c19
-  }
-  if ((size _np_pixels) >= 20) {
-    atPut 20 _np_pixels c20
-  }
-  if ((size _np_pixels) >= 21) {
-    atPut 21 _np_pixels c21
-  }
-  if ((size _np_pixels) >= 22) {
-    atPut 22 _np_pixels c22
-  }
-  if ((size _np_pixels) >= 23) {
-    atPut 23 _np_pixels c23
-  }
-  if ((size _np_pixels) >= 24) {
-    atPut 24 _np_pixels c24
-  }
-  if ((size _np_pixels) >= 25) {
-    atPut 25 _np_pixels c25
+  for i (minimum (size _np_pixels) (pushArgCount)) {
+    atPut i _np_pixels (getArg i)
   }
   '_NeoPixel_update'
 }

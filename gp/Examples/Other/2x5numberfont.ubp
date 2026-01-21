@@ -16,7 +16,7 @@ to '2x5 number font' number {
   led_displayImage (at ((at 2 temp) + 1) font) 4 1
 }
 
-script 66 66 {
+script 66 56 {
 whenStarted
 for i ('[data:range]' 0 99) {
   '2x5 number font' i
@@ -24,27 +24,27 @@ for i ('[data:range]' 0 99) {
 }
 }
 
-script 358 72 {
+script 358 62 {
 comment 'The 2x5 number font block makes it possible to display numbers from 00 to 99 on a 5 x 5 led display.
 
 The font was originally made by David Whale in 2017 and he called it WhaleySans.'
 }
 
-script 509 163 {
+script 509 153 {
 comment 'The numbers in the font list are the integer representations of the images 
 that you can see below. So you could replace the list with numbers, with 
 the list block below and get the same result. '
 comment ('[data:makeList]' (led_image 3247203) (led_image 2164802) (led_image 3181635) (led_image 3214403) (led_image 2165793) (led_image 3214371) (led_image 3247139) (led_image 2164803) (led_image 3244131) (led_image 3214435))
 }
 
-script 68 250 {
+script 68 240 {
 to '2x5 number font' {}
 }
 
 
 module 'LED Display' Output
 author MicroBlocks
-version 1 13 
+version 1 14 
 choices led_imageMenu heart 'small heart' yes no happy sad confused angry asleep surprised silly fabulous meh 't-shirt' 'roller skate' duck house tortoise butterfly 'stick figure' ghost sword giraffe skull umbrella snake rabbit cow 'quarter note' 'eight note' pitchfork target triangle 'left triangle' 'chess board' diamond 'small diamond' square 'small square' scissors 
 description 'Display primitives for the 5x5 LED display on the BBC micro:bit, Calliope mini and M5Atom Matrix. Boards with TFT displays (such as the Citilab ED1 or the M5Stack family) support these primitives with a simulated "fat pixel" display.
 '

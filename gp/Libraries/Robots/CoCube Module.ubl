@@ -1,7 +1,7 @@
 module 'CoCube Module'
 author 'Liang Shuai'
-version 1 12 
-depends _Servo NeoPixel 'Robots/CoCube' '_Sensing/Distance (VL53L0X)' '_Sensing/Gesture (PAJ7620)' 
+version 1 13 
+depends _Servo NeoPixel 
 description 'External modules of CoCube.
 
 CoCube is a tabletop modular multi-robot platform for education and research.
@@ -29,9 +29,6 @@ variables _cc_cam_init_flag _cc_asr_snc
   space
   spec 'r' 'ccmodule_ASR get command' 'ASR get command'
   spec ' ' 'ccmodule_ASR play command' 'ASR play command _' 'num' 19
-  space
-  spec 'r' 'ccmodule_gesture connected' '3D gesture connected'
-  spec 'r' 'ccmodule_gesture read' '3D gesture read'
   space
   spec ' ' 'ccmodule_power on module' 'power on module'
   space
@@ -81,12 +78,25 @@ to 'ccmodule_DLight level' {
 
 to 'ccmodule_ToF connected' {
   '_ccmodule_check_camera'
-  return ('VL53L0X connected')
+  return ((i2cGet 41 (hexToInt 'C0')) == (hexToInt 'EE'))
 }
 
 to 'ccmodule_ToF distance' {
   '_ccmodule_check_camera'
-  return ('VL53L0X distance (mm)')
+  i2cSet 41 0 1
+  waitMillis 70
+  if (((i2cGet 41 (hexToInt '14')) & 1) == 1) {
+    '[sensors:i2cWrite]' 41 ('[data:makeList]' (hexToInt '14'))
+    local 'buf' (newList 12)
+    '[sensors:i2cRead]' 41 buf
+    if ((at 1 buf) == 95) {
+      return (((at 11 buf) << 8) | (at 12 buf))
+    } else {
+      return -1
+    }
+  } else {
+    return -2
+  }
 }
 
 to 'ccmodule_attach NeoPixels' {
@@ -103,16 +113,6 @@ to 'ccmodule_attach NeoPixels' {
 to 'ccmodule_clear NeoPixels' {
   digitalWriteOp 13 true
   clearNeoPixels
-}
-
-to 'ccmodule_gesture connected' {
-  '_ccmodule_check_camera'
-  return ('paj7620 connected')
-}
-
-to 'ccmodule_gesture read' {
-  '_ccmodule_check_camera'
-  return ('paj7620 read')
 }
 
 to 'ccmodule_gripper close' {

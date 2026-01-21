@@ -1434,7 +1434,7 @@ msgid "set display color _"
 msgstr ""
 
 #. 5x5 LED Display library block
-msgid "led image _"
+msgid "LED image #BR# _"
 msgstr ""
 
 #. 5x5 LED Display library block
@@ -6427,11 +6427,23 @@ msgid "erase flash and update firmware on ESP board"
 msgstr ""
 
 #. Settings menu option
+msgid "open vm folder on microblocks.fun"
+msgstr ""
+
+#. Settings menu option
 msgid "install ESP firmware from URL"
 msgstr ""
 
 #. Settings menu option
 msgid "install ESP firmware from microblocks.fun"
+msgstr ""
+
+#. Settings menu option
+msgid "show program size on board"
+msgstr ""
+
+#. Program size information
+msgid "Using %1 out of %2 bytes"
 msgstr ""
 
 #. Firmware install board type confirmation. As in "Use board type micro:bit?"
@@ -6556,6 +6568,14 @@ msgid "clear graph"
 msgstr ""
 
 #. Graph context menu option
+msgid "increase range"
+msgstr ""
+
+#. Graph context menu option
+msgid "decrease range"
+msgstr ""
+
+#. Graph context menu option
 msgid "zero at bottom"
 msgstr ""
 
@@ -6573,6 +6593,10 @@ msgstr ""
 
 #. Graph context menu option
 msgid "copy graph data to clipboard"
+msgstr ""
+
+#. Script right-click context menu
+msgid "copy callable name"
 msgstr ""
 
 #. Script right-click context menu

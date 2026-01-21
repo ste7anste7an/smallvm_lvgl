@@ -16,8 +16,9 @@
 #include "mem.h"
 #include "interp.h"
 
-#if defined(PICO_ED) || defined(XRP) || defined(GIZMO_MECHATRONICS)
-	#define Wire Wire1
+#if defined(PICO_ED) || defined(XRP) || defined(GIZMO_MECHATRONICS) || \
+	defined(ARDUINO_SEEED_XIAO_RP2350)
+		#define Wire Wire1
 #endif
 
 #if defined(MAKERPORT_V2) || defined(MAKERPORT_V3)
@@ -51,6 +52,9 @@
 #elif defined(ARDUINO_M5Stack_ATOMS3)
 	#define PIN_WIRE_SCL 1
 	#define PIN_WIRE_SDA 2
+#elif defined(ARDUINO_SEEED_XIAO_RP2350)
+	#define PIN_WIRE_SCL 7
+	#define PIN_WIRE_SDA 6
 #elif defined(DUELink)
 	// 0 and 1 are edge connector pins 19 and 20 or DUELink standard pins 16 and 15
 	#define PIN_WIRE_SCL 1

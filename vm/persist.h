@@ -39,7 +39,8 @@ void clearPersistentMemory();
 int * recordAfter(int *lastRecord);
 void restoreScripts();
 int *scanStart();
-void compactCodeStore();
+void compactCodeStore(int *codeStoreUsed, int *codeStoreTotal);
+void outputRecordHeaders();
 
 #ifdef EMSCRIPTEN
 int *ramStart();

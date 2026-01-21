@@ -170,7 +170,7 @@ const char * boardType() {
 
 // Grab ublockscode as a base64 URL
 void EMSCRIPTEN_KEEPALIVE getScripts() {
-	compactCodeStore();
+	compactCodeStore(NULL, NULL);
 	EM_ASM_({
 		console.log(
 			Module['base64Encode'](HEAP8.subarray($0, $0 + $1), true)

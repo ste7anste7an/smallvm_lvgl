@@ -1260,36 +1260,56 @@ to color_withSaturation color saturation {
 
 
 module 'Distance (HC-SR04)' Input
-author 'Joan Guillén & Josep Ferràndiz'
-version 1 4 
+author MicroBlocks
+version 1 5 
 tags sensor 'hc-sr04' distance ultrasound 
-description 'Support for the HC-SR04 ultrasound distance sensor.'
-variables _sr04_last 
+description 'Support for the HC-SR04 ultrasound distance sensor.
+
+Originally written by Joan Guillén & Josep Ferràndiz.
+Rewritten to use the new pulse capture mechanism.'
+variables _sr04_last _sr04_misses 
 
   spec 'r' 'distance (cm)' 'distance (cm) trigger _ echo _' 'num num' 2 4
   spec 'r' 'sr04_distanceOnePin' 'distance (cm) pin _' 'num' 0
+  spec 'r' '_sr04_getEchoData' '_getEchoData _ echo _' 'auto auto' 0 1
 
-to 'distance (cm)' trig ech {
-  comment 'Contributed by Joan Guillén and Josep Ferràndiz'
+to '_sr04_getEchoData' trig echo {
+  comment 'Output a 50 usec pulse on trigger pin to
+start distance measurement.'
   digitalWriteOp trig false
   waitMicros 2
   digitalWriteOp trig true
   waitMicros 50
   digitalWriteOp trig false
-  local 'start' (microsOp)
-  waitUntil (or (not (digitalReadOp ech)) (((microsOp) - start) > 23320))
-  waitUntil (or (digitalReadOp ech) (((microsOp) - start) > 23320))
-  if (((microsOp) - start) > 23320) {
-    comment 'Distance sensor not ready; return the last distance reading'
-    return _sr04_last
+  comment 'Capture the distance pulse. Width of
+pulse is proportional to the distance.'
+  '[sensors:captureStart]' echo
+  local 'start' (millisOp)
+  repeatUntil (('[sensors:captureCount]') >= 2) {
+    if ((millisSince start) > 24) {exitLoop}
+    waitMillis 1
   }
-  comment 'Pulse sent. Measure time until echo is detected.'
-  start = (microsOp)
-  waitUntil (or (not (digitalReadOp ech)) (((microsOp) - start) > 23320))
-  _sr04_last = ((10 * ((microsOp) - start)) / 583)
-  comment 'Leave some time for reverberations to die away.'
-  waitMillis 10
-  return _sr04_last
+  return ('[sensors:captureEnd]')
+}
+
+to 'distance (cm)' trig echo {
+  comment 'Take a distance measurement. Pulses will be two element
+list if successful. If no echo detected it will have only one
+element. In rare error cases the second item will be negative.'
+  local 'pulses' ('_sr04_getEchoData' trig echo)
+  if (and ((size pulses) >= 2) ((at 2 pulses) > 0)) {
+    _sr04_misses = 0
+    comment 'The divisor was determined empirically. It is
+less than the expected 2 * 343 meter/sec.'
+    _sr04_last = ((10 * (at 2 pulses)) / 583)
+    return _sr04_last
+  } else {
+    comment 'No echo, probably because target is out of range.
+To avoid short-term glitches, return the last distance
+unless the are N misses in a row, then return 400.'
+    _sr04_misses += 1
+    return (ifExpression (_sr04_misses < 10) _sr04_last 400)
+  }
 }
 
 to sr04_distanceOnePin pin {

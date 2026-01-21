@@ -80,8 +80,15 @@
 
 #if defined(ARDUINO_ARCH_ESP32)
 	static OBJ *objstore = NULL; // allocated from heap on ESP32
+
+	#include <esp_heap_caps.h>
+	int hasPSRAM() {
+		return heap_caps_get_total_size(MALLOC_CAP_SPIRAM) > 0;
+	}
 #else
 	static OBJ objstore[OBJSTORE_WORDS];
+
+	int hasPSRAM() { return false; }
 #endif
 
 static OBJ memStart = NULL;

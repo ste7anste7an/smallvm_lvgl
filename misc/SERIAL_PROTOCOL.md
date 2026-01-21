@@ -140,7 +140,7 @@ implemented, it will just reset the hardware;
 the program will persist.
 
 
-## Board → IDE (OpCodes 0x10 to 0x16)
+## Board → IDE (OpCodes 0x10 to 0x19)
 
 The board sends task status change and output messages
 without being asked and regardless of whether it is tethered.
@@ -192,11 +192,14 @@ Return the four-byte CRC-32 (cyclic redundancy check) of the given chunk.
 
 ### Clear Graph (OpCode: 0x18)
 
-### *Reserved* (OpCode 0x19)
+Tells IDE to clear the graph data.
 
-Reserved for additional Board → IDE messages.
+### Code Store Full (OpCode 0x19)
 
-## Bidirectional (OpCode: 0x1A to 0x1F)
+Indicates that the code store is full even after compaction.
+
+
+## Bidirectional (OpCode: 0x1A to 0x1D)
 
 ### Ping (OpCode: 0x1A)
 
@@ -223,6 +226,9 @@ The first byte of the body is the attribute type, current:
 
 The name of the variable with the given ID. Body is a string.
 
+
+## Other Messages (OpCode: 0x1E to 0x25)
+
 ### Extended Message (OpCode: 0x1E, long message)
 
 The ID specifies the extended message type. The format depends on the message type:
@@ -241,10 +247,14 @@ Body contains the 16-bit binary code for the given chunkID.
 This message is also used to return chunk code to the IDE
 in response to the Get All Code message.
 
+### Code Space Used (OpCode: 0x21; long message; board -> IDE)
 
-### *Reserved* (OpCodes 0x20-0x25)
+Body contains two 32-bit integers (LSB first):
+<code space used (bytes)><total code space (bytes)>
 
-Reserved for additional Bidirectional messages.
+### *Reserved* (OpCodes 0x22-0x25)
+
+Reserved for additional messages.
 
 
 ## CRC Exchange

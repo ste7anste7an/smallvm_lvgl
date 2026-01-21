@@ -1,7 +1,7 @@
 module CoCube
 author 'Liang Shuai'
-version 2 16 
-depends Tone Display TFT '_Motors/PID' 
+version 2 17 
+depends Tone Display TFT '_Motors/PID' 'Robots/CoCube Module' 
 tags 'cocube robot' 
 choices cocube_rotate_Menu 'cocube;left' 'cocube;right' 
 choices cocube_move_Menu 'cocube;forward' 'cocube;backward' 
@@ -26,6 +26,7 @@ v2.13 Optimize "set wheel" function
 v2.14 Improve the accuracy of move_to_target and optimize the loop exit mechanism
 v2.15 Remove "set TFT backlight" function
 v2.16 Change PID global variables into local
+v2.17 Modify the movement function on the map
 '
 variables _cocube_set_right_speed _cocube_set_left_speed _cocube_error_angle _cocube_pid_flag _cocube_error_distance _cocube_error_y _cocube_error_x _cocube_target_angle 
 
@@ -102,20 +103,26 @@ to 'CoCube move' direction speed {
 }
 
 to 'CoCube move by step' direction speed steps {
+  _cocube_move_flag = (booleanConstant true)
   if ('CoCube on the mat') {
     local 'begin_x' ('CoCube position_X')
     local 'begin_y' ('CoCube position_Y')
     'CoCube move' direction speed
     forever {
-      '_cocube_calculate_distance_error target_x _ target_y _' begin_x begin_y
-      if ((steps - _cocube_error_distance) < 2) {
-        'CoCube wheels break'
+      if _cocube_move_flag {
+        '_cocube_calculate_distance_error target_x _ target_y _' begin_x begin_y
+        if ((steps - _cocube_error_distance) < 2) {
+          'CoCube wheels break'
+          exitLoop
+        }
+      } else {
         exitLoop
       }
     }
   } else {
     sayIt 'Please put CoCube on CoMaps'
   }
+  _cocube_move_flag = (booleanConstant false)
 }
 
 to 'CoCube move for msecs' direction speed time {
@@ -125,22 +132,24 @@ to 'CoCube move for msecs' direction speed time {
 }
 
 to 'CoCube move to' target_x target_y speed {
-  if ('CoCube on the mat') {
-    '_cocube_calculate_distance_error target_x _ target_y _' target_x target_y
-    if (_cocube_error_distance > 2) {
-      'CoCube point towards' target_x target_y speed
-      repeatUntil (_cocube_error_distance < 2) {
+  _cocube_move_flag = (booleanConstant true)
+  '_cocube_calculate_distance_error target_x _ target_y _' target_x target_y
+  if (_cocube_error_distance > 3) {
+    'CoCube point towards' target_x target_y speed
+    repeatUntil (_cocube_error_distance < 3) {
+      if _cocube_move_flag {
         '_cocube_calculate_distance_error target_x _ target_y _' target_x target_y
         _cocube_target_angle = (('[misc:atan2]' _cocube_error_y _cocube_error_x) / 100)
         '_cocube_calculate_angle_error_' _cocube_target_angle
         'CoCube set wheel' (speed - ((speed * _cocube_error_angle) / 20)) (speed + ((speed * _cocube_error_angle) / 20))
         waitMillis 10
+      } else {
+        exitLoop
       }
-      'CoCube wheels break'
     }
-  } else {
-    sayIt 'Please put CoCube on CoMaps'
+    'CoCube wheels break'
   }
+  _cocube_move_flag = (booleanConstant false)
 }
 
 to 'CoCube on the mat' {
@@ -169,29 +178,35 @@ to 'CoCube rotate' direction speed {
 }
 
 to 'CoCube rotate by degree' direction speed degree {
+  _cocube_move_flag = (booleanConstant true)
   if ('CoCube on the mat') {
     local 'begin_degree' ('CoCube direction')
     forever {
-      if (direction == 'cocube;left') {
-        '_cocube_calculate_angle_error_' (begin_degree + degree)
+      if _cocube_move_flag {
+        if (direction == 'cocube;left') {
+          '_cocube_calculate_angle_error_' (begin_degree + degree)
+        } else {
+          '_cocube_calculate_angle_error_' (begin_degree - degree)
+        }
+        if (_cocube_error_angle > 1) {
+          comment 'turn left'
+          '_cocube_motors_speed' (0 - speed) speed
+        } (_cocube_error_angle < -1) {
+          comment 'turn right'
+          '_cocube_motors_speed' speed (0 - speed)
+        } else {
+          comment 'motors break'
+          'CoCube wheels break'
+          exitLoop
+        }
       } else {
-        '_cocube_calculate_angle_error_' (begin_degree - degree)
-      }
-      if (_cocube_error_angle > 1) {
-        comment 'turn left'
-        '_cocube_motors_speed' (0 - speed) speed
-      } (_cocube_error_angle < -1) {
-        comment 'turn right'
-        '_cocube_motors_speed' speed (0 - speed)
-      } else {
-        comment 'motors break'
-        'CoCube wheels break'
         exitLoop
       }
     }
   } else {
     sayIt 'Please put CoCube on CoMaps'
   }
+  _cocube_move_flag = (booleanConstant false)
 }
 
 to 'CoCube rotate for msecs' direction speed time {
@@ -201,9 +216,10 @@ to 'CoCube rotate for msecs' direction speed time {
 }
 
 to 'CoCube rotate to angle' angle speed {
-  if ('CoCube on the mat') {
-    local 'abs_speed' (absoluteValue speed)
-    forever {
+  local 'abs_speed' (absoluteValue speed)
+  _cocube_move_flag = (booleanConstant true)
+  forever {
+    if _cocube_move_flag {
       '_cocube_calculate_angle_error_' angle
       if (_cocube_error_angle > 1) {
         comment 'turn left'
@@ -213,12 +229,20 @@ to 'CoCube rotate to angle' angle speed {
         '_cocube_motors_speed' abs_speed (0 - abs_speed)
       } else {
         comment 'motors break'
-        'CoCube wheels break'
+        digitalWriteOp 9 true
+        digitalWriteOp 10 true
+        digitalWriteOp 26 true
+        digitalWriteOp 25 true
+        waitMillis 99
+        digitalWriteOp 9 false
+        digitalWriteOp 10 false
+        digitalWriteOp 26 false
+        digitalWriteOp 25 false
         exitLoop
       }
+    } else {
+      exitLoop
     }
-  } else {
-    sayIt 'Please put CoCube on CoMaps'
   }
 }
 
@@ -237,6 +261,7 @@ to 'CoCube set wheel' speed_left speed_right {
 
 to 'CoCube wheels break' {
   _cocube_pid_flag = (booleanConstant false)
+  _cocube_move_flag = (booleanConstant false)
   waitMillis 1
   digitalWriteOp 9 true
   digitalWriteOp 10 true
@@ -251,6 +276,8 @@ to 'CoCube wheels break' {
 
 to 'CoCube wheels stop' {
   _cocube_pid_flag = (booleanConstant false)
+  _cocube_move_flag = (booleanConstant false)
+  waitMillis 1
   digitalWriteOp 9 false
   digitalWriteOp 10 false
   digitalWriteOp 26 false

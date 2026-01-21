@@ -16,8 +16,10 @@
 #include "mem.h"
 #include "interp.h"
 
-int useTFT = false;
+int useTFT = false; // simulate 5x5 LED display on TFT display
 int isOLED1106 = false;
+
+static int hasOLED = false;
 static int touchEnabled = false;
 static int deferUpdates = false;
 
@@ -514,9 +516,10 @@ static int deferUpdates = false;
 			uint16_t x, y;
 			uint8_t pressure;
 			ts.readData(&x, &y, &pressure);
-// 			x = (320 * (x - 256)) / 10;
-// 			if (x < 0) x = 0;
-// 			if (x > 320) x = 320;
+			x -= 460;
+			x = (320 * x) / 3150;
+			if (x < 0) x = 0;
+			if (x > 320) x = 320;
 			return x;
 		}
 
@@ -526,18 +529,20 @@ static int deferUpdates = false;
 			uint16_t x, y;
 			uint8_t pressure;
 			ts.readData(&x, &y, &pressure);
-// 			y = (240 * (y - 274)) / 14;
-// 			if (y < 0) y = 0;
-// 			if (y > 240) y = 240;
+			y -= 580;
+			y = 240 - ((240 * y) / 2900);
+			if (y < 0) y = 0;
+			if (y > 240) y = 240;
 			return y;
 		}
 
 		static int screenTouchPressure() {
 			if (!touchEnabled) touchInit();
 			if (!ts.touched()) { return -1; }
-			uint16_t x, y;
-			uint8_t pressure;
-			ts.readData(&x, &y, &pressure);
+			TS_Point p = ts.getPoint();
+			int pressure = (100 * (p.z - 1000)) / 2000; // pressure: 0-100
+			if (pressure < 0) pressure = 0;
+			if (pressure > 100) pressure = 100;
 			return pressure;
 		}
 
@@ -1159,7 +1164,10 @@ static int deferUpdates = false;
 			oledCmd(0x81);
 			oledCmd(0x80);
 
-			useTFT = true;
+			hasOLED = true;
+			#if defined(KIDS_BITS)
+				useTFT = true; // simulate TFT on KidsBits OLED display
+			#endif
 			tftClear();
 		}
 
@@ -1546,7 +1554,7 @@ static int deferUpdates = false;
 
 static int hasTFT() {
 	#if defined(OLED_128_64)
-		if (!useTFT) tftInit();
+		return hasOLED;
 	#endif
 	char s[100];
 	sprintf(s,"in hasTFT(): useTFT %d",useTFT);
@@ -1605,12 +1613,6 @@ void tftClear() {
 void tftSetHugePixel(int x, int y, int state) {
 	if (!useTFT) return;
 
-	#if defined(ARDUINO_BBC_MICROBIT) || defined(ARDUINO_BBC_MICROBIT_V2) || \
-		defined(ARDUINO_CALLIOPE_MINI) || defined(CALLIOPE_V3)
-			// allow independent use of OLED and micro:bit display
-			return;
-	#endif
-
 	// simulate a 5x5 array of square pixels like the micro:bit LED array
 	#if defined(PICO_ED)
 		if ((1 <= x) && (x <= 5) && (1 <= y) && (y <= 5)) {
@@ -1640,11 +1642,6 @@ void tftSetHugePixel(int x, int y, int state) {
 
 void tftSetHugePixelBits(int bits) {
 	if (!useTFT) return;
-
-	#if defined(ARDUINO_BBC_MICROBIT) || defined(ARDUINO_BBC_MICROBIT_V2)
-		// allow independent use TFT and micro:bit display
-		return;
-	#endif
 
 	#if defined(PICO_ED)
 		tft.clearDisplayBuffer();
@@ -2002,7 +1999,7 @@ const int april_bit_y[52] = {
 	9, 9, 9, 9, 9, 9, 9, 9, 9, 6, 6, 6, 5, 9, 8, 7, 6, 5, 4, 3, 2, 1, 6, 5, 4, 5};
 
 static OBJ primAruco(int argCount, OBJ *args) {
-	if (!useTFT) return falseObj;
+	if (!hasTFT()) return falseObj;
 
 	int aruco_id = evalInt(args[0]);
 	if (aruco_id >= 100) {
@@ -2043,7 +2040,7 @@ static OBJ primAruco(int argCount, OBJ *args) {
 }
 
 static OBJ primAprilTag(int argCount, OBJ *args) {
-	if (!useTFT) return falseObj;
+	if (!hasTFT()) return falseObj;
 
 	int tag_id = evalInt(args[0]);
 	if (tag_id >= 100) {
@@ -2085,13 +2082,13 @@ static OBJ primAprilTag(int argCount, OBJ *args) {
 // display update control
 
 OBJ primDeferUpdates(int argCount, OBJ *args) {
-	if (!useTFT) return falseObj;
+	if (!hasTFT()) return falseObj;
 	deferUpdates = true;
 	return falseObj;
 }
 
 OBJ primResumeUpdates(int argCount, OBJ *args) {
-	if (!useTFT) return falseObj;
+	if (!hasTFT()) return falseObj;
 	deferUpdates = false;
 	UPDATE_DISPLAY();
 	return falseObj;
