@@ -1019,8 +1019,8 @@ extern "C" void esp8266DeepSleep(uint64_t usecs) {
 	#define PIN_LED_R 4
 	#define PIN_LED_G 16
 	#define PIN_LED_B 17
-	#define PIN_LED -1
-	//#define INVERT_USER_LED true
+	#define PIN_LED 4
+	#define INVERT_USER_LED true
 	
 	#if !defined(PIN_BUTTON_A)
 		#if defined(KEY_BUILTIN)

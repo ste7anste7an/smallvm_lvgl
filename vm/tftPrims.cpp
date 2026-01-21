@@ -542,6 +542,161 @@ static int deferUpdates = false;
 		}
 
 	#elif defined(TFT_CONFIG)
+	  #if defined(TFT_ESPI)
+	  	#include <TFT_eSPI.h>
+		#include <XPT2046_Touchscreen.h>
+		#include "touch_cst820.h"
+		#include <SPI.h>
+		#include "configurator.h"
+
+
+		#include <LittleFS.h>
+		#include <FS.h>
+
+		inline void applyPreferred(Config& c) {
+			#if defined(LMS_ESP32) && defined(ILI9341)
+			useTFT = true;
+			// [lcd]
+			strcpy(c.lcd.controller, "ILI9341");
+			c.lcd.spi = 3;
+			c.lcd.mosi = 13;
+			c.lcd.miso = 12;
+			c.lcd.sclk = 14;
+			c.lcd.cs = 15;
+			c.lcd.dc = 27;
+			c.lcd.rst = 32;
+			c.lcd.rotation = 3;
+			c.lcd.color = 1;
+			c.lcd.backlight = 33;
+			c.lcd.width = 320;
+			c.lcd.height = 240;
+
+			// [lvgl]
+			c.lvgl.width = 320;
+			c.lvgl.height = 240;
+
+			// [touch]
+			strcpy(c.touch.interface, "spi");
+			strcpy(c.touch.controller, "xpt2046");
+			c.touch.spi = 3;
+			c.touch.mosi = 13;
+			c.touch.miso = 12;
+			c.touch.sclk = 14;
+			c.touch.cs = 26;
+			c.touch.rotation = 3;
+		
+    // [other]
+		
+			#else
+				// empty cfg
+				 (void)c;
+			#endif
+		}
+
+		
+		Config cfg = {};              // zero-init (PIN_UNUSED, false, "")
+    	
+
+		TFT_eSPI tft = TFT_eSPI();
+	  	XPT2046_Touchscreen *touch = nullptr;
+	//	SPIClass* tftSPI = nullptr;
+		SPIClass* touchSPI = nullptr;
+		SPIClass& spix = SPI;
+
+		#define HAS_TOUCH_SCREEN 1
+
+		// New (I2C/CST820):
+		static TouchCST820 *touchI2C = nullptr;
+
+		// Cache last point for XPT so we don’t call getPoint() multiple times per frame
+		static TS_Point lastP;
+		static bool lastPTouched = false;
+		static uint32_t lastTouchPoll = 0;
+	
+	
+
+		void tftInit() {
+			Serial.println("starting tftinit\r\n");
+
+			useTFT = true;
+			#ifndef TFT_WIDTH
+			#define TFT_WIDTH  (cfg.lvgl.width)
+			#endif
+
+			#ifndef TFT_HEIGHT
+			#define TFT_HEIGHT (cfg.lvgl.height)
+			#endif
+			char s[100];
+			bool config_file_exists=false;
+			        // pure zero-initialization
+			// configurator::loadConfig(&cfg);
+			// configurator::setDefaults(&cfg);
+			
+			if (!LittleFS.begin()) {
+					sprintf(s,"LittleFS mount failed!\n");
+					outputString(s);
+					//return;
+				}
+
+			if (!LittleFS.exists("/config.txt")) {
+				Serial.printf("File does not exist!\n\r");
+				useTFT = false;
+				applyPreferred(cfg);  		
+			} else {
+				config_file_exists=true;
+				cfg={};
+			}  
+
+			if (config_file_exists) {
+				if (!configurator::loadConfig(&cfg)) {
+						sprintf(s,"Defaults used");
+						
+						outputString(s);
+				}
+			}
+
+			
+			 Serial.printf("non configured: touch.i2c %d, touch.scl:%d touch:sda %d,  cfg.lcd.invert %d,cfg.touch.flip_x %d,cfg.touch.flip_y %d,cfg.touch.flip_x_y %d\r\n",
+			 	 cfg.touch.i2c,toGPIO(cfg.touch.scl),toGPIO(cfg.touch.scl),cfg.lcd.invert,cfg.touch.flip_x,cfg.touch.flip_y,cfg.touch.flip_x_y);
+
+			 Serial.printf("cfg.lcd.controller %s , cfg.touch.interface %s, cfg.touch.controller %s\r\n", cfg.lcd.controller,cfg.touch.interface,cfg.touch.controller);
+
+			 Serial.printf("toGPIO(cfg.lcd.dc) %d, toGPIO(cfg.lcd.cs) %d,toGPIO(cfg.lcd.sclk) %d, toGPIO(cfg.lcd.mosi) %d, toGPIO(cfg.lcd.miso) %d, cfg.lcd.spi %d \r\n",
+					toGPIO(cfg.lcd.dc), toGPIO(cfg.lcd.cs),	toGPIO(cfg.lcd.sclk), toGPIO(cfg.lcd.mosi), toGPIO(cfg.lcd.miso),
+						cfg.lcd.spi);
+			 Serial.printf(" toGPIO(cfg.lcd.rst) %d, cfg.lcd.rotation %d, cfg.lcd.invert %d,cfg.lcd.width %d, cfg.lcd.height %d,cfg.lcd.col_offset %d,cfg.lcd.row_offset %d\r\n",
+				 toGPIO(cfg.lcd.rst), cfg.lcd.rotation, cfg.lcd.invert,cfg.lcd.width, cfg.lcd.height,cfg.lcd.col_offset,cfg.lcd.row_offset);
+
+		
+			tft.begin();
+			tft.init();
+			tft.initDMA();
+			//tft.setSwapBytes(true);
+			spix = tft.getSPIinstance(); 
+			//tft.fillScreen(TFT_BLACK);
+		
+			tft.begin();
+			tft.setRotation(cfg.lcd.rotation);
+	//			tft._freq = 80000000; // this requires moving _freq to public in AdaFruit_SITFT.h
+			tftClear();
+			// Turn on backlight on IoT-Bus
+			tft.fillScreen(TFT_BLACK);
+
+  tft.setTextColor(TFT_WHITE);
+  tft.setTextSize(2);
+  tft.setCursor(20, 20);
+  tft.println("LovyanGFX OK");
+
+			delay(1); 
+			useTFT = true;
+			Serial.printf("backlight %d\r\n",cfg.lcd.backlight);
+			pinMode(toGPIO(cfg.lcd.backlight), OUTPUT);
+			digitalWrite(toGPIO(cfg.lcd.backlight), HIGH); // turn backlight ON (or LOW if your display is inverted)
+			Serial.printf("TFT completely initilaized\r\n");
+
+		}
+
+	  #else
 		#include <Arduino.h>
 		#include <Arduino_GFX_Library.h>
 		#include <XPT2046_Touchscreen.h>
@@ -553,6 +708,7 @@ static int deferUpdates = false;
 		#include <LittleFS.h>
 		#include <FS.h>
 
+		#define ARDUINO_GFX_USE_PSRAM
 
 		inline void applyPreferred(Config& c) {
 			#if defined(LMS_ESP32) && defined(ST7789)
@@ -620,7 +776,8 @@ static int deferUpdates = false;
 		Config cfg = {};              // zero-init (PIN_UNUSED, false, "")
     	
 
-		static Arduino_DataBus *bus = nullptr;
+		//static Arduino_DataBus *bus = nullptr;
+		static Arduino_DataBus *bus=nullptr;
 		// static Arduino_ESP32RGBPanel *rgbpanel =  new Arduino_ESP32RGBPanel(
 		// 		40 /* DE */, 41 /* VSYNC */, 39 /* HSYNC */, 42 /* PCLK */,
 		// 		45 /* R0 */, 48 /* R1 */, 47 /* R2 */, 21 /* R3 */, 14 /* R4 */,
@@ -640,10 +797,11 @@ static int deferUpdates = false;
 		#define tft (*gfx)
 		//Arduino_GFX& tft = *gfx;
 		XPT2046_Touchscreen *touch = nullptr;
+		SPIClass* tftSPI = nullptr;
 		SPIClass* touchSPI = nullptr;
 
 
-		//#define HAS_TOUCH_SCREEN 1
+		#define HAS_TOUCH_SCREEN 1
 
 		// New (I2C/CST820):
 		static TouchCST820 *touchI2C = nullptr;
@@ -706,31 +864,24 @@ static int deferUpdates = false;
 				}
 			}
 
-			//  Serial.printf("non configured: touch.i2c %d, touch.scl:%d touch:sda %d,  cfg.lcd.invert %d,cfg.touch.flip_x %d,cfg.touch.flip_y %d,cfg.touch.flip_x_y %d\r\n",
-			//  	 cfg.touch.i2c,toGPIO(cfg.touch.scl),toGPIO(cfg.touch.scl),cfg.lcd.invert,cfg.touch.flip_x,cfg.touch.flip_y,cfg.touch.flip_x_y);
-
-			//  Serial.printf("cfg.lcd.controller %s , cfg.touch.interface %s, cfg.touch.controller %s\r\n", cfg.lcd.controller,cfg.touch.interface,cfg.touch.controller);
-
-			//  Serial.printf("toGPIO(cfg.lcd.dc) %d, toGPIO(cfg.lcd.cs) %d,toGPIO(cfg.lcd.sclk) %d, toGPIO(cfg.lcd.mosi) %d, toGPIO(cfg.lcd.miso) %d, cfg.lcd.spi %d \r\n",
-			// 		toGPIO(cfg.lcd.dc), toGPIO(cfg.lcd.cs),	toGPIO(cfg.lcd.sclk), toGPIO(cfg.lcd.mosi), toGPIO(cfg.lcd.miso),
-			// 			cfg.lcd.spi);
-			//  Serial.printf(" toGPIO(cfg.lcd.rst) %d, cfg.lcd.rotation %d, cfg.lcd.invert %d,cfg.lcd.width %d, cfg.lcd.height %d,cfg.lcd.col_offset %d,cfg.lcd.row_offset %d\r\n",
-			// 	 toGPIO(cfg.lcd.rst), cfg.lcd.rotation, cfg.lcd.invert,cfg.lcd.width, cfg.lcd.height,cfg.lcd.col_offset,cfg.lcd.row_offset);
-			 	 
-		
-		// 	if (strcmp(cfg.lcd.controller, "ELECROW") == 0) {	
-		// 		rgb_tft = nullptr;
-
-				
+	
 					
 		// } else {
-			if (cfg.lcd.dc != PIN_UNUSED && cfg.lcd.cs != PIN_UNUSED && cfg.lcd.sclk != PIN_UNUSED && cfg.lcd.mosi != PIN_UNUSED && cfg.lcd.spi>=0) {
-				bus = new Arduino_ESP32SPI(
-						toGPIO(cfg.lcd.dc), toGPIO(cfg.lcd.cs),
-						toGPIO(cfg.lcd.sclk), toGPIO(cfg.lcd.mosi), toGPIO(cfg.lcd.miso),
-						cfg.lcd.spi, true
-					);
+			if (cfg.lcd.dc != PIN_UNUSED && cfg.lcd.cs != PIN_UNUSED && cfg.lcd.sclk != PIN_UNUSED && cfg.lcd.mosi != PIN_UNUSED && cfg.lcd.spi>=0 &&
+				 strlen(cfg.lcd.controller)>0)
+			 {
+				// tftSPI = new SPIClass(cfg.lcd.spi);
+				// tftSPI->begin(toGPIO(cfg.lcd.sclk), toGPIO(cfg.lcd.miso), toGPIO(cfg.lcd.mosi), toGPIO(cfg.lcd.cs));
+				// bus = new Arduino_ESP32SPI(cfg.lcd.spi, toGPIO(cfg.lcd.dc), toGPIO(cfg.lcd.cs));
+				// 	//bus->begin(10000000,SPI_MODE0);
 
+				bus = new Arduino_ESP32SPI( toGPIO(cfg.lcd.dc), toGPIO(cfg.lcd.cs), toGPIO(cfg.lcd.sclk), toGPIO(cfg.lcd.mosi), 
+											toGPIO(cfg.lcd.miso), cfg.lcd.spi, (cfg.lcd.spi==cfg.touch.spi));
+											// last boolean is: shared spi interface
+											
+				//bus->begin(10000000,SPI_MODE0); // bus->setSpeed(27000000);
+
+			//	bus->setSpeed(27000000);
 			
 				if (strcmp(cfg.lcd.controller, "ILI9341") == 0) {
 					gfx = new Arduino_ILI9341(bus, toGPIO(cfg.lcd.rst), cfg.lcd.rotation, cfg.lcd.invert);
@@ -748,8 +899,8 @@ static int deferUpdates = false;
 				}
 				
 				if (gfx != nullptr) {
-						Serial.printf("tft.begin()\r\n");
-						delay(100); 
+					Serial.printf("tft.begin()\r\n");
+					delay(100); 
 					tft.begin();
 					tft.fillScreen(RGB565_BLACK);
 					delay(1); 
@@ -761,7 +912,7 @@ static int deferUpdates = false;
 				}
 			} else Serial.printf("No TFT used\r\n");
 		}
-		
+		#endif
 	
 			// --- State flags ---
 		static bool touchInitAttempted = false;
@@ -787,8 +938,10 @@ static int deferUpdates = false;
 			if (touchEnabled) return;
 
 			if (isTouchXPT()) {
-				touchSPI = new SPIClass(cfg.touch.spi);
-				touchSPI->begin(toGPIO(cfg.touch.sclk), toGPIO(cfg.touch.miso), toGPIO(cfg.touch.mosi), toGPIO(cfg.touch.cs));
+				#if !defined(ILI9341)
+					touchSPI = new SPIClass(cfg.touch.spi);
+					touchSPI->begin(toGPIO(cfg.touch.sclk), toGPIO(cfg.touch.miso), toGPIO(cfg.touch.mosi), toGPIO(cfg.touch.cs));
+				#endif
 				touchEnabled = true;
 				hasTouch = true;
 
@@ -796,8 +949,11 @@ static int deferUpdates = false;
 					touch = new XPT2046_Touchscreen(toGPIO(cfg.touch.cs), toGPIO(cfg.touch.irq));
 				else
 					touch = new XPT2046_Touchscreen(toGPIO(cfg.touch.cs));
-
-				touch->begin(*touchSPI);
+				#if defined(ILI9341)
+					touch->begin(spix);
+				#else
+					touch->begin(*touchSPI);
+				#endif
 				touch->setRotation(cfg.touch.rotation);
 				return;
 			}
@@ -1392,6 +1548,9 @@ static int hasTFT() {
 	#if defined(OLED_128_64)
 		if (!useTFT) tftInit();
 	#endif
+	char s[100];
+	sprintf(s,"in hasTFT(): useTFT %d",useTFT);
+	outputString(s);
 	return useTFT;
 }
 
@@ -1434,6 +1593,9 @@ static int color24to16b(int color24b) {
 }
 
 void tftClear() {
+	char s[100];
+	sprintf(s,"hasTFT %d",hasTFT());
+	outputString(s);
 	if (!hasTFT()) return;
 
 	tft.fillScreen(BLACK);
@@ -1614,7 +1776,11 @@ static OBJ primPixelRow(int argCount, OBJ *args) {
 			OBJ pixelObj = FIELD(pixelDataObj, (i + 1));
 			bufferPixels[i] = (isInt(pixelObj)) ? color24to16b(obj2int(pixelObj)) : 0;
 		}
-		#if defined(TFT_CONFIG)
+		#if defined(TFT_ESPI)
+		   //tft.pushImageDMA(x,y,pixelCount,1,bufferPixels);
+		   // no DMA possible from PSRAM
+		   tft.pushImage(x,y,pixelCount,1,bufferPixels);
+		#elif defined(TFT_CONFIG) 
 		tft.draw16bitRGBBitmap(x, y, bufferPixels, pixelCount, 1);
 		#else
 		tft.drawRGBBitmap(x, y, bufferPixels, pixelCount, 1);
@@ -1650,7 +1816,11 @@ static OBJ primPixelRow(int argCount, OBJ *args) {
 				byte += bytesPerPixel;
 			}
 		}
-		#if defined(TFT_CONFIG)
+		#if defined(TFT_ESPI)
+		   //tft.pushImageDMA(x,y,pixelCount,1,bufferPixels);
+		   // no DMA possible from PSRAM
+		   tft.pushImage(x,y,pixelCount,1,bufferPixels);
+		#elif defined(TFT_CONFIG) 
 		tft.draw16bitRGBBitmap(x, y, bufferPixels, pixelCount, 1);
 		#else
 		tft.drawRGBBitmap(x, y, bufferPixels, pixelCount, 1);
@@ -2002,7 +2172,17 @@ static OBJ primDrawBuffer(int argCount, OBJ *args) {
 			}
 		}
 
-		#if defined(TFT_CONFIG)
+		#if defined(TFT_ESPI)
+		   //tft.pushImageDMA(x,y,pixelCount,1,bufferPixels);
+		   // no DMA possible from PSRAM
+			tft.pushImage(
+				originX * scale,
+				(originY + y) * scale,
+				originWidth * scale,
+				scale,
+				bufferPixels
+			);
+		#elif defined(TFT_CONFIG) 
 			tft.draw16bitRGBBitmap(
 			originX * scale,
 			(originY + y) * scale,
@@ -2134,7 +2314,35 @@ void setup_lvgl(void);
 static uint32_t screenWidth;
 static uint32_t screenHeight;
 
+#if defined(TFT_ESPI)
 
+	void my_disp_flush(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map) {
+		uint16_t w = area->x2 - area->x1 + 1;
+		uint16_t h = area->y2 - area->y1 + 1;
+
+		uint16_t *color_buf = (uint16_t *)px_map;
+
+		tft.startWrite();
+		tft.setAddrWindow(area->x1, area->y1, w, h);
+
+		// Send entire area with DMA
+		#if defined(S3_CTF)
+		  tft.pushPixels(color_buf, w * h);      // ← NOT DMA
+		  tft.endWrite();
+		  
+		#else
+
+		   tft.pushPixelsDMA(color_buf, w * h);
+
+		   tft.endWrite();
+		   tft.dmaWait();
+		#endif
+		// Immediately notify LVGL since TFT_eSPI handles DMA behind the scenes
+		lv_disp_flush_ready(disp);
+		yield(); // sodb give wifi some air to breath
+	}
+
+#else
 
 void my_disp_flush(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map)
 {
@@ -2149,7 +2357,7 @@ void my_disp_flush(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map)
   /*Call it to tell LVGL you are ready*/
   lv_disp_flush_ready(disp);
 }
-
+#endif
 void my_touchpad_read(lv_indev_t *indev, lv_indev_data_t *data)
 {
 			if (screenTouched()) {
@@ -2278,26 +2486,65 @@ void setup_lvgl() {
 	// double buffer
 	
  	size_t buf_size = TFT_WIDTH * TFT_BUFFER_LINES * sizeof(lv_color_t);
- 	char s[100];
-	 sprintf(s,"free heap before: %d psram: %d ",  ESP.getFreeHeap(),ESP.getFreePsram());
-	 outputString(s);
-    
-	  
-	#if defined(COCUBE)
-	  buf1 = (lv_color_t *)heap_caps_malloc(TFT_WIDTH * 20 * sizeof(lv_color_t), MALLOC_CAP_DMA);
- 	  buf2 = (lv_color_t *)heap_caps_malloc(TFT_WIDTH * 20 * sizeof(lv_color_t), MALLOC_CAP_DMA);
+ 	// char s[100];
+	//  sprintf(s,"free heap before: %d psram: %d ",  ESP.getFreeHeap(),ESP.getFreePsram());
+	//  outputString(s);
+	#if defined (CYDIO)
+		#if defined(BLE_IDE)
+    		#define LV_NR_ROWS 10
+		#else
+			#define LV_NR_ROWS 40
+		#endif		
+		  // reduce number of rows from 40 to 10 in order to allow for Wifi+LVGL+BLE
+	#elif defined(COCUBE)
+		#define LV_NR_ROWS 10
 	#else
-	  buf1 = (lv_color_t *)heap_caps_malloc(TFT_WIDTH * 40 * sizeof(lv_color_t), MALLOC_CAP_DMA);
- 	  buf2 = (lv_color_t *)heap_caps_malloc(TFT_WIDTH * 40 * sizeof(lv_color_t), MALLOC_CAP_DMA);
+		#if defined(TFT_ESPI)
+			#define LV_NR_ROWS 40
+		#else
+			#if defined(BLE_IDE)
+				#define LV_NR_ROWS 20
+			#else
+				#define LV_NR_ROWS 40
+			#endif	
+		#endif
 	#endif
- 	if (buf1)  outputString("malloc succesfull");
-	 else outputString("cannot mallocsuccesfull");
+	// size_t psramFree = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
+	// if (psramFree>0) {
+	// 	buf1 = (lv_color_t *)heap_caps_malloc(TFT_WIDTH * LV_NR_ROWS * sizeof(lv_color_t), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+	// 	buf2 = (lv_color_t *)heap_caps_malloc(TFT_WIDTH * LV_NR_ROWS * sizeof(lv_color_t), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+
+	// } else {
+		buf1 = (lv_color_t *)heap_caps_malloc(TFT_WIDTH * LV_NR_ROWS * sizeof(lv_color_t), MALLOC_CAP_DMA);
+		buf2 = (lv_color_t *)heap_caps_malloc(TFT_WIDTH * LV_NR_ROWS * sizeof(lv_color_t), MALLOC_CAP_DMA);
+
+	// }
 	
-	  sprintf(s,"free heap after: %d psram: %d ",  ESP.getFreeHeap(),ESP.getFreePsram());
-	  outputString(s);
+/* try to allocated psram first
+void* ptr = heap_caps_malloc(
+    1024,
+    MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT
+);
+
+if (!ptr) {
+    ptr = heap_caps_malloc(
+        1024,
+        MALLOC_CAP_8BIT
+    );
+}
+
+
+
+*/
+
+ 	// if (buf1)  outputString("malloc succesfull");
+	//  else outputString("cannot mallocsuccesfull");
+	
+	//   sprintf(s,"free heap after: %d psram: %d ",  ESP.getFreeHeap(),ESP.getFreePsram());
+	//   outputString(s);
 
 	disp = lv_display_create(TFT_WIDTH, TFT_HEIGHT);
-    lv_display_set_buffers(disp, buf1, buf2, TFT_WIDTH * 40, LV_DISPLAY_RENDER_MODE_PARTIAL);
+    lv_display_set_buffers(disp, buf1, buf2, TFT_WIDTH * LV_NR_ROWS, LV_DISPLAY_RENDER_MODE_PARTIAL);
     lv_display_set_flush_cb(disp, my_disp_flush);
 	#if defined(TFT_ESPI) 
 		#if defined(CYDROT)
@@ -3857,15 +4104,15 @@ static OBJ primLVGLpsram(int argCount, OBJ *args) {
 	int val = heap_caps_get_free_size(MALLOC_CAP_SPIRAM); // in bytes
 
 	char s[100];
-	sprintf(s,"PSRAM total size: %d",ESP.getPsramSize());
-	outputString(s);	
-	sprintf(s,"PSRAM free: %d",val);
-    outputString(s);	
-	sprintf(s,"PSRAM largest free block: %d",heap_caps_get_largest_free_block(MALLOC_CAP_SPIRAM));
-	outputString(s);	
+	// sprintf(s,"PSRAM total size: %d",ESP.getPsramSize());
+	// outputString(s);	
+	// sprintf(s,"PSRAM free: %d",val);
+    // outputString(s);	
+	// sprintf(s,"PSRAM largest free block: %d",heap_caps_get_largest_free_block(MALLOC_CAP_SPIRAM));
+	// outputString(s);	
 	sprintf(s,"RAM heap free: %d",heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
     outputString(s);	
-	sprintf(s,"free heap after: %d psram: %d ",  ESP.getFreeHeap(),ESP.getFreePsram());
+	sprintf(s,"free heap after: %d ",  ESP.getFreeHeap()); //,ESP.getFreePsram());
 	outputString(s);
 	return int2obj(val);
 }
