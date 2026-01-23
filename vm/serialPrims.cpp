@@ -291,15 +291,15 @@ static void serialOpen(int baudRate) {
 		#else
 			SERIAL_PORT.begin(baudRate, SERIAL_8N1, RX, TX);
 		#endif
-	#elif defined(ESP32_ORIGINAL)
-		if (hasPSRAM()) { // GPIO16 and GPIO17 are used by PSRAM on original ESP32
-			SERIAL_PORT.begin(baudRate, SERIAL_8N1, 21, 22);
-		} else {
-			SERIAL_PORT.begin(baudRate, SERIAL_8N1, 16, 17);
-		}
-	#elif defined(ESP32)
-		// all ESP32 boards that do not have cases above
-		SERIAL_PORT.begin(baudRate, SERIAL_8N1, 16, 17);
+	// #elif defined(ESP32_ORIGINAL)
+	// 	if (hasPSRAM()) { // GPIO16 and GPIO17 are used by PSRAM on original ESP32
+	// 		SERIAL_PORT.begin(baudRate, SERIAL_8N1, 21, 22);
+	// 	} else {
+	// 		SERIAL_PORT.begin(baudRate, SERIAL_8N1, 16, 17);
+	// 	}
+	// #elif defined(ESP32)
+	// 	// all ESP32 boards that do not have cases above
+	// 	SERIAL_PORT.begin(baudRate, SERIAL_8N1, 16, 17);
 	#elif defined(DUELink)
 		if (DUE_HAS_EDGE_CONNECTOR) {
 			// Edge connector pins 0 and 1

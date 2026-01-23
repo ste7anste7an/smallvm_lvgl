@@ -1031,7 +1031,7 @@ extern "C" void esp8266DeepSleep(uint64_t usecs) {
 			#define PIN_BUTTON_A 0
 		#endif
 	#endif
-	static const char reservedPin[TOTAL_PINS] = {
+	static char reservedPin[TOTAL_PINS] = {
 		//sodb remove reserved pins 7 and 8 for LMS-ESP32v2 serial port
 		
 		0, 1, 0, 1, 0, 0, 1, 0, 0, 1,
@@ -1066,7 +1066,7 @@ extern "C" void esp8266DeepSleep(uint64_t usecs) {
 			#define PIN_BUTTON_A 0
 		#endif
 	#endif
-	static const char reservedPin[TOTAL_PINS] = {
+	static char reservedPin[TOTAL_PINS] = {
 		//sodb remove reserved pins 7 and 8 for LMS-ESP32v2 serial port
 		
 		0, 1, 0, 1, 0, 0, 1, 0, 0, 1,
