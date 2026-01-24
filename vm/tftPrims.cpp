@@ -2507,15 +2507,17 @@ void setup_lvgl() {
 		#endif
 	#endif
 	// size_t psramFree = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
-	// if (psramFree>0) {
-	// 	buf1 = (lv_color_t *)heap_caps_malloc(TFT_WIDTH * LV_NR_ROWS * sizeof(lv_color_t), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-	// 	buf2 = (lv_color_t *)heap_caps_malloc(TFT_WIDTH * LV_NR_ROWS * sizeof(lv_color_t), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+	int psramFree = heap_caps_get_free_size(MALLOC_CAP_SPIRAM); // in bytes
+	if (psramFree>0) {
+		Serial.printf("psramfree = %d\r\n",psramFree);
+		buf1 = (lv_color_t *)heap_caps_malloc(TFT_WIDTH * LV_NR_ROWS * sizeof(lv_color_t), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+		buf2 = (lv_color_t *)heap_caps_malloc(TFT_WIDTH * LV_NR_ROWS * sizeof(lv_color_t), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
 
-	// } else {
+	} else {
 		buf1 = (lv_color_t *)heap_caps_malloc(TFT_WIDTH * LV_NR_ROWS * sizeof(lv_color_t), MALLOC_CAP_DMA);
 		buf2 = (lv_color_t *)heap_caps_malloc(TFT_WIDTH * LV_NR_ROWS * sizeof(lv_color_t), MALLOC_CAP_DMA);
 
-	// }
+	}
 	
 /* try to allocated psram first
 void* ptr = heap_caps_malloc(
@@ -3735,13 +3737,13 @@ static OBJ primLVGLaddObject(int argCount, OBJ *args) {
 		 	ui_create_spinner(obj_name, parent);
 		 	break;
 		case CMD_SCALE:
-		 	//ui_create_scale(obj_name, parent);
+		 	ui_create_scale(obj_name, parent);
 		 	break;
 		case CMD_TEXTAREA:
-		 	//ui_create_textarea(obj_name, parent);
+		 	ui_create_textarea(obj_name, parent);
 		 	break;
 		case CMD_KEYBOARD:
-		 	//ui_create_keyboard(obj_name, parent);
+		 	ui_create_keyboard(obj_name, parent);
 		 	break;
 		default:
 			outputString("Unknown command");;
