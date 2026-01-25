@@ -621,7 +621,7 @@ static int deferUpdates = false;
 	
 
 		void tftInit() {
-			Serial.println("starting tftinit\r\n");
+			//Serial.println("starting tftinit\r\n");
 
 			useTFT = true;
 			#ifndef TFT_WIDTH
@@ -644,7 +644,7 @@ static int deferUpdates = false;
 				}
 
 			if (!LittleFS.exists("/config.txt")) {
-				Serial.printf("File does not exist!\n\r");
+				//Serial.printf("File does not exist!\n\r");
 				useTFT = false;
 				applyPreferred(cfg);  		
 			} else {
@@ -660,7 +660,7 @@ static int deferUpdates = false;
 				}
 			}
 
-			
+			/*
 			 Serial.printf("non configured: touch.i2c %d, touch.scl:%d touch:sda %d,  cfg.lcd.invert %d,cfg.touch.flip_x %d,cfg.touch.flip_y %d,cfg.touch.flip_x_y %d\r\n",
 			 	 cfg.touch.i2c,toGPIO(cfg.touch.scl),toGPIO(cfg.touch.scl),cfg.lcd.invert,cfg.touch.flip_x,cfg.touch.flip_y,cfg.touch.flip_x_y);
 
@@ -671,7 +671,7 @@ static int deferUpdates = false;
 						cfg.lcd.spi);
 			 Serial.printf(" toGPIO(cfg.lcd.rst) %d, cfg.lcd.rotation %d, cfg.lcd.invert %d,cfg.lcd.width %d, cfg.lcd.height %d,cfg.lcd.col_offset %d,cfg.lcd.row_offset %d\r\n",
 				 toGPIO(cfg.lcd.rst), cfg.lcd.rotation, cfg.lcd.invert,cfg.lcd.width, cfg.lcd.height,cfg.lcd.col_offset,cfg.lcd.row_offset);
-
+			*/
 		
 			tft.begin();
 			tft.init();
@@ -694,10 +694,10 @@ static int deferUpdates = false;
 
 			delay(1); 
 			useTFT = true;
-			Serial.printf("backlight %d\r\n",cfg.lcd.backlight);
+			//Serial.printf("backlight %d\r\n",cfg.lcd.backlight);
 			pinMode(toGPIO(cfg.lcd.backlight), OUTPUT);
 			digitalWrite(toGPIO(cfg.lcd.backlight), HIGH); // turn backlight ON (or LOW if your display is inverted)
-			Serial.printf("TFT completely initilaized\r\n");
+			//Serial.printf("TFT completely initilaized\r\n");
 
 		}
 
@@ -819,7 +819,7 @@ static int deferUpdates = false;
 	
 
 		void tftInit() {
-			Serial.println("starting tftinit\r\n");
+			//Serial.println("starting tftinit\r\n");
 
 			useTFT = false;
 			#ifndef TFT_WIDTH
@@ -842,14 +842,14 @@ static int deferUpdates = false;
 				}
 
 			if (!LittleFS.exists("/config.txt")) {
-				Serial.printf("File does not exist!\n\r");
+				//Serial.printf("File does not exist!\n\r");
 				useTFT = false;
 				applyPreferred(cfg);  		
 			} else {
 				config_file_exists=true;
 				cfg={};
 			}  
-
+			/*
 			 Serial.printf("non configured: touch.i2c %d, touch.scl:%d touch:sda %d,  cfg.lcd.invert %d,cfg.touch.flip_x %d,cfg.touch.flip_y %d,cfg.touch.flip_x_y %d\r\n",
 			 	 cfg.touch.i2c,toGPIO(cfg.touch.scl),toGPIO(cfg.touch.scl),cfg.lcd.invert,cfg.touch.flip_x,cfg.touch.flip_y,cfg.touch.flip_x_y);
 
@@ -860,7 +860,7 @@ static int deferUpdates = false;
 						cfg.lcd.spi);
 			 Serial.printf(" toGPIO(cfg.lcd.rst) %d, cfg.lcd.rotation %d, cfg.lcd.invert %d,cfg.lcd.width %d, cfg.lcd.height %d,cfg.lcd.col_offset %d,cfg.lcd.row_offset %d\r\n",
 				 toGPIO(cfg.lcd.rst), cfg.lcd.rotation, cfg.lcd.invert,cfg.lcd.width, cfg.lcd.height,cfg.lcd.col_offset,cfg.lcd.row_offset);
-
+			*/
 			if (config_file_exists) {
 				if (!configurator::loadConfig(&cfg)) {
 						sprintf(s,"Defaults used");
@@ -879,43 +879,52 @@ static int deferUpdates = false;
 				// tftSPI->begin(toGPIO(cfg.lcd.sclk), toGPIO(cfg.lcd.miso), toGPIO(cfg.lcd.mosi), toGPIO(cfg.lcd.cs));
 				// bus = new Arduino_ESP32SPI(cfg.lcd.spi, toGPIO(cfg.lcd.dc), toGPIO(cfg.lcd.cs));
 				// 	//bus->begin(10000000,SPI_MODE0);
-
+#if defined(ESP32_C3)
+				bus = new Arduino_ESP32SPI( toGPIO(cfg.lcd.dc), toGPIO(cfg.lcd.cs), toGPIO(cfg.lcd.sclk), toGPIO(cfg.lcd.mosi), 
+											toGPIO(cfg.lcd.miso) );
+											// last boolean is: shared spi interface
+#else
 				bus = new Arduino_ESP32SPI( toGPIO(cfg.lcd.dc), toGPIO(cfg.lcd.cs), toGPIO(cfg.lcd.sclk), toGPIO(cfg.lcd.mosi), 
 											toGPIO(cfg.lcd.miso), cfg.lcd.spi, (cfg.lcd.spi==cfg.touch.spi));
 											// last boolean is: shared spi interface
-											
-				//bus->begin(10000000,SPI_MODE0); // bus->setSpeed(27000000);
+				
+#endif							
 
-			//	bus->setSpeed(27000000);
-			
+
+		
 				if (strcmp(cfg.lcd.controller, "ILI9341") == 0) {
 					gfx = new Arduino_ILI9341(bus, toGPIO(cfg.lcd.rst), cfg.lcd.rotation, cfg.lcd.invert);
 				} else if (strcmp(cfg.lcd.controller, "ST7789") == 0) {
-					Serial.printf("ST7789 controller configured\r\n");
+					//Serial.printf("ST7789 controller configured\r\n");
 					gfx = new Arduino_ST7789(bus, toGPIO(cfg.lcd.rst), cfg.lcd.rotation, cfg.lcd.invert,cfg.lcd.width, cfg.lcd.height,cfg.lcd.col_offset,cfg.lcd.row_offset);
 				}  else if (strcmp(cfg.lcd.controller, "ST7796") == 0) {
 					//if (cfg.lcd.col_offset==0 && cfg.lcd.row_offset==0)
 					//  gfx = new Arduino_ST7796(bus, cfg.lcd.rst, cfg.lcd.rotation, false);
 					//else
 					gfx = new Arduino_ST7796(bus, toGPIO(cfg.lcd.rst), cfg.lcd.rotation, cfg.lcd.invert,cfg.lcd.width, cfg.lcd.height,cfg.lcd.col_offset,cfg.lcd.row_offset);
-				}else {
-					Serial.println("Unknown controller\r\n");
-					
+				} else if (strcmp(cfg.lcd.controller, "GC9A01") == 0) {
+					//if (cfg.lcd.col_offset==0 && cfg.lcd.row_offset==0)
+					//  gfx = new Arduino_ST7796(bus, cfg.lcd.rst, cfg.lcd.rotation, false);
+					//else
+					gfx = new Arduino_GC9A01(bus, toGPIO(cfg.lcd.rst), cfg.lcd.rotation, cfg.lcd.invert,cfg.lcd.width, cfg.lcd.height,cfg.lcd.col_offset,cfg.lcd.row_offset);
 				}
+				//else {
+				//	Serial.println("Unknown controller\r\n");
+				//}
 				
 				if (gfx != nullptr) {
-					Serial.printf("tft.begin()\r\n");
+					//Serial.printf("tft.begin()\r\n");
 					delay(100); 
 					tft.begin();
 					tft.fillScreen(RGB565_BLACK);
 					delay(1); 
 					useTFT = true;
-					Serial.printf("backlight %d\r\n",cfg.lcd.backlight);
+					//Serial.printf("backlight %d\r\n",cfg.lcd.backlight);
 					pinMode(toGPIO(cfg.lcd.backlight), OUTPUT);
 					digitalWrite(toGPIO(cfg.lcd.backlight), HIGH); // turn backlight ON (or LOW if your display is inverted)
-					Serial.printf("TFT completely initilaized\r\n");
+					//Serial.printf("TFT completely initilaized\r\n");
 				}
-			} else Serial.printf("No TFT used\r\n");
+			} //else Serial.printf("No TFT used\r\n");
 		}
 		#endif
 	
@@ -964,7 +973,7 @@ static int deferUpdates = false;
 			}
 
 			if (isTouchCST()) {
-				Serial.printf("initialize CST820\r\n");
+				// Serial.printf("initialize CST820   sda=%d scl=%d\r\n",toGPIO(cfg.touch.sda), toGPIO(cfg.touch.scl));
 				touchI2C = new TouchCST820();
 				touchI2C->configure(cfg.touch.i2c, toGPIO(cfg.touch.sda), toGPIO(cfg.touch.scl));
 				touchI2C->setScreenSize(cfg.lvgl.width, cfg.lvgl.height);
@@ -1556,9 +1565,9 @@ static int hasTFT() {
 	#if defined(OLED_128_64)
 		return hasOLED;
 	#endif
-	char s[100];
-	sprintf(s,"in hasTFT(): useTFT %d",useTFT);
-	outputString(s);
+	// char s[100];
+	// sprintf(s,"in hasTFT(): useTFT %d",useTFT);
+	// outputString(s);
 	return useTFT;
 }
 
@@ -1601,9 +1610,9 @@ static int color24to16b(int color24b) {
 }
 
 void tftClear() {
-	char s[100];
-	sprintf(s,"hasTFT %d",hasTFT());
-	outputString(s);
+	// char s[100];
+	// sprintf(s,"hasTFT %d",hasTFT());
+	// outputString(s);
 	if (!hasTFT()) return;
 
 	tft.fillScreen(BLACK);
@@ -2509,7 +2518,7 @@ void setup_lvgl() {
 	// size_t psramFree = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
 	int psramFree = heap_caps_get_free_size(MALLOC_CAP_SPIRAM); // in bytes
 	if (psramFree>0) {
-		Serial.printf("psramfree = %d\r\n",psramFree);
+		//Serial.printf("psramfree = %d\r\n",psramFree);
 		buf1 = (lv_color_t *)heap_caps_malloc(TFT_WIDTH * LV_NR_ROWS * sizeof(lv_color_t), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
 		buf2 = (lv_color_t *)heap_caps_malloc(TFT_WIDTH * LV_NR_ROWS * sizeof(lv_color_t), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
 
