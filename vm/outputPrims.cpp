@@ -414,8 +414,8 @@ static void initDUELedPins() {
 		rowPins[0] = mapDigitalPinNum(22);
 		rowPins[1] = mapDigitalPinNum(23);
 		rowPins[2] = mapDigitalPinNum(24);
-		rowPins[3] = mapDigitalPinNum(25);
-		rowPins[4] = mapDigitalPinNum(26);
+		rowPins[3] = mapDigitalPinNum(27);
+		rowPins[4] = mapDigitalPinNum(28);
 		columnPins[0] = mapDigitalPinNum(4);
 		columnPins[1] = mapDigitalPinNum(7);
 		columnPins[2] = mapDigitalPinNum(3);

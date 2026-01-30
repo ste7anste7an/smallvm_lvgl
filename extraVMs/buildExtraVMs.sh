@@ -56,6 +56,9 @@ cp .pio/build/m5core2/firmware.bin extraVMs/vm_m5core2_1.0.bin
 
 pio run -e esp32-s3
 cp .pio/build/esp32-s3/firmware.bin extraVMs/vm_esp32-s3.bin
+pio run -e esp32-s3-lonely-binary
+cp .pio/build/esp32-s3-lonely-binary/firmware.bin extraVMs/vm_esp32-s3-lonely-binary.bin
+
 pio run -e esp32-c3-dev
 cp .pio/build/esp32-c3-dev/firmware.bin extraVMs/vm_esp32-c3-dev.bin
 pio run -e esp32-c3-qtpy

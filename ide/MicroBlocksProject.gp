@@ -510,7 +510,7 @@ method loadFromString MicroBlocksProject s updateLibraries {
 }
 
 method addLibraryFromString MicroBlocksProject s libName fileName {
-	// Load a library from a string.
+	// Load a library from a string and return its module name.
 	cmdList = (parse s)
 	loadSpecs this cmdList
 	cmdsByModule = (splitCmdListIntoModules this cmdList)
@@ -542,7 +542,7 @@ method addLibraryFromString MicroBlocksProject s libName fileName {
 		}
 		addLibrary this lib
 	}
-	return this
+	return moduleName
 }
 
 method parsedSpecs MicroBlocksProject cmdList {

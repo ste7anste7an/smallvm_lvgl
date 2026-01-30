@@ -1,6 +1,6 @@
 module 'Distance (VL53L1x)' Input
 author 'José García Yeste'
-version 1 1 
+version 1 2 
 tags sensor distance 
 choices modeMenu short medium long 
 description 'Support for VL53L1x distance sensor.
@@ -9,7 +9,7 @@ Emitter: 940 nm invisible laser (Class1).
 
 Based on https://github.com/pololu/vl53l1x-arduino
 '
-variables '_VL53L1x initialized' 
+variables _VL53L1x_initialized _VL53L1x_lastResult 
 
   spec 'r' 'VL53L1x connected' 'VL53L1x connected'
   spec 'r' 'VL53L1x distance (mm)' 'VL53L1x distance (mm)'
@@ -20,7 +20,9 @@ variables '_VL53L1x initialized'
   spec 'r' '_VL53L1x read reg' '_VL53L1x read 16bit reg _' 'auto' 0
 
 to 'VL53L1x connected' {
-  return (('_VL53L1x read reg' (hexToInt '10F')) == (hexToInt 'EACC'))
+  comment 'Just check high byte of register 0x10F since low byte
+can vary between sensors (different versions?)'
+  return ((('_VL53L1x read reg' (hexToInt '10F')) & (hexToInt 'FF00')) == (hexToInt 'EA00'))
 }
 
 to 'VL53L1x distance (mm)' {
@@ -31,10 +33,14 @@ to 'VL53L1x distance (mm)' {
   local 'status' (at 1 data)
   if (status == 9) {
     local 'range' (((at 14 data) << 8) | (at 15 data))
-    range = (((range * 2011) + 1024) >> 11)
-    return range
+    _VL53L1x_lastResult = (((range * 2011) + 1024) >> 11)
+    waitMillis 70
+    return _VL53L1x_lastResult
   } else {
-    return (0 - status)
+    comment 'Distance reading failed.
+Return the last good reading.'
+    waitMillis 70
+    return _VL53L1x_lastResult
   }
 }
 
@@ -67,14 +73,14 @@ to 'VL53L1x set distance mode' mode {
 }
 
 to '_VL53L1x read reg' reg {
-  i2cSet 41 (reg >> 8) (reg & 255)
+  '[sensors:i2cWrite]' 41 ('[data:makeList]' ((reg >> 8) & 255) (reg & 255))
   local 'data' (newList 2)
   '[sensors:i2cRead]' 41 data
   return (((at 1 data) << 8) | (at 2 data))
 }
 
 to '_VL53L1x setup' {
-  if ((v 'VL53L1x initialized') == 0) {
+  if (_VL53L1x_initialized == 0) {
     'VL53L1x set distance mode' 'long'
     comment 'start continuous every 50 ms'
     '_VL53L1x write reg 32' (hexToInt '6C') (50 * ('_VL53L1x read reg' (hexToInt 'DE')))
@@ -84,25 +90,21 @@ to '_VL53L1x setup' {
     '_VL53L1x write reg' (hexToInt '87') (hexToInt '40')
     comment 'avoids first 0 return'
     waitMillis 120
-    '_VL53L1x initialized' = 1
+    _VL53L1x_initialized = 1
   }
 }
 
 to '_VL53L1x write reg' reg byte {
-  local 'data' (newList 3)
-  atPut 1 data (reg >> 8)
-  atPut 2 data (reg & 255)
-  atPut 3 data byte
-  '[sensors:i2cWrite]' 41 data
+  '[sensors:i2cWrite]' 41 ('[data:makeList]' ((reg >> 8) & 255) (reg & 255) byte)
 }
 
 to '_VL53L1x write reg 32' reg value {
   local 'data' (newList 6)
-  atPut 1 data (reg >> 8)
+  atPut 1 data ((reg >> 8) & 255)
   atPut 2 data (reg & 255)
-  atPut 3 data (value >> 24)
-  atPut 4 data (value >> 16)
-  atPut 5 data (value >> 8)
+  atPut 3 data ((value >> 24) & 255)
+  atPut 4 data ((value >> 16) & 255)
+  atPut 5 data ((value >> 8) & 255)
   atPut 6 data (value & 255)
   '[sensors:i2cWrite]' 41 data
 }

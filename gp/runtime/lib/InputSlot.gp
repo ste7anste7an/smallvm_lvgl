@@ -26,7 +26,6 @@ method initialize InputSlot default editRule blockColor slotMenu {
 	setTextFont this
 	addPart morph (morph text)
 	if (editRule == 'static') {
-		isStatic = true
 		contents = default
 		if (notNil blockColor) { color = (lighter blockColor 75) }
 	}
@@ -222,7 +221,7 @@ method textEdited InputSlot {
 method clicked InputSlot aHand {
 	if (notNil menuSelector) {
 		arrowLeft = ((right morph) - (20 * (blockScale)))
-		if (or isStatic ((x aHand) >= arrowLeft)) {
+		if (or ((editRule text) == 'static') ((x aHand) >= arrowLeft)) {
 			if (contains (methodNames (class 'InputSlot')) menuSelector) {
 				menu = (call menuSelector this)
 				if (notNil menu) {

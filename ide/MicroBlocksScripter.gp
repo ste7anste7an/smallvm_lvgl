@@ -1463,14 +1463,14 @@ method importLibraryFromUrl MicroBlocksScripter fullUrl {
 }
 
 method importLibraryFromString MicroBlocksScripter data libName fileName asImplementation {
-	addLibraryFromString mbProject (toString data) libName fileName
+	moduleName = (addLibraryFromString mbProject (toString data) libName fileName)
 	if asImplementation { beImplementation (libraryNamed mbProject libName) }
 	librariesChanged (smallRuntime)
 
 	// update library list and select the new library
 	updateLibraryList this
 	select categorySelector nil
-	select libSelector libName
+	select libSelector moduleName
 	updateBlocks this
 	saveScripts this
 	restoreScripts this

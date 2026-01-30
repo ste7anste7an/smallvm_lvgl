@@ -1228,7 +1228,7 @@ extern "C" void esp8266DeepSleep(uint64_t usecs) {
 #elif defined(DUELink)
 
 	#define BOARD_TYPE "DUELink"
-	#define DIGITAL_PINS 27
+	#define DIGITAL_PINS 29
 	#define ANALOG_PINS 5
 	#define TOTAL_PINS 60
 	#define PIN_LED 15 // PB_8
@@ -1238,32 +1238,34 @@ extern "C" void esp8266DeepSleep(uint64_t usecs) {
 	// 42 (PF_2) - reset
 	// 49 (PA_12) - USB P
 	// 50 (PA_11) - USB N
-	// 47 (PA_3) - Downlink RX (serial)
-	// 52 (PA_2) - Downlink TX (serial)
 
-	// PA_5, D13, edge pin 21 is the buzzer
 	// PB_0, D19, edge pin  9 is the light sensor
+	// PA_5, D13, edge pin 21 is the buzzer
+	// PA_2, D52, edge pin 25 is downlink TX
+	// PA_3, D47, edge pin 26 is downlink RX
 	static const char cincoEdgePin[DIGITAL_PINS] = {
 		16, 17, 18, 14, 29, 28,  8,  10,  37, 19,
 		 2, 27, 32,  9,  5,  4, 33, 255, 255,  0,
-		 1, 13,  7, 12, 15, 54, 11}; // row pins: 7, 12, 15, 54, 11
+		 1, 13,  7, 12, 15, 52, 47, 54, 11}; // row pins: 7, 12, 15, 54, 11
 
 	// PA_5, D13, edge pin 21 is the buzzer
 	// PC_6, D29, edge pin 22 is the display reset pin
 	// PA_6, D12, edge pin 23 is the light sensor
+	// PA_2, D52, edge pin 25 is downlink TX
+	// PA_3, D47, edge pin 26 is downlink RX
 	static const char pixoEdgePin[DIGITAL_PINS] = {
 		16, 17, 18, 11, 54, 28,  8,  10,  37, 19,
 		 2, 27,  7,  9,  5,  4, 33, 255, 255,  0,
-		 1, 13, 29, 12, 15, 14, 32}; // unused pins: 12, 15, 14, 32
+		 1, 13, 29, 12, 15, 52, 47, 14, 32}; // unused pins: 12, 15, 14, 32
 
-	// PA_9, D8, edge pin 21 is UART1_TX (uplink UART and often USB, too)
+	// PA_9,  D8, edge pin 21 is UART1_TX (uplink UART and often USB, too)
 	// PA_10, D2, edge pin 22 is UART1_RX (uplink UART and often USB, too)
-	// 52 (PA_2) - Downlink TX (downlink UART)
-	// 47 (PA_3) - Downlink RX (downlink UART)
+	// PA_2, D52, edge pin 25 is downlink TX
+	// PA_3, D47, edge pin 26 is downlink RX
 	static const char dueStandardPin[DIGITAL_PINS] = {
 		15, 16, 17, 18, 13, 12, 11,  7, 54, 19,
 		33, 29,  9,  5,  4,  1,  0, 37, 14, 10,
-		28,  8,  2, 27, 32, 52, 47};
+		28,  8,  2, 27, 32, 52, 47, 255, 255};
 
 	// Analog pin names for DUELink boards
 	// Note: CincoBit edge pins 3, 4, and 12 are not analog capable
