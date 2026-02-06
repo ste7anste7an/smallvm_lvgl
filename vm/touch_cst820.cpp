@@ -1,4 +1,5 @@
 // touch_cst820.cpp
+#if !defined(PICO)
 #include "touch_cst820.h"
 #include <Wire.h>
 
@@ -119,3 +120,4 @@ int TouchCST820::gesture()  { update(); return _g; }
 int TouchCST820::pressure() {
   return touched() ? 1000 : -1;
 }
+#endif

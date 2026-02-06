@@ -2500,13 +2500,15 @@ OBJ primCaptureEnd(int argCount, OBJ *args) {
 	}
 	return result;
 }
+
+#if defined(PICO)
 OBJ primSPIPins(int argCount, OBJ *args) {
 		char s[100];
 		sprintf(s,"SPI MOSI %d MISO %d  SCL %d",PIN_SPI_MOSI,PIN_SPI_MISO,PIN_SPI_SCK);
 		outputString(s);
 		return trueObj;
 }
- 
+#endif 
 
 static PrimEntry entries[] = {
 	{"acceleration", primAcceleration},
@@ -2526,7 +2528,7 @@ static PrimEntry entries[] = {
 	{"internalI2cSet", primInternalI2cSet},
 	{"spiExchange", primSPIExchange},
 	{"spiSetup", primSPISetup},
-	#if defined(TFT_CONFIG)
+	#if defined(PICO)
 	{"spiPins", primSPIPins},
 	#endif
 	{"readDHT", primReadDHT},

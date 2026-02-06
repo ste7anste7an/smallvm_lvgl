@@ -682,6 +682,11 @@ static int deferUpdates = false;
 			#ifndef TFT_HEIGHT
 			#define TFT_HEIGHT (cfg.lvgl.height)
 			#endif
+
+			#ifndef TFT_BL
+			#define TFT_BL (cfg.lcd.backlight)
+			#endif
+
 			char s[100];
 			bool config_file_exists=false;
 			        // pure zero-initialization
@@ -1561,7 +1566,7 @@ OBJ primSetBacklight(int argCount, OBJ *args) {
 	#if defined(ARDUINO_IOT_BUS)
 		pinMode(33, OUTPUT);
 		digitalWrite(33, (brightness > 0) ? HIGH : LOW);
-	#elif defined(COCUBE)
+	#elif defined(COCUBE) || defined(TFT_CONFIG)
 		pinMode(TFT_BL, OUTPUT);
 		if (brightness < 0) brightness = 0;
 		if (brightness > 10) brightness = 10;
