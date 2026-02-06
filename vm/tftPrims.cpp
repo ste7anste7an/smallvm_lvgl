@@ -547,165 +547,13 @@ static int deferUpdates = false;
 		}
 
 	#elif defined(TFT_CONFIG)
-	  #if defined(TFT_ESPI)
-	  	#include <TFT_eSPI.h>
-		#include <XPT2046_Touchscreen.h>
-		#include "touch_cst820.h"
-		#include <SPI.h>
-		#include "configurator.h"
 
-
-		#include <LittleFS.h>
-		#include <FS.h>
-
-		inline void applyPreferred(Config& c) {
-			#if defined(LMS_ESP32) && defined(ILI9341)
-			useTFT = true;
-			// [lcd]
-			strcpy(c.lcd.controller, "ILI9341");
-			c.lcd.spi = 3;
-			c.lcd.mosi = 13;
-			c.lcd.miso = 12;
-			c.lcd.sclk = 14;
-			c.lcd.cs = 15;
-			c.lcd.dc = 27;
-			c.lcd.rst = 32;
-			c.lcd.rotation = 3;
-			c.lcd.color = 1;
-			c.lcd.backlight = 33;
-			c.lcd.width = 320;
-			c.lcd.height = 240;
-
-			// [lvgl]
-			c.lvgl.width = 320;
-			c.lvgl.height = 240;
-
-			// [touch]
-			strcpy(c.touch.interface, "spi");
-			strcpy(c.touch.controller, "xpt2046");
-			c.touch.spi = 3;
-			c.touch.mosi = 13;
-			c.touch.miso = 12;
-			c.touch.sclk = 14;
-			c.touch.cs = 26;
-			c.touch.rotation = 3;
-		
-    // [other]
-		
-			#else
-				// empty cfg
-				 (void)c;
-			#endif
-		}
-
-		
-		Config cfg = {};              // zero-init (PIN_UNUSED, false, "")
-    	
-
-		TFT_eSPI tft = TFT_eSPI();
-	  	XPT2046_Touchscreen *touch = nullptr;
-	//	SPIClass* tftSPI = nullptr;
-		SPIClass* touchSPI = nullptr;
-		SPIClass& spix = SPI;
-
-		#define HAS_TOUCH_SCREEN 1
-
-		// New (I2C/CST820):
-		static TouchCST820 *touchI2C = nullptr;
-
-		// Cache last point for XPT so we don’t call getPoint() multiple times per frame
-		static TS_Point lastP;
-		static bool lastPTouched = false;
-		static uint32_t lastTouchPoll = 0;
-	
-	
-
-		void tftInit() {
-			//Serial.println("starting tftinit\r\n");
-
-			useTFT = true;
-			#ifndef TFT_WIDTH
-			#define TFT_WIDTH  (cfg.lvgl.width)
-			#endif
-
-			#ifndef TFT_HEIGHT
-			#define TFT_HEIGHT (cfg.lvgl.height)
-			#endif
-			char s[100];
-			bool config_file_exists=false;
-			        // pure zero-initialization
-			// configurator::loadConfig(&cfg);
-			// configurator::setDefaults(&cfg);
-			
-			if (!LittleFS.begin()) {
-					sprintf(s,"LittleFS mount failed!\n");
-					outputString(s);
-					//return;
-				}
-
-			if (!LittleFS.exists("/config.txt")) {
-				//Serial.printf("File does not exist!\n\r");
-				useTFT = false;
-				applyPreferred(cfg);  		
-			} else {
-				config_file_exists=true;
-				cfg={};
-			}  
-
-			if (config_file_exists) {
-				if (!configurator::loadConfig(&cfg)) {
-						sprintf(s,"Defaults used");
-						
-						outputString(s);
-				}
-			}
-
-			/*
-			 Serial.printf("non configured: touch.i2c %d, touch.scl:%d touch:sda %d,  cfg.lcd.invert %d,cfg.touch.flip_x %d,cfg.touch.flip_y %d,cfg.touch.flip_x_y %d\r\n",
-			 	 cfg.touch.i2c,toGPIO(cfg.touch.scl),toGPIO(cfg.touch.scl),cfg.lcd.invert,cfg.touch.flip_x,cfg.touch.flip_y,cfg.touch.flip_x_y);
-
-			 Serial.printf("cfg.lcd.controller %s , cfg.touch.interface %s, cfg.touch.controller %s\r\n", cfg.lcd.controller,cfg.touch.interface,cfg.touch.controller);
-
-			 Serial.printf("toGPIO(cfg.lcd.dc) %d, toGPIO(cfg.lcd.cs) %d,toGPIO(cfg.lcd.sclk) %d, toGPIO(cfg.lcd.mosi) %d, toGPIO(cfg.lcd.miso) %d, cfg.lcd.spi %d \r\n",
-					toGPIO(cfg.lcd.dc), toGPIO(cfg.lcd.cs),	toGPIO(cfg.lcd.sclk), toGPIO(cfg.lcd.mosi), toGPIO(cfg.lcd.miso),
-						cfg.lcd.spi);
-			 Serial.printf(" toGPIO(cfg.lcd.rst) %d, cfg.lcd.rotation %d, cfg.lcd.invert %d,cfg.lcd.width %d, cfg.lcd.height %d,cfg.lcd.col_offset %d,cfg.lcd.row_offset %d\r\n",
-				 toGPIO(cfg.lcd.rst), cfg.lcd.rotation, cfg.lcd.invert,cfg.lcd.width, cfg.lcd.height,cfg.lcd.col_offset,cfg.lcd.row_offset);
-			*/
-		
-			tft.begin();
-			tft.init();
-			tft.initDMA();
-			//tft.setSwapBytes(true);
-			spix = tft.getSPIinstance(); 
-			//tft.fillScreen(TFT_BLACK);
-		
-			tft.begin();
-			tft.setRotation(cfg.lcd.rotation);
-	//			tft._freq = 80000000; // this requires moving _freq to public in AdaFruit_SITFT.h
-			tftClear();
-			// Turn on backlight on IoT-Bus
-			tft.fillScreen(TFT_BLACK);
-
-  tft.setTextColor(TFT_WHITE);
-  tft.setTextSize(2);
-  tft.setCursor(20, 20);
-  tft.println("LovyanGFX OK");
-
-			delay(1); 
-			useTFT = true;
-			//Serial.printf("backlight %d\r\n",cfg.lcd.backlight);
-			pinMode(toGPIO(cfg.lcd.backlight), OUTPUT);
-			digitalWrite(toGPIO(cfg.lcd.backlight), HIGH); // turn backlight ON (or LOW if your display is inverted)
-			//Serial.printf("TFT completely initilaized\r\n");
-
-		}
-
-	  #else
 		#include <Arduino.h>
 		#include <Arduino_GFX_Library.h>
 		#include <XPT2046_Touchscreen.h>
-		#include "touch_cst820.h"
+		#if !defined(PICO)
+			#include "touch_cst820.h"
+		#endif
 		#include <SPI.h>
 		#include "configurator.h"
 
@@ -802,15 +650,20 @@ static int deferUpdates = false;
 		#define tft (*gfx)
 		//Arduino_GFX& tft = *gfx;
 		XPT2046_Touchscreen *touch = nullptr;
-		SPIClass* tftSPI = nullptr;
-		SPIClass* touchSPI = nullptr;
+		#if defined(PICO)
+			SPIClassRP2040* touchSPI = nullptr;
+		#else
+			SPIClass* touchSPI = nullptr;
+		#endif
+
 
 
 		#define HAS_TOUCH_SCREEN 1
 
 		// New (I2C/CST820):
-		static TouchCST820 *touchI2C = nullptr;
-
+		#if !defined(PICO)
+			static TouchCST820 *touchI2C = nullptr;
+		#endif
 		// Cache last point for XPT so we don’t call getPoint() multiple times per frame
 		static TS_Point lastP;
 		static bool lastPTouched = false;
@@ -879,16 +732,18 @@ static int deferUpdates = false;
 				// tftSPI->begin(toGPIO(cfg.lcd.sclk), toGPIO(cfg.lcd.miso), toGPIO(cfg.lcd.mosi), toGPIO(cfg.lcd.cs));
 				// bus = new Arduino_ESP32SPI(cfg.lcd.spi, toGPIO(cfg.lcd.dc), toGPIO(cfg.lcd.cs));
 				// 	//bus->begin(10000000,SPI_MODE0);
-#if defined(ESP32_C3)
+#if !defined(PICO)
+			#if defined(ESP32_C3)
 				bus = new Arduino_ESP32SPI( toGPIO(cfg.lcd.dc), toGPIO(cfg.lcd.cs), toGPIO(cfg.lcd.sclk), toGPIO(cfg.lcd.mosi), 
 											toGPIO(cfg.lcd.miso) );
 											// last boolean is: shared spi interface
-#else
+			#else 
+
 				bus = new Arduino_ESP32SPI( toGPIO(cfg.lcd.dc), toGPIO(cfg.lcd.cs), toGPIO(cfg.lcd.sclk), toGPIO(cfg.lcd.mosi), 
 											toGPIO(cfg.lcd.miso), cfg.lcd.spi, (cfg.lcd.spi==cfg.touch.spi));
 											// last boolean is: shared spi interface
 				
-#endif							
+		#endif							
 
 
 		
@@ -911,7 +766,30 @@ static int deferUpdates = false;
 				//else {
 				//	Serial.println("Unknown controller\r\n");
 				//}
-				
+				#else
+				bus = new Arduino_RPiPicoSPI(
+						toGPIO(cfg.lcd.dc), toGPIO(cfg.lcd.cs),
+						toGPIO(cfg.lcd.sclk), toGPIO(cfg.lcd.mosi), toGPIO(cfg.lcd.miso),
+						(cfg.lcd.spi == 0) ? spi0 : spi1
+					);
+
+			
+				if (strcmp(cfg.lcd.controller, "ILI9341") == 0) {
+					gfx = new Arduino_ILI9341(bus, toGPIO(cfg.lcd.rst), cfg.lcd.rotation, cfg.lcd.invert);
+				} else if (strcmp(cfg.lcd.controller, "ST7789") == 0) {
+					Serial.printf("ST7789 controller configured\r\n");
+					gfx = new Arduino_ST7789(bus, toGPIO(cfg.lcd.rst), cfg.lcd.rotation, cfg.lcd.invert,cfg.lcd.width, cfg.lcd.height,cfg.lcd.col_offset,cfg.lcd.row_offset);
+				}  else if (strcmp(cfg.lcd.controller, "ST7796") == 0) {
+					//if (cfg.lcd.col_offset==0 && cfg.lcd.row_offset==0)
+					//  gfx = new Arduino_ST7796(bus, cfg.lcd.rst, cfg.lcd.rotation, false);
+					//else
+					gfx = new Arduino_ST7796(bus, toGPIO(cfg.lcd.rst), cfg.lcd.rotation, cfg.lcd.invert,cfg.lcd.width, cfg.lcd.height,cfg.lcd.col_offset,cfg.lcd.row_offset);
+				}else {
+					Serial.println("Unknown controller\r\n");
+					
+				}
+			#endif
+
 				if (gfx != nullptr) {
 					//Serial.printf("tft.begin()\r\n");
 					delay(100); 
@@ -926,7 +804,7 @@ static int deferUpdates = false;
 				}
 			} //else Serial.printf("No TFT used\r\n");
 		}
-		#endif
+		
 	
 			// --- State flags ---
 		static bool touchInitAttempted = false;
@@ -951,10 +829,15 @@ static int deferUpdates = false;
 
 			if (touchEnabled) return;
 
+
 			if (isTouchXPT()) {
-				#if !defined(ILI9341)
-					touchSPI = new SPIClass(cfg.touch.spi);
-					touchSPI->begin(toGPIO(cfg.touch.sclk), toGPIO(cfg.touch.miso), toGPIO(cfg.touch.mosi), toGPIO(cfg.touch.cs));
+				#if defined(PICO)
+				touchSPI = new SPIClassRP2040(spi1, toGPIO(cfg.touch.miso), toGPIO(cfg.touch.cs), toGPIO(cfg.touch.sclk), toGPIO(cfg.touch.mosi));
+				touchSPI->begin();
+						
+				#else
+				touchSPI = new SPIClass(cfg.touch.spi);
+				touchSPI->begin(toGPIO(cfg.touch.sclk), toGPIO(cfg.touch.miso), toGPIO(cfg.touch.mosi), toGPIO(cfg.touch.cs));
 				#endif
 				touchEnabled = true;
 				hasTouch = true;
@@ -963,17 +846,14 @@ static int deferUpdates = false;
 					touch = new XPT2046_Touchscreen(toGPIO(cfg.touch.cs), toGPIO(cfg.touch.irq));
 				else
 					touch = new XPT2046_Touchscreen(toGPIO(cfg.touch.cs));
-				#if defined(ILI9341)
-					touch->begin(spix);
-				#else
-					touch->begin(*touchSPI);
-				#endif
+
+				touch->begin(*touchSPI);
 				touch->setRotation(cfg.touch.rotation);
 				return;
 			}
-
+			#if !defined(PICO)
 			if (isTouchCST()) {
-				// Serial.printf("initialize CST820   sda=%d scl=%d\r\n",toGPIO(cfg.touch.sda), toGPIO(cfg.touch.scl));
+				Serial.printf("initialize CST820\r\n");
 				touchI2C = new TouchCST820();
 				touchI2C->configure(cfg.touch.i2c, toGPIO(cfg.touch.sda), toGPIO(cfg.touch.scl));
 				touchI2C->setScreenSize(cfg.lvgl.width, cfg.lvgl.height);
@@ -982,7 +862,7 @@ static int deferUpdates = false;
 				touchEnabled = true;
 				return;
 			}
-			
+			#endif
 			touchEnabled = false;
 			hasTouch = false;
 		}
@@ -1008,11 +888,11 @@ static int deferUpdates = false;
 				}
 				return lastPTouched ? 1 : 0;
 			}
-
+		#if !defined(PICO)
 			if (isTouchCST()) {
 				return (touchI2C && touchI2C->touched()) ? 1 : 0;
 			}
-
+		#endif
 			return 0;
 		}
 
@@ -1033,7 +913,7 @@ static int deferUpdates = false;
 				else
 					return (int)map((int)lastP.x, 200, 3800, (int)cfg.lvgl.width, 0);
 			}
-
+		#if !defined(PICO)
 			if (isTouchCST()) {
 				if (!touchI2C) return 0;
 				if (cfg.touch.flip_x_y)
@@ -1046,7 +926,7 @@ static int deferUpdates = false;
 				else
 					return x;
 			}
-
+		#endif
 			return 0;
 		}
 
@@ -1067,7 +947,7 @@ static int deferUpdates = false;
 				else
 					return (int)map((int)lastP.y, 300, 3900, 0, (int)cfg.lvgl.height);
 			}
-
+		#if !defined(PICO)
 			if (isTouchCST()) {
 				if (!touchI2C) return 0;
 				if (cfg.touch.flip_x_y)
@@ -1080,7 +960,7 @@ static int deferUpdates = false;
 				else
 					return y;
 			}
-
+		#endif
 			return 0;
 		}
 
@@ -1091,12 +971,12 @@ static int deferUpdates = false;
 				if (!screenTouched()) return 0;
 				return (int)lastP.z;
 			}
-
+		#if !defined(PICO)
 			if (isTouchCST()) {
 				if (!touchI2C) return 0;
 				return touchI2C->pressure();  // 1000 when touched, -1 otherwise
 			}
-
+		#endif
 			return 0;
 		}
 
@@ -1106,11 +986,11 @@ static int deferUpdates = false;
 			if (isTouchXPT()) {
 				return 0;  // no gesture support
 			}
-
+		#if !defined(PICO)
 			if (isTouchCST()) {
 				return touchI2C ? touchI2C->gesture() : 0;
 			}
-
+		#endif
 			return 0;
 		}
 
