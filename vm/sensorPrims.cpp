@@ -460,6 +460,12 @@ static OBJ primI2cSetPins(int argCount, OBJ *args) {
 	#define PIN_SPI_SS   (9u)
 	#define PIN_SPI_SCK  (10u)
 	#define PIN_SPI_MOSI (11u)
+#elif defined(PICO) && defined(TFT_CONFIG)
+	//#define SPI SPI0
+	#define PIN_SPI_MISO (8u)
+	#define PIN_SPI_SS   (9u)
+	#define PIN_SPI_SCK  (10u)
+	#define PIN_SPI_MOSI (11u)
 #elif defined(WUKONG2040)
 	#define PIN_SPI_MISO (4u)
 	#define PIN_SPI_SS   (5u)
@@ -2495,6 +2501,15 @@ OBJ primCaptureEnd(int argCount, OBJ *args) {
 	return result;
 }
 
+#if defined(PICO)
+OBJ primSPIPins(int argCount, OBJ *args) {
+		char s[100];
+		sprintf(s,"SPI MOSI %d MISO %d  SCL %d",PIN_SPI_MOSI,PIN_SPI_MISO,PIN_SPI_SCK);
+		outputString(s);
+		return trueObj;
+}
+#endif 
+
 static PrimEntry entries[] = {
 	{"acceleration", primAcceleration},
 	{"temperature", primMBTemp},
@@ -2513,6 +2528,9 @@ static PrimEntry entries[] = {
 	{"internalI2cSet", primInternalI2cSet},
 	{"spiExchange", primSPIExchange},
 	{"spiSetup", primSPISetup},
+	#if defined(PICO)
+	{"spiPins", primSPIPins},
+	#endif
 	{"readDHT", primReadDHT},
 	{"microphone", primMicrophone},
 
