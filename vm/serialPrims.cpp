@@ -432,6 +432,42 @@ OBJ primSerialAvailable(int argCount, OBJ *args) {
 // Empty byte array constant
 static uint32 emptyByteArray = HEADER(ByteArrayType, 0);
 
+
+/*
+// universal primSerialRead with optional parameter nr_bytes
+static OBJ primSerialRead(int argCount, OBJ *args) {
+	if (!isOpen) return fail(serialPortNotOpen);
+
+	// optional argument handling
+	int limit = -1;
+	if (argCount >= 1) {
+		if (!isInt(args[0])) return fail(needsIntegerError);
+		limit = obj2int(args[0]);
+		if (limit < 0) return fail(needsIntegerError);
+	}
+
+	taskSleep(-1);
+
+	int byteCount = serialAvailable();
+	if (byteCount == 0) return (OBJ) &emptyByteArray;
+	if (byteCount < 0) return fail(primitiveNotImplemented);
+
+	// apply limit if provided
+	if (limit >= 0 && limit < byteCount)
+		byteCount = limit;
+
+	int wordCount = (byteCount + 3) / 4;
+
+	OBJ result = newObj(ByteArrayType, wordCount, falseObj);
+	if (!result) return fail(insufficientMemoryError);
+
+	serialReadBytes((uint8 *) &FIELD(result, 0), byteCount);
+	setByteCountAdjust(result, byteCount);
+
+	return result;
+}
+	*/
+
 static OBJ primSerialReadNr(int argCount, OBJ *args) {
 	if (!isOpen) return fail(serialPortNotOpen);
 	if (argCount < 1) return fail(notEnoughArguments);
