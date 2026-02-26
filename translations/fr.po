@@ -1,10 +1,10 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"Report-Msgid-Bugs-To: \n"
+"Report-Msgid-Bugs-To: interest@microblocks.fun\n"
 "POT-Creation-Date: 2024-10-28 16:36+0200\n"
-"PO-Revision-Date: 2024-11-22 13:15+0000\n"
-"Last-Translator: Nathan <bonnemainsnathan@gmail.com>\n"
+"PO-Revision-Date: 2026-02-09 14:09+0000\n"
+"Last-Translator: Anthony LE LUYER <anthony.leluyer@gmail.com>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/microblocks/ide/"
 "fr/>\n"
 "Language: fr\n"
@@ -12,7 +12,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n!=1);\n"
-"X-Generator: Weblate 5.9-dev\n"
+"X-Generator: Weblate 5.16-dev\n"
 
 #. "Output" blocks category label
 msgid "cat;Output"
@@ -361,7 +361,7 @@ msgstr "changer _ par _"
 
 #. Block in Variables category
 msgid "initialize local _ to _"
-msgstr ""
+msgstr "définir _ à _"
 
 #. "Data" blocks category label
 msgid "cat;Data"
@@ -414,11 +414,11 @@ msgstr "copie _ de _"
 #. Example value for the ( copy (smiles) from 2 > ) block, which will become "miles" when run.
 #. You could think of a word that still has meaning when you remove its first character in your language.
 msgid "smiles"
-msgstr ""
+msgstr "larme"
 
 #. Block in Data category
 msgid "to _"
-msgstr ""
+msgstr "à _"
 
 #. Block in Data category
 msgid "find _ in _"
@@ -430,7 +430,7 @@ msgstr "commence à _"
 
 #. Block in Data category
 msgid "join items of list _"
-msgstr ""
+msgstr "concaténation des éléments de la liste _"
 
 #. Block in Data category
 msgid "separator _"
@@ -446,7 +446,7 @@ msgstr "chaîne à partir de l'unicode _"
 
 #. Block in Data category
 msgid "new list length _"
-msgstr ""
+msgstr "Nouvelle liste de taille _"
 
 #. Block in Data category
 msgid "new byte array _"
@@ -458,11 +458,11 @@ msgstr "comme tableau d'octets _"
 
 #. Example string. Tells the user this input accepts a byte list or a string
 msgid "aByteListOrString"
-msgstr ""
+msgstr "uneListeOctetOuPhrase"
 
 #. Block in Data category
 msgid "with all _"
-msgstr ""
+msgstr "remplie de _"
 
 #. Block in Data category
 msgid "free memory"
@@ -488,7 +488,7 @@ msgstr "aléatoire"
 
 #. Block in Data category
 msgid "split _ by _"
-msgstr ""
+msgstr "découper _ au caractère _"
 
 #. "My Blocks" blocks category label
 msgid "cat;My Blocks"
@@ -504,7 +504,7 @@ msgstr "Ajouter un bloc de commande"
 
 #. Button on top of "My Blocks" category
 msgid "Add a reporter block"
-msgstr ""
+msgstr "Ajouter un bloc rapporteur"
 
 #. Make a block dialog
 msgid "Enter function name:"
@@ -512,7 +512,7 @@ msgstr "Entrez le nom de la fonction :"
 
 #. "Comm" blocks category label
 msgid "cat;Comm"
-msgstr ""
+msgstr "Communication"
 
 #. Block in Comm category
 msgid "i2c get device _ register _"
@@ -524,15 +524,15 @@ msgstr "i2c mettre le périphérique _ au registre _ à _"
 
 #. Block in Comm category
 msgid "i2c device _ read list _"
-msgstr ""
+msgstr "Appareil i2c _ lit la liste _"
 
 #. Block in Comm category
 msgid "i2c device _ write list _"
-msgstr ""
+msgstr "Appareil i2c _ écrit la liste _"
 
 #. Block in Comm category
 msgid "i2c device _ exists?"
-msgstr ""
+msgstr "Appareil i2c _ existe ?"
 
 #. Block in Comm category
 msgid "spi send _"
@@ -560,7 +560,7 @@ msgstr ""
 
 #. Example string. Tells the user this input accepts a byte array
 msgid "aByteArray"
-msgstr ""
+msgstr "uneListeOctet"
 
 #. Block in Comm category
 msgid "serial open _ baud"
@@ -5898,3 +5898,7 @@ msgstr "Langue manquante ?"
 #. Block in Control category
 msgid "exit loop"
 msgstr "boucle de sortie"
+
+#. Option in dropdown menu of editable input slots on mobile devices:
+msgid "edit"
+msgstr "modifier"

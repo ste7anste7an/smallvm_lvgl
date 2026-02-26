@@ -1,6 +1,6 @@
 module 'Four Digit Display (TM1637)' Output
 author MicroBlocks
-version 1 0 
+version 1 1 
 description 'Four digit LED display that can display decimal numbers from -999 to 9999.
 Datasheet:
 https://m5stack.oss-cn-shenzhen.aliyuncs.com/resource/docs/datasheet/unit/digi_clock/TM1637.pdf'
@@ -14,8 +14,8 @@ variables _tmClockPin _tmDataPin _tmBrightness _tmShowColon
   spec ' ' 'tmShowColon' 'four digit show colon _' 'bool' false
   space
   spec 'r' '_tmIsInitialized' '_tmIsInitialized'
-  spec 'r' '_tmShowSegments' '_tmShowSegments _ _' 'num num' 255 1
-  spec 'r' '_tmSegmentsForNum' '_tmSegmentsForNum _' 'num' 10
+  spec ' ' '_tmShowSegments' '_tmShowSegments _ _' 'num num' 255 1
+  spec ' ' '_tmSegmentsForNum' '_tmSegmentsForNum _' 'num' 10
   space
   spec ' ' '_tmWriteByte' '_tmWriteByte _' 'num' 0
   spec ' ' '_tmStart' '_tmStart'

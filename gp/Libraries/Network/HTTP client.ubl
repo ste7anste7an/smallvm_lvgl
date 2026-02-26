@@ -1,23 +1,27 @@
 module 'HTTP client' Comm
 author MicroBlocks
-version 1 5 
+version 1 8 
 depends WiFi 
 tags http network get post put delete 
-choices requestTypes GET POST PUT DELETE
+choices requestTypes GET POST PUT DELETE 
 description 'Send HTTP requests and get responses back. You can use this library to fetch or store data in online servers, or to control other Wifi-enabled boards.
 '
 
-	spec 'r' '_http_body_start' '_http_body_start _' 'auto' ''
-	spec 'r' '_http_header_text' '_http_header_text _' 'auto' ''
-	spec 'r' '_http_status_text' '_http_status_text _' 'auto' ''
-	spec 'r' '_http_header' '_header _ of response _' 'auto auto' 'content-length' ''
-	spec 'r' '_http_status' '_status of response _' 'auto' ''
-	spec 'r' '_line_end' '_line_end'
-	spec 'r' '_lowercase' '_lowercase _' 'auto' 'ABC Def gH'
-	spec 'r' '_request_url' '_request_url _ method _ body _ :port _' 'str menu.requestTypes str num' '' 'GET' '' 80
-	spec 'r' '_readHTTPResponse' '_readHTTPResponse'
-	spec 'r' 'http܃//' 'http #SVG#colon-double-slash _ :port _' 'auto num' 'microblocks.fun/example.txt' 80
-	spec ' ' 'request' '_ data _ to http #SVG#colon-double-slash _ :port _' 'menu.requestTypes str str num' 'POST' 'MicroBlocks is fun' 'microblocks.fun' 80
+  spec 'r' 'url' 'fetch URL _' 'str' 'https://microblocks.fun/example.txt'
+  space
+  spec 'r' 'http܃//' 'http #SVG#colon-double-slash _ : port _' 'auto num' 'microblocks.fun/example.txt' 80
+  spec 'r' 'https܃//' 'https #SVG#colon-double-slash _ : port _' 'auto num' 'microblocks.fun/example.txt' 443
+  space
+  spec ' ' 'request' '_ data _ to http #SVG#colon-double-slash _ : port _ : useHTTPS _' 'menu.requestTypes str str num bool' 'POST' 'MicroBlocks is fun' 'microblocks.fun' 80 false
+  spec 'r' '_http_body_start' '_http_body_start _' 'auto' ''
+  spec 'r' '_http_header_text' '_http_header_text _' 'auto' ''
+  spec 'r' '_http_status_text' '_http_status_text _' 'auto' ''
+  spec 'r' '_http_header' '_header _ of response _' 'auto auto' 'content-length' ''
+  spec 'r' '_http_status' '_status of response _' 'auto' ''
+  spec 'r' '_line_end' '_line_end'
+  spec 'r' '_lowercase' '_lowercase _' 'auto' 'ABC Def gH'
+  spec 'r' '_request_url' '_request_url _ method _ body _ : port _ : useHTTPS _' 'str menu.requestTypes str num bool' '' 'GET' '' 80 false
+  spec 'r' '_readHTTPResponse' '_readHTTPResponse'
 
 to '_http_body_start' response {
   return (('[data:find]' ('[data:unicodeString]' ('[data:makeList]' 13 10 13 10)) response) + 4)
@@ -83,11 +87,9 @@ to '_readHTTPResponse' {
   return response
 }
 
-to '_request_url' url method body optionalPort {
-  local 'port' 80
-  if ((pushArgCount) > 3) {
-    port = optionalPort
-  }
+to '_request_url' url method body optionalPort optionalHTTPS {
+  local 'useHTTPS' (argOrDefault 5 (booleanConstant false))
+  local 'port' (argOrDefault 4 (ifExpression useHTTPS 443 80))
   local 'host' ''
   local 'path' ''
   local 'slashPosition' ('[data:find]' '/' url)
@@ -100,7 +102,12 @@ to '_request_url' url method body optionalPort {
   if (('[net:wifiStatus]') != 'Connected') {
     return ('[data:join]' '0 Not Connected' ('_line_end'))
   }
-  '[net:httpConnect]' host port
+  port = ('[data:convertType]' port 'number')
+  if useHTTPS {
+    '[net:httpSecureConnect]' host port
+  } else {
+    '[net:httpConnect]' host port
+  }
   if (not ('[net:httpIsConnected]')) {
     return ('[data:join]' '0 Could not connect to server' ('_line_end'))
   }
@@ -108,12 +115,36 @@ to '_request_url' url method body optionalPort {
   return ('_readHTTPResponse')
 }
 
-to 'http܃//' url optionalPort {
-  local 'port' 80
-  if ((pushArgCount) > 1) {
-    port = optionalPort
+to decompose url {
+  local 'host' ''
+  local 'path' ''
+  local 'auxUrl' ''
+  local 'colonPosition' ('[data:find]' '://' url)
+  local 'protocol' (ifExpression (('[data:find]' 'https://' ('_lowercase' url)) > 0) 'https' (ifExpression (('[data:find]' 'http://' ('_lowercase' url)) > 0) 'http' 'https'))
+  local 'port' (ifExpression (protocol == 'https') 443 80)
+  if (colonPosition > 4) {
+    auxUrl = ('[data:copyFromTo]' url (colonPosition + 3))
+  } else {
+    auxUrl = url
   }
-  local 'response' ('_request_url' url 'GET' '' port)
+  local 'slashPosition' ('[data:find]' '/' auxUrl)
+  if (slashPosition > 0) {
+    host = ('[data:copyFromTo]' auxUrl 1 (slashPosition - 1))
+    path = ('[data:copyFromTo]' auxUrl (slashPosition + 1))
+  } else {
+    host = auxUrl
+  }
+  colonPosition = ('[data:find]' ':' host)
+  if (colonPosition > 0) {
+    port = ('[data:convertType]' ('[data:copyFromTo]' host (colonPosition + 1)) 'number')
+    host = ('[data:copyFromTo]' host 1 (colonPosition - 1))
+  }
+  return ('[data:makeList]' protocol host path port)
+}
+
+to 'https܃//' url optionalPort {
+  local 'port' (argOrDefault 2 443)
+  local 'response' ('_request_url' url 'GET' '' port true)
   if (response != '') {
     if (('_http_status' response) == 200) {
       return ('[data:copyFromTo]' response ('_http_body_start' response))
@@ -125,12 +156,24 @@ to 'http܃//' url optionalPort {
   }
 }
 
-to request method data url optionalPort {
-  local 'port' 80
-  if ((pushArgCount) > 3) {
-    port = optionalPort
+to 'http܃//' url optionalPort {
+  local 'port' (argOrDefault 2 80)
+  local 'response' ('_request_url' url 'GET' '' port false)
+  if (response != '') {
+    if (('_http_status' response) == 200) {
+      return ('[data:copyFromTo]' response ('_http_body_start' response))
+    } else {
+      return ('_http_status_text' response)
+    }
+  } else {
+    return 'Failed to get response'
   }
-  local 'response' ('_request_url' url method data port)
+}
+
+to request method data url optionalPort optionalHTTPS {
+  local 'useHTTPS' (argOrDefault 5 (booleanConstant false))
+  local 'port' (argOrDefault 4 (ifExpression useHTTPS 443 80))
+  local 'response' ('_request_url' url method data port useHTTPS)
   if (response != '') {
     local 'status' ('_http_status' response)
     local 'body start' ('_http_body_start' response)
@@ -141,6 +184,27 @@ to request method data url optionalPort {
     }
   } else {
     sayIt 'Failed to get response'
+  }
+}
+
+to url url {
+  comment 'Returns the content of a web page.
+The URL can be with or without explicit protocol and/or port. If omitted, the default protocol is https (port 443). In the case of http, the default port is 80.
+These forms are valid:
+https://microblocks.fun/example.txt
+http://microblocks.fun/example.txt
+microblocks.fun/example.txt (https by default)
+https://tls-v1-2.badssl.com:1012 (specific port)'
+  local 'infoURL' (decompose url)
+  local 'response' ('_request_url' ('[data:join]' (at 2 infoURL) (ifExpression ((size (at 3 infoURL)) > 0) ('[data:join]' '/' (at 3 infoURL)) '')) 'GET' '' (at 4 infoURL) ((at 1 infoURL) == 'https'))
+  if (response != '') {
+    if (('_http_status' response) == 200) {
+      return ('[data:copyFromTo]' response ('_http_body_start' response))
+    } else {
+      return ('_http_status_text' response)
+    }
+  } else {
+    return 'Failed to get response'
   }
 }
 

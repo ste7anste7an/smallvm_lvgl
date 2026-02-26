@@ -291,15 +291,17 @@ static void serialOpen(int baudRate) {
 		#else
 			SERIAL_PORT.begin(baudRate, SERIAL_8N1, RX, TX);
 		#endif
-	// #elif defined(ESP32_ORIGINAL)
-	// 	if (hasPSRAM()) { // GPIO16 and GPIO17 are used by PSRAM on original ESP32
-	// 		SERIAL_PORT.begin(baudRate, SERIAL_8N1, 21, 22);
-	// 	} else {
-	// 		SERIAL_PORT.begin(baudRate, SERIAL_8N1, 16, 17);
-	// 	}
-	// #elif defined(ESP32)
-	// 	// all ESP32 boards that do not have cases above
-	// 	SERIAL_PORT.begin(baudRate, SERIAL_8N1, 16, 17);
+	#elif defined(ESP32_ORIGINAL)
+		if (hasPSRAM()) { // GPIO16 and GPIO17 are used by PSRAM on original ESP32
+			SERIAL_PORT.begin(baudRate, SERIAL_8N1, 21, 22);
+		} else {
+			SERIAL_PORT.begin(baudRate, SERIAL_8N1, 16, 17);
+		}
+	#elif defined(METRO_S3)
+		SERIAL_PORT.begin(baudRate, SERIAL_8N1, 41, 40);
+	#elif defined(ESP32)
+		// all ESP32 boards that do not have cases above
+		SERIAL_PORT.begin(baudRate, SERIAL_8N1, 16, 17);
 	#elif defined(DUELink)
 		if (DUE_HAS_EDGE_CONNECTOR) {
 			// Edge connector pins 0 and 1
@@ -651,6 +653,98 @@ static OBJ primMIDIRecv(int argCount, OBJ *args) {
 
 	return result;
 }
+
+// #elif defined(ESP32_S2) || defined(ESP32_S3)
+// // Not working; commented out
+// // NOTE: Could not get this to work using platformio Arduino, which is IDF v4.4.7-dirty.
+// // It might need a newer version of the Espressive IDF.
+//
+// Note: These #includes cause conflicting library errors when compiling on SAMD21 boards
+// unless you add "lib_ldf_mode = chain+" to their environments in the platformio.ini file.
+// #include <tusb.h>
+// #include <esp32-hal-tinyusb.h>
+// #include <tusb_config.h>
+//
+// static int midiInitialized = false;
+//
+// extern "C" uint16_t tusb_midi_load_descriptor(uint8_t *dst, uint8_t *itf) {
+// 	// NOTE: This never gets called.
+// outputString("tusb_midi_load_descriptor");
+//   uint8_t str_index = tinyusb_add_string_descriptor("TinyUSB MIDI");
+//   uint8_t ep_num = tinyusb_get_free_duplex_endpoint();
+// //  TU_VERIFY(ep_num != 0);
+// reportNum("str_index", ep_num);
+// reportNum("ep_num", ep_num);
+//   uint8_t descriptor[TUD_MIDI_DESC_LEN] = {
+//       // Interface number, string index, EP Out & EP In address, EP size
+//       TUD_MIDI_DESCRIPTOR(*itf, str_index, ep_num, (uint8_t)(0x80 | ep_num), 64)};
+//   *itf += 1;
+//   memcpy(dst, descriptor, TUD_MIDI_DESC_LEN);
+//   return TUD_MIDI_DESC_LEN;
+// }
+//
+// static void initMidi() {
+// 	if (!midiInitialized)  {
+//
+// 		// tusb_desc_interface_t is defined in tusb_types.h:
+// 		tusb_desc_interface_t midiDesc;
+// 		memset(&midiDesc, 0, sizeof(midiDesc));
+// 		midiDesc.bLength = sizeof(midiDesc);
+// 		midiDesc.bDescriptorType = TUSB_DESC_CS_INTERFACE;
+// 		midiDesc.bInterfaceNumber = 0;
+// 		midiDesc.bInterfaceNumber = 1;
+// 		midiDesc.bInterfaceClass = 1;
+// 		midiDesc.bInterfaceSubClass = 3;
+// 		midiDesc.bInterfaceProtocol = 0;
+// 		midiDesc.iInterface = tinyusb_add_string_descriptor("Johns TinyUSB MIDI");
+//
+// 		tinyusb_enable_interface(USB_INTERFACE_MIDI, TUD_MIDI_DESC_LEN, tusb_midi_load_descriptor);
+// 		midid_init();
+//
+// 		midid_open(0, &midiDesc, 64);
+// 	}
+// 	midiInitialized = true;
+// }
+//
+// static OBJ primMIDISend(int argCount, OBJ *args) {
+// 	if (argCount < 1) return fail(notEnoughArguments);
+//
+// 	uint8_t buf[3];
+//
+// 	initMidi();
+// 	buf[0] = obj2int(args[0]);
+// 	buf[1] = (argCount > 1) ? obj2int(args[1]) : 0;
+// 	buf[2] = (argCount > 2) ? obj2int(args[2]) : 0;
+// 	tud_midi_n_stream_write (0, 0, buf, 3);
+//
+// 	return trueObj;
+// }
+//
+// static OBJ primMIDIRecv(int argCount, OBJ *args) {
+// 	// Return a MIDI message packet or false if none is available.
+// 	// Packets are always 3-bytes. The first byte is the MIDI command bytes.
+// 	// The following two bytes are argument bytes. The unused argument bytes
+// 	// of 1-byte and 2-byte MIDI commands are zero.
+//
+// 	uint8_t buf[4];
+//
+// 	initMidi();
+// 	int gotData = tud_midi_n_packet_read(0, buf);
+// 	if (!gotData) return falseObj;
+//
+// 	// allocate 3-byte byte array
+// 	OBJ result = newObj(ByteArrayType, 1, falseObj);
+// 	if (!result) return fail(insufficientMemoryError);
+// 	setByteCountAdjust(result, 3);
+//
+// 	// read MIDI data into result
+// 	uint8 *bytes = (uint8 *) &FIELD(result, 0);
+// 	bytes[0] = buf[0];
+// 	bytes[1] = buf[1];
+// 	bytes[2] = buf[2];
+//
+// 	return result;
+// }
 
 #else // no USB_MIDI
 

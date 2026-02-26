@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: interest@microblocks.fun\n"
 "POT-Creation-Date: 2024-10-30 07:10+0200\n"
-"PO-Revision-Date: 2026-01-19 23:58+0000\n"
+"PO-Revision-Date: 2026-02-21 17:09+0000\n"
 "Last-Translator: Josep Ferràndiz <josep.ferrandiz@gmail.com>\n"
 "Language-Team: Catalan <https://hosted.weblate.org/projects/microblocks/ide/"
 "ca/>\n"
@@ -12,7 +12,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.16-dev\n"
+"X-Generator: Weblate 5.16.1-dev\n"
 
 #. "Output" blocks category label
 msgid "cat;Output"
@@ -353,7 +353,7 @@ msgstr "Nom de la variable?"
 
 #. Block in Variables category
 msgid "set _ to _"
-msgstr "assigna _ a _"
+msgstr "assigna a _ el valor _"
 
 #. Block in Variables category
 msgid "change _ by _"
@@ -7834,3 +7834,338 @@ msgstr "redueix el rang"
 #. Script right-click context menu
 msgid "copy callable name"
 msgstr "copia el nom de la funció"
+
+#. Block in Function Calls library
+msgid "function _ exists"
+msgstr "la funció _ existeix"
+
+#. External Displays Library block
+#. The #BR# tag must be kept intact. It translates to a new line
+msgid "attach ST7735 w _ h _ rotation _ #BR# dc pin _ cs pin _ backlight pin _"
+msgstr ""
+"connecta ST7735 amplada _ alçada _ rotació _ #BR# pin dc _ pin cs _ pin de "
+"retroil·luminació _"
+
+#. External Displays Library block
+#. The #BR# tag must be kept intact. It translates to a new line
+msgid "#BR# reset pin _ invert colors _"
+msgstr "#BR# reinicia el pin _ invertir colors _"
+
+#. External Displays Library block
+#. The #BR# tag must be kept intact. It translates to a new line
+msgid "#BR# x offset _ y offset _"
+msgstr "#BR# desplaçament x _ desplaçament y _"
+
+#. External Displays Library block
+#. The #BR# tag must be kept intact. It translates to a new line
+msgid "attach ST7789 w _ h _ rotation _ #BR# dc pin _ cs pin _ backlight pin _"
+msgstr ""
+"connecta ST7789 amplada _ alçada _ rotació _ #BR# pin dc _ pin cs _ pin de "
+"retroil·luminació _"
+
+#. External Displays Library block
+#. The #BR# tag must be kept intact. It translates to a new line
+msgid "attach ST7796 w _ h _ rotation _ #BR# dc pin _ cs pin _ backlight pin _"
+msgstr ""
+"connecta ST7796 amplada _ alçada _ rotació _ #BR# pin dc _ pin cs _ pin de "
+"retroil·luminació _"
+
+#. External Displays Library block
+msgid "attach ILI9341 rotation _ dc pin _ cs pin _ backlight pin _"
+msgstr "connecta ILI9341 rotació _ pin dc _ pin cs _ pin de retroil·luminació _"
+
+#. External Displays Library block
+msgid "attach OLED w _ h _"
+msgstr "connecta OLED amplada _ alçada _"
+
+#. External Displays Library block
+msgid "reset pin _"
+msgstr "reinicia el pin _"
+
+#. External Displays Library block
+msgid "detach display"
+msgstr "desconnecta la pantalla"
+
+#. 8 Bit Graphics Library block
+msgid "set scale _"
+msgstr "escala _"
+
+#. 8 Bit Graphics Library block
+msgid "draw buffer"
+msgstr "actualitza la pantalla"
+
+#. 8 Bit Graphics Library block
+msgid "starting at x _ y _ width _ height _"
+msgstr "comença a x _ y _ amplada _ alçada _"
+
+#. 8 Bit Graphics Library block
+msgid "bitmap from BMP file _"
+msgstr "mapa de bits del fitxer BMP _"
+
+#. 8 Bit Graphics Library block
+msgid "bitmap of width _ from raw indexed file _"
+msgstr "mapa de bits d'amplada _ del fitxer cru indexat _"
+
+#. 8 Bit Graphics Library block
+msgid "bitmap of width _ from string _"
+msgstr "mapa de bits d'amplada _ de la cadena _"
+
+#. 8 Bit Graphics Library block
+msgid "bitmap _ rotated _ º"
+msgstr "mapa de bits _ girat _ º"
+
+#. 8 Bit Graphics Library block
+msgid "bitmap _ mirrored across _ axis"
+msgstr "mapa de bits _ capgirat respecte de l'eix _"
+
+#. 8 Bit Graphics Library block
+msgid "merge bitmap _ at _ , _"
+msgstr "fusiona mapa de bits _ a _ , _"
+
+#. 8 Bit Graphics Library block
+msgid "merge tile _ from _ , _ to _ , _"
+msgstr "fusiona tessel·la _ de _ , _ a _ , _"
+
+#. 8 Bit Graphics Library block
+msgid "merge tile _ at tile position _ , _"
+msgstr "fusiona la tesel·la _ a la posició de la tesel·la _ , _"
+
+#. 8 Bit Graphics Library block
+msgid "set palette _"
+msgstr "estableix la paleta a _"
+
+#. 8 Bit Graphics Library block
+msgid "set transparent color index _"
+msgstr "índex del color transparent a _"
+
+#. 8 Bit Graphics Library block
+msgid "palette from pal file _"
+msgstr "paleta des de fitxer PAL _"
+
+#. 8 Bit Graphics Library block
+msgid "palette from BMP file _"
+msgstr "paleta des de fitxer BMP _"
+
+#. 8 Bit Graphics Library block
+msgid "4 bit _ palette"
+msgstr "paleta _ de 4 bits"
+
+#. 8 Bit Graphics Library block
+msgid "8 bit _ palette"
+msgstr "paleta _ de 8 bits"
+
+#. 8 Bit Graphics Library block
+msgid "color number for r _ g _ b _ (0-255)"
+msgstr "color r _ g _ b _ (0-255)"
+
+#. 8 Bit Graphics Library block
+msgid "draw palette table _"
+msgstr "mostra la paleta de colors _"
+
+#. 8 Bit Graphics Library block
+msgid "current palette"
+msgstr "paleta actual"
+
+#. 8 Bit Graphics Library block
+msgid "screen width"
+msgstr "amplada de la pantalla"
+
+#. 8 Bit Graphics Library block
+msgid "screen height"
+msgstr "alçada de la pantalla"
+
+#. General MIDI drum set
+msgid "Standard 1"
+msgstr "Estàndard 1"
+
+#. General MIDI drum set
+msgid "Standard 2"
+msgstr "Estàndard 2"
+
+#. General MIDI drum set
+msgid "Standard L/R"
+msgstr "Estàndard E/D"
+
+#. General MIDI drum set
+msgid "Room"
+msgstr "Sala"
+
+#. General MIDI drum set
+msgid "Hip Hop"
+msgstr "Hip Hop"
+
+#. Musical scale name
+msgid "chromatic"
+msgstr "cromàtica"
+
+#. Musical scale name
+msgid "tonal"
+msgstr "de tons"
+
+#. WiFi library block
+msgid "stop wifi"
+msgstr "atura el wifi"
+
+#. Library name
+msgid "8 Bit Graphics"
+msgstr "Gràfics de 8 bits"
+
+#. Library name
+msgid "BMP"
+msgstr "BMP"
+
+#. Library name
+msgid "Color"
+msgstr "Color"
+
+#. Library name
+msgid "External Displays"
+msgstr "Pantalles Externes"
+
+#. Library name
+msgid "Four Digit Display (TM1637)"
+msgstr "Pantalla de Quatre Dígits (TM1637)"
+
+#. Library name
+msgid "Four Digit Display (TM1650)"
+msgstr "Pantalla de Quatre Dígits (TM1650)"
+
+#. Library name
+msgid "TFT"
+msgstr "TFT"
+
+#. Library name
+msgid "CoCube Module"
+msgstr "Mòdul CoCube"
+
+#. Library name
+msgid "CoCube"
+msgstr "CoCube"
+
+#. Library name
+msgid "MIDI"
+msgstr "MIDI"
+
+#. Library name
+msgid "Function Calls"
+msgstr "Crides de Funcions"
+
+#. General MIDI drum set
+msgid "Room L/R"
+msgstr "Sala E/D"
+
+#. General MIDI drum set
+msgid "House Power Electronic"
+msgstr "House Power Electrònic"
+
+#. General MIDI drum set
+msgid "CR-78"
+msgstr "CR-78"
+
+#. General MIDI drum set
+msgid "TR-606"
+msgstr "TR-606"
+
+#. General MIDI drum set
+msgid "TR-707"
+msgstr "TR-707"
+
+#. General MIDI drum set
+msgid "TR-909"
+msgstr "TR-909"
+
+#. General MIDI drum set
+msgid "Jazz"
+msgstr "Jazz"
+
+#. General MIDI drum set
+msgid "Jazz L/R"
+msgstr "Jazz E/D"
+
+#. General MIDI drum set
+msgid "Brush"
+msgstr "Brush"
+
+#. General MIDI drum set
+msgid "Brush 2"
+msgstr "Brush 2"
+
+#. General MIDI drum set
+msgid "Brush 2 L/R"
+msgstr "Brush 2 E/D"
+
+#. General MIDI drum set
+msgid "Kick & Snare"
+msgstr "Kick & Snare"
+
+#. General MIDI drum set
+msgid "Kick & Snare 2"
+msgstr "Kick & Snare 2"
+
+#. General MIDI drum set
+msgid "Asia"
+msgstr "Àsia"
+
+#. General MIDI drum set
+msgid "Cymbal&claps"
+msgstr "Plats i Palmes"
+
+#. General MIDI drum set
+msgid "Gamelan 1"
+msgstr "Gamelan 1"
+
+#. General MIDI drum set
+msgid "Gamelan 2"
+msgstr "Gamelan 2"
+
+#. General MIDI drum set
+msgid "SFX"
+msgstr "SFX"
+
+#. General MIDI drum set
+msgid "Rhythm FX"
+msgstr "Ritme FX"
+
+#. General MIDI drum set
+msgid "Rhythm FX 2"
+msgstr "Ritme FX 2"
+
+#. General MIDI drum set
+msgid "Rhythm FX 3"
+msgstr "Ritme FX 3"
+
+#. General MIDI drum set
+msgid "SFX 2"
+msgstr "SFX 2"
+
+#. General MIDI drum set
+msgid "Voice"
+msgstr "Veu"
+
+#. General MIDI drum set
+msgid "Cym&Claps 2"
+msgstr "Plats i Palmes 2"
+
+#. MIDI library block
+msgid "stop all notes on channel _ in _ ms"
+msgstr "atura totes les notes al canal _ en _ ms"
+
+#. General MIDI drum set
+msgid "Orchestra Ethnic"
+msgstr "Orquestra Ètnic"
+
+#. General MIDI drum set
+msgid "Dance"
+msgstr "Ball"
+
+#. General MIDI drum set
+msgid "Jungle Techno"
+msgstr "Jungle Tecno"
+
+#. Sound destination for arpeggiate block in Scales & Chords library
+msgid "gate trigger"
+msgstr "activador de porta"
+
+#. Octostudio communication library block
+msgid "Octo last beam group"
+msgstr "Octo últim grup d'emissió"

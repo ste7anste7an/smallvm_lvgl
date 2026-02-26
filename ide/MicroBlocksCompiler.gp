@@ -292,7 +292,8 @@ method microBlocksSpecs SmallCompiler {
 		(array 'r' '[net:startSSIDscan]'		'scan SSID list')
 		(array 'r' '[net:getSSID]'				'get SSID number _' 'num' 1)
 
-		(array ' ' '[net:httpConnect]'			'connect to http܃// _ : port _' 'auto num' 'microblocks.fun' 80)
+		(array ' ' '[net:httpConnect]'			'connect to http܃// _ : port _' 'str num' 'microblocks.fun' 80)
+		(array ' ' '[net:httpSecureConnect]'	'connect to https܃// _ : port _' 'str num' 'microblocks.fun' 443)
 		(array 'r' '[net:httpIsConnected]'		'is HTTP connected?')
 		(array ' ' '[net:httpRequest]'			'_ request http܃// _ / _ : body _' 'menu.requestTypes auto auto str' 'GET' 'microblocks.fun' 'example.txt' '')
 		(array 'r' '[net:httpResponse]'			'HTTP response')

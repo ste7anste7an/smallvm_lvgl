@@ -1,19 +1,19 @@
 module 'DUELink Edu'
 author MicroBlocks
-version 1 12 
+version 1 14 
 choices dueSTEM_pianoPad left right C 'C#' D 'D#' E F 'F#' G 'G#' A 'A#' B 'High C' 
 choices dueSTEM_clipItPad A B left right up down 
 choices dueSTEM_buttonName left right up down 
 choices dueSTEM_axis x y z 
 choices dueSTEM_timeComponent 'time (H:M:S)' 'date (Y-M-D)' second minute hour day month year 'day of week' 
-description 'Library for DUELink Educational boards: CincoBit, PixoBit, ClipIt, and DueSTEM.
+description 'Library for DUELink Educational boards, and with additional helper methods.
 
-The "due PID" works on all DUELink boards.
-Blocks labeled "dueSTEM" work only on the DueSTEM board.
+Blocks with no product name, like "due PID", work on all modules.
+Blocks labeled a product name, like "dueSTEM", work only on specific board.
 
-Touch sensing works only on pins with capacitive touch circuits including pins 0, 1, 2 of the CincoBit and PixoBit and all but the SCL/SDA pins of the ClipIt.
+Touch sensing works only on pins with capacitive touch circuits, including pins 0, 1, 2 of the CincoBit and PixoBit, and all but the SCL/SDA pins of the ClipIt.
 '
-variables dueSTEM_accelAddr dueSTEM_touchAdjustments 
+variables _dueSTEM_accelAddr _dueSTEM_touchAdjustments 
 
   spec 'r' 'dueSTEM_light' 'due light level (0-1000)'
   spec 'r' 'dueSTEM_LDR_button' 'due LDR button'
@@ -44,18 +44,18 @@ variables dueSTEM_accelAddr dueSTEM_touchAdjustments
 to '_dueSTEM_accelInit' {
   comment 'MC3216
 https://www.mouser.com/datasheet/2/821/MEMSIC_MC3216_Datasheet-1879973.pdf'
-  if (dueSTEM_accelAddr != 0) {
+  if (_dueSTEM_accelAddr != 0) {
     return
   }
-  dueSTEM_accelAddr = (hexToInt '4C')
+  _dueSTEM_accelAddr = (hexToInt '4C')
   comment 'Turn off accelerometer before changing settings'
-  i2cSet dueSTEM_accelAddr 7 0
+  i2cSet _dueSTEM_accelAddr 7 0
   comment 'Sampling rate: 256 Hz'
-  i2cSet dueSTEM_accelAddr 8 10
+  i2cSet _dueSTEM_accelAddr 8 10
   comment '+/-2G range, 10-bit resolution'
-  i2cSet dueSTEM_accelAddr (hexToInt '20') 3
+  i2cSet _dueSTEM_accelAddr (hexToInt '20') 3
   comment 'Start accelerometer'
-  i2cSet dueSTEM_accelAddr 7 1
+  i2cSet _dueSTEM_accelAddr 7 1
 }
 
 to '_dueSTEM_accelRead16BitReg' reg {
@@ -69,8 +69,8 @@ to '_dueSTEM_accelRead16BitReg' reg {
 }
 
 to '_dueSTEM_adjustmentForPin' pin {
-  if (dueSTEM_touchAdjustments == 0) {dueSTEM_touchAdjustments = (newList (digitalPins) -1)}
-  local 'result' (at (pin + 1) dueSTEM_touchAdjustments)
+  if (_dueSTEM_touchAdjustments == 0) {_dueSTEM_touchAdjustments = (newList (digitalPins) -1)}
+  local 'result' (at (pin + 1) _dueSTEM_touchAdjustments)
   if (result >= 0) {
     return result
   }
@@ -79,7 +79,7 @@ to '_dueSTEM_adjustmentForPin' pin {
     'total usecs' += ('_dueSTEM_dischargeTime' pin)
   }
   result = (maximum 0 (minimum (((v 'total usecs') / 80) - 99) 30))
-  atPut (pin + 1) dueSTEM_touchAdjustments result
+  atPut (pin + 1) _dueSTEM_touchAdjustments result
   return result
 }
 

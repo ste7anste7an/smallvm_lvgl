@@ -58,6 +58,15 @@ static OBJ primHttpConnect(int argCount, OBJ *args) {
 	return trueObj;
 }
 
+static OBJ primHttpSecureConnect(int argCount, OBJ *args) {
+	EM_ASM_({
+		window.httpRequest = new XMLHttpRequest();
+		window.httpRequest.port = $0;
+		window.httpRequest.currentIndex = 0;
+	}, ((argCount > 1) && isInt(args[1])) ? obj2int(args[1]) : 443);
+	return trueObj;
+}
+
 static OBJ primHttpIsConnected(int argCount, OBJ *args) {
 	return EM_ASM_INT({ return window.httpRequest !== undefined; }) ?
 		trueObj : falseObj;
@@ -256,6 +265,7 @@ static PrimEntry entries[] = {
 	{"respondToHttpRequest", primRespondToHttpRequest},
 
 	{"httpConnect", primHttpConnect},
+	{"httpSecureConnect", primHttpSecureConnect},
 	{"httpIsConnected", primHttpIsConnected},
 	{"httpRequest", primHttpRequest},
 	{"httpResponse", primHttpResponse},

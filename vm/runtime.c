@@ -540,9 +540,6 @@ static void softReset(int clearMemoryFlag) {
 
 	OBJ off = falseObj;
 	if (!useTFT) primSetUserLED(&off);
-	#if defined(OLED_128_64)
-		if (!useTFT) tftInit();
-	#endif
 
 #if defined(ARDUINO_BBC_MICROBIT) || defined(ARDUINO_BBC_MICROBIT_V2) || \
 	defined(ARDUINO_CALLIOPE_MINI) || defined(CALLIOPE_V3)

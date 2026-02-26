@@ -1,6 +1,6 @@
 module 'Analog Synthesis' Operators
 author MicroBlocks
-version 1 14 
+version 1 16 
 choices outputTypes 'asy;pin' 'asy;MCP4725' 
 description 'Generate analog waves that you can output to a DAC or analog pin to produce sound.
 
@@ -61,11 +61,11 @@ to '_asynth init' {
   _asynth_trigger_active = (newList 8 (booleanConstant false))
   _asynth_trigger_times = (newList 8)
   _asynth_frequencies = (newList 8)
-  _asynth_amplitudes = (newList 8)
-  _asynth_attacks = (newList 8)
-  _asynth_holds = (newList 8)
-  _asynth_releases = (newList 8)
-  _asynth_total_durations = (newList 8)
+  _asynth_amplitudes = (newList 8 8000)
+  _asynth_attacks = (newList 8 5)
+  _asynth_holds = (newList 8 50)
+  _asynth_releases = (newList 8 250)
+  _asynth_total_durations = (newList 8 305)
   _asynth_ramp_starts = (newList 8 -1)
   _asynth_ramp_ends = (newList 8)
   _asynth_ramp_frequencies = (newList 8)
@@ -81,7 +81,10 @@ to 'asynth envelope' amp att hold release gate {
 }
 
 to 'asynth gate amplitude' gate {
-  if (not (at gate _asynth_trigger_active)) {return 0}
+  '_asynth init'
+  if (not (at gate _asynth_trigger_active)) {
+    return 0
+  }
   local 'start time' (at gate _asynth_trigger_times)
   local 'amp' (at gate _asynth_amplitudes)
   local 'att' (maximum 1 (at gate _asynth_attacks))
@@ -102,6 +105,7 @@ to 'asynth gate amplitude' gate {
 }
 
 to 'asynth gate frequency' gate {
+  '_asynth init'
   local 'base' (at gate _asynth_frequencies)
   if ((at gate _asynth_ramp_starts) == -1) {
     return base
@@ -110,9 +114,9 @@ to 'asynth gate frequency' gate {
   local 'freq2' (base * (at gate _asynth_ramp_ends))
   local 'freq' (at gate _asynth_ramp_frequencies)
   local 'new freq' ((freq1 + (((freq2 - freq1) * ((millisOp) - (at gate _asynth_trigger_times))) / (maximum 1 (at gate _asynth_total_durations)))) / 100)
-  if ((absoluteValue (((microsOp) % (1000000 / (maximum 1 freq))) - ((microsOp) % (1000000 / (maximum 1 (v 'new freq')))))) < 250) {
-    freq = (v 'new freq')
+  if ((absoluteValue (((microsOp) % (1000000 / (maximum 1 freq))) - ((microsOp) % (1000000 / (maximum 1 (v 'new freq')))))) < 850) {
     atPut gate _asynth_ramp_frequencies (v 'new freq')
+    freq = (v 'new freq')
   }
   return freq
 }

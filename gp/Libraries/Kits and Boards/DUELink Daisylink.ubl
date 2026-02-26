@@ -1,13 +1,12 @@
 module 'DUELink Daisylink' Comm
 author 'GHI Electronics'
-version 0 13 
+version 0 17 
 choices due_combx b0 b1 b2 b3 b4 b5 b6 b7 
-description 'DUELink base library used by all other DUELink libraries.
+description 'Handles tethered communications via I2C or serial (UART) to DUELink Daisylink module(s).
 
-Handles daisylink communications via I2C or serial (UART).
 By default, this library uses serial over the Downlink port on DUELink boards and I2C on other boards but that can be changed by using the advanced "use I2C" block.
 
-See https://www.duelink.com/docs/engine/stdlib
+See https://www.duelink.com/docs/language/microblocks on how tethering works.
 
 '
 variables _dueUseI2C _dueReadTimeout 
@@ -33,16 +32,19 @@ variables _dueUseI2C _dueReadTimeout
   spec 'r' 'due_stream_read_bytes' 'stream read from _ count _' 'menu.due_combx auto' 'b1' 3
   space
   space
-  spec ' ' 'due_stop' 'stop'
   spec ' ' 'due_exec' 'run'
+  spec ' ' 'due_stop' 'stopall'
   space
   space
   spec ' ' '_due_init' '_due_init'
+  spec 'r' '_due_isDUELink' '_due_isDUELink'
   spec ' ' '_due_send' '_due send _' 'str'
   spec ' ' '_dueSendRaw' '_due send raw _' 'auto' '10'
   spec 'r' '_due_awaitResult' '_due await result'
   spec 'r' '_due_awaitResultI2C' '_due await result (I2C)'
   spec 'r' '_due_endsWithPrompt' '_due byte array ends with prompt _' 'str'
+  spec 'r' '_due_isFloat' '_due string is float _' 'auto' '2.3'
+  spec 'r' '_due_textGfxCmd' '_due_textGfxCmd _' 'auto' 'textT'
 
 to '_dueSendRaw' s {
   '_due_init'
@@ -128,19 +130,45 @@ to '_due_init' {
   if (_dueReadTimeout == 0) {_dueReadTimeout = 1000}
   if (not (isType _dueUseI2C 'boolean')) {
     comment 'Not yet initialized, set _dueUseI2C.'
-    if (('[misc:dueLinkPID]') > 0) {
+    if ('_due_isDUELink') {
       comment 'This is a DUELink board; use serial.'
       _dueUseI2C = (booleanConstant false)
       if ('[serial:dueSend]' ('[data:unicodeString]' 10) 1) {
         comment 'Serial need first byte is 10, 13 or ''s'', ''S'''
       }
-      comment 'Wait a bit because device will see multiple commands'
-      return 0
     } else {
       comment 'Not a DUELink board; use I2C.'
       _dueUseI2C = (booleanConstant true)
     }
+    comment 'Wait a bit because device will see multiple commands'
+    waitMillis 300
   }
+}
+
+to '_due_isDUELink' {
+  return ('[serial:isDUELink]')
+}
+
+to '_due_isFloat' str {
+  if (isType str 'number') {return (booleanConstant true)}
+  local 'num' (booleanConstant true)
+  local 'length' (size str)
+  local 'pos' -1
+  for i ('[data:range]' 1 length) {
+    if (or (('[data:unicodeAt]' i str) < 46) (('[data:unicodeAt]' i str) > 57)) {num = (booleanConstant false)}
+  }
+  for i ('[data:range]' 1 length) {
+    if (or (('[data:unicodeAt]' i str) == 46) (('[data:unicodeAt]' i str) == 47)) {pos = i}
+  }
+  if (pos >= 0) {
+    for i ('[data:range]' (pos + 1) length) {
+      if (or (('[data:unicodeAt]' i str) < 48) (('[data:unicodeAt]' i str) > 57)) {num = (booleanConstant false)}
+    }
+    for i ('[data:range]' 1 (pos - 1)) {
+      if (or (('[data:unicodeAt]' i str) < 48) (('[data:unicodeAt]' i str) > 57)) {num = (booleanConstant false)}
+    }
+  }
+  return num
 }
 
 to '_due_send' s {
@@ -167,8 +195,21 @@ to '_due_send' s {
   }
 }
 
+to '_due_textGfxCmd' str {
+  if (isType str 'string') {
+    comment 'If this is Text command, force first argument to be "string"'
+    if ((size str) >= 4) {
+      if (or (('[data:unicodeAt]' 1 str) == 84) (('[data:unicodeAt]' 1 str) == 116)) {if (or (('[data:unicodeAt]' 2 str) == 69) (('[data:unicodeAt]' 2 str) == 101)) {
+        if (or (('[data:unicodeAt]' 3 str) == 88) (('[data:unicodeAt]' 3 str) == 120)) {if (or (('[data:unicodeAt]' 4 str) == 84) (('[data:unicodeAt]' 4 str) == 116)) {
+          return (booleanConstant true)
+        }}
+      }}
+    }
+  }
+  return (booleanConstant false)
+}
+
 to due_connected {
-  '_due_send' ('[data:unicodeString]' 27)
   local 'n' ('[data:convertType]' (random 1 9) 'string')
   return ((due_returnStr n) == n)
 }
@@ -195,6 +236,7 @@ to due_make_command s optionalArgs {
   local 'result' ('[data:makeList]')
   local 'str' (booleanConstant false)
   local 'arr' (booleanConstant false)
+  local 'drawtext_cmd' ('_due_textGfxCmd' s)
   '[data:addLast]' s result
   '[data:addLast]' '(' result
   for i 8 {
@@ -208,7 +250,12 @@ to due_make_command s optionalArgs {
           comment 'Dont add "'
           arr = (booleanConstant true)
         } else {
-          '[data:addLast]' '"' result
+          comment 'add " open'
+          if (('_due_isFloat' (argOrDefault (i + 1) '')) == (booleanConstant false)) {
+            '[data:addLast]' '"' result
+          } else {
+            if (and (drawtext_cmd == (booleanConstant true)) (i == 1)) {'[data:addLast]' '"' result}
+          }
         }
       } else {
         comment 'check if array and ['
@@ -218,6 +265,11 @@ to due_make_command s optionalArgs {
           comment 'check if list and {'
           if (isType (argOrDefault (i + 1) '') 'list') {
             '[data:addLast]' '{' result
+          } else {
+            comment 'add " open'
+            if (and (drawtext_cmd == (booleanConstant true)) (i == 1)) {
+              '[data:addLast]' '"' result
+            }
           }
         }
       }
@@ -233,11 +285,19 @@ to due_make_command s optionalArgs {
         '[data:addLast]' (argOrDefault (i + 1) '') result
       }
       comment 'if this is a string then add "'
-      if str {
-        if arr {
+      if (str == (booleanConstant true)) {
+        if (arr == (booleanConstant true)) {
           comment 'Dont add "'
         } else {
-          '[data:addLast]' '"' result
+          comment 'add " close'
+          if (and (drawtext_cmd == (booleanConstant true)) (i == 1)) {
+            '[data:addLast]' '"' result
+          } else {
+            if (('_due_isFloat' (argOrDefault (i + 1) '')) == (booleanConstant false)) {
+              '[data:addLast]' '"' result
+            } else {
+            }
+          }
         }
       } else {
         comment 'check if array and ['
@@ -247,6 +307,11 @@ to due_make_command s optionalArgs {
           comment 'check if list and {'
           if (isType (argOrDefault (i + 1) '') 'list') {
             '[data:addLast]' '}' result
+          } else {
+            comment 'add " close'
+            if (and (drawtext_cmd == (booleanConstant true)) (i == 1)) {
+              '[data:addLast]' '"' result
+            }
           }
         }
       }
@@ -360,17 +425,22 @@ to due_stream_read_bytes 'array name' count {
 
 to due_useI2C useI2C {
   comment 'DUELink defaults to using the serial Downlink port on DUELink boards
-
 and I2C on non-DUELink board. This advanced block is only needed
-
 when one wants to force different behavior from the default
-
 (e.g. to use I2C edge connector pins on a DUE CincoBit or PixoBit).'
   _dueUseI2C = useI2C
   if _dueUseI2C {
+    comment 'Send new line for enumeration'
+    '[sensors:i2cRead]' 82 ('[data:newByteArray]' 64)
+    '[sensors:i2cWrite]' 82 ('[data:unicodeString]' 10)
   } else {
-    comment 'If Uart we need to send 10 or 13 or 27 or ''s'' or ''S'''
+    comment 'Serial need first byte is 10, 13 or ''s'', ''S'''
+    if ('[serial:dueSend]' ('[data:unicodeString]' 10) 1) {
+    }
+    waitMillis 255
+    comment 'Device 1 is selected as default enumeration'
     due_select_device 1
   }
+  waitMillis 100
 }
 

@@ -1,0 +1,5 @@
+module Springbot
+author 'bjarke@gotfredsen.com'
+version 1 2 
+depends  'Tone' 'NeoPixel' 'SDCard'
+description 'Springbot Libraries'

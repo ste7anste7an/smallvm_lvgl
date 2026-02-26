@@ -1411,6 +1411,14 @@ method installBoardSpecificBlocks SmallRuntime {
 	} (or ('Ghizzy' == boardType) ('Holiday Tree' == boardType)) {
 		importEmbeddedLibrary scripter 'DUELink Edu'
 		importEmbeddedLibrary scripter 'Tone'
+	} ('Springbot Green' == boardType) {
+		importEmbeddedLibrary scripter 'Springbot'
+		importEmbeddedLibrary scripter 'Basic Sensors'
+		importEmbeddedLibrary scripter 'LED Display'
+	} ('Springbot Gold' == boardType) {
+		importEmbeddedLibrary scripter 'Springbot'
+		importEmbeddedLibrary scripter 'Basic Sensors'
+		importEmbeddedLibrary scripter 'OLED Graphics'
 	} ('DUELink' == boardType) {
 		importEmbeddedLibrary scripter 'DUELink Edu'
 	}

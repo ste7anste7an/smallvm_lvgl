@@ -1,0 +1,9 @@
+module 'Function Calls'
+author MicroBlocks
+version 1 0 
+description 'Function call primitives.'
+
+  spec 'r' '[misc:functionExists]' 'function _ exists' 'str.functionNameMenu'
+  space
+  spec ' ' 'callCustomCommand' 'call _ : with _' 'str.functionNameMenu str' '' 'parameter list'
+  spec 'r' 'callCustomReporter' 'call _ : with _' 'str.functionNameMenu str' '' 'parameter list'

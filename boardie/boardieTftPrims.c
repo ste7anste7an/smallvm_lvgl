@@ -359,43 +359,52 @@ static OBJ primTriangle(int argCount, OBJ *args) {
 	return falseObj;
 }
 
-static OBJ primText(int argCount, OBJ *args) {
-	tftInit();
-	OBJ value = args[0];
-	char text[256];
+static void drawText(OBJ value, int x, int y, int textColor, int scale, int wrap, int bgColor, int unicodeFont) {
+	char text[32] = {0};
+	char *s = text;
 
 	if (IS_TYPE(value, StringType)) {
-		sprintf(text, "%s", obj2str(value));
+		s = obj2str(value);
+	} else if (isInt(value)) {
+		sprintf(text, "%d", obj2int(value));
 	} else if (trueObj == value) {
 		sprintf(text, "true");
 	} else if (falseObj == value) {
 		sprintf(text, "false");
-	} else if (isInt(value)) {
-		sprintf(text, "%d", obj2int(value));
+	} else if (IS_TYPE(value, ListType)) {
+		sprintf(text, "[%d item list]", obj2int(FIELD(value, 0)));
+	} else if (IS_TYPE(value, ByteArrayType)) {
+		sprintf(text, "(%d bytes)", BYTES(value));
 	}
 
 	// draw text
 	EM_ASM_({
-			var text = UTF8ToString($0);
-			// subtract a little bit from x, proportional to font scale, to make
-			// it match the font on physical boards
-			var textColor = $3;
-			var scale = $4;
-			var wrap = $5;
-			var bgColor = $6;
-			var x = $1 - scale;
-			var y = $2 - scale;
-			if (bgColor >= 0) {
-				var w = scale * 6 * text.length;
-				var h = scale * 8; // text height on boards is scale * 8
-				window.ctx.fillStyle = window.rgbFrom24b(bgColor);
-				window.ctx.fillRect(x + scale, y + scale, w, h);
-			}
-			// there is a weird rounding artifact at scale 3
-			var fontSize = (scale == 3) ? (scale * 10.5) : (scale * 11);
+		var text = UTF8ToString($0);
+		// subtract a little bit from x, proportional to font scale, to make
+		// it match the font on physical boards
+		var textColor = $3;
+		var scale = $4;
+		var wrap = $5;
+		var bgColor = $6;
+		var x = $1 - scale;
+		var y = $2 - scale;
+		if (bgColor >= 0) {
+			var w = scale * 6 * text.length;
+			var h = scale * 8; // text height on boards is scale * 8
+			window.ctx.fillStyle = window.rgbFrom24b(bgColor);
+			window.ctx.fillRect(x + scale, y + scale, w, h);
+		}
+		// there is a weird rounding artifact at scale 3
+		var fontSize = (scale == 3) ? (scale * 10.5) : (scale * 11);
+		window.ctx.fillStyle = window.rgbFrom24b(textColor);
+		window.ctx.textBaseline = 'top';
+		if ($7) { // Unicode
+			// Approximate the same font size and top-left position as the Adafruit font
+			fontSize = (scale * 10);
+			window.ctx.font = fontSize + 'px monospace';
+			window.ctx.fillText(text, x + (scale * 0.9), y + (scale * 2.45));
+		} else {
 			window.ctx.font = fontSize + 'px adafruit';
-			window.ctx.fillStyle = window.rgbFrom24b(textColor);
-			window.ctx.textBaseline = 'top';
 			text.split("").forEach(
 				(c) => {
 					window.ctx.fillText(c, x, y);
@@ -407,15 +416,38 @@ static OBJ primText(int argCount, OBJ *args) {
 					}
 				}
 			);
-		},
-		text, // text
-		obj2int(args[1]), // x
-		obj2int(args[2]), // y
-		obj2int(args[3]), // text color
-		(argCount > 4) ? obj2int(args[4]) : 2, // scale
-		(argCount > 5) ? (trueObj == args[5]) : true, // wrap
-		(argCount > 6) ? obj2int(args[6]) : -1 // background color
-	);
+		}
+	},
+	s, x, y, textColor, scale, wrap, bgColor, unicodeFont);
+}
+
+static OBJ primText(int argCount, OBJ *args) {
+	tftInit();
+
+	int x = obj2int(args[1]); // x
+	int y = obj2int(args[2]); // y
+	int textColor = obj2int(args[3]); // text color
+	int scale = (argCount > 4) ? obj2int(args[4]) : 2; // scale
+	int wrap = (argCount > 5) ? (trueObj == args[5]) : true; // wrap
+	int bgColor = (argCount > 6) ? obj2int(args[6]) : -1; // background color
+
+	drawText(args[0], x, y, textColor, scale, wrap, bgColor, false);
+
+	tftChanged();
+	return falseObj;
+}
+
+static OBJ primUnicode(int argCount, OBJ *args) {
+	tftInit();
+
+	int x = obj2int(args[1]); // x
+	int y = obj2int(args[2]); // y
+	int textColor = obj2int(args[3]); // text color
+	int scale = (argCount > 4) ? obj2int(args[4]) : 2; // scale
+	int wrap = (argCount > 5) ? (trueObj == args[5]) : true; // wrap
+	int bgColor = (argCount > 6) ? obj2int(args[6]) : -1; // background color
+
+	drawText(args[0], x, y, textColor, scale, wrap, bgColor, true);
 
 	tftChanged();
 	return falseObj;
@@ -634,14 +666,14 @@ static OBJ primTftTouched(int argCount, OBJ *args) {
 static OBJ primTftTouchX(int argCount, OBJ *args) {
 	initMouseHandler();
 	return int2obj(EM_ASM_INT({
-		return window.mouseDown ? window.mouseX : -1
+		return window.mouseX;
 	}));
 }
 
 static OBJ primTftTouchY(int argCount, OBJ *args) {
 	initMouseHandler();
 	return int2obj(EM_ASM_INT({
-		return window.mouseDown ? window.mouseY : -1
+		return window.mouseY;
 	}));
 }
 
@@ -672,6 +704,7 @@ static PrimEntry entries[] = {
 	{"circle", primCircle},
 	{"triangle", primTriangle},
 	{"text", primText},
+	{"unicode", primUnicode},
 	{"clear", primClear},
 
 	{"deferUpdates", primDeferUpdates},

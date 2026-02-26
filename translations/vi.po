@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: interest@microblocks.fun\n"
 "POT-Creation-Date: 2025-06-06 09:00+0200\n"
-"PO-Revision-Date: 2025-12-24 09:00+0000\n"
+"PO-Revision-Date: 2026-02-13 06:09+0000\n"
 "Last-Translator: Loc Huynh <huynhloc.contact@gmail.com>\n"
 "Language-Team: Vietnamese <https://hosted.weblate.org/projects/microblocks/"
 "ide/vi/>\n"
@@ -12,7 +12,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Weblate 5.15.1\n"
+"X-Generator: Weblate 5.16-dev\n"
 
 #. "Output" blocks category label
 msgid "cat;Output"
@@ -438,7 +438,7 @@ msgstr "nụ cười"
 
 #. Block in Data category
 msgid "to _"
-msgstr "đẾN _"
+msgstr "đến _"
 
 #. Block in Data category
 msgid "find _ in _"
@@ -1128,11 +1128,11 @@ msgstr "kết thúc"
 
 #. Key name (as in computer keyboard key)
 msgid "kbd;PgUp"
-msgstr "PGUp"
+msgstr "PgUp"
 
 #. Key name (as in computer keyboard key)
 msgid "kbd;PgDown"
-msgstr "PGDown"
+msgstr "PgDown"
 
 #. Key name (as in computer keyboard key)
 msgid "kbd;CapsLock"
@@ -7758,3 +7758,31 @@ msgstr "MakerPort"
 #. Nezha Pro library label
 msgid "Nezha Pro"
 msgstr "Nezha Pro"
+
+#. 5x5 LED Display library block
+msgid "LED image #BR# _"
+msgstr "Hình ảnh LED #BR# _"
+
+#. Settings menu option
+msgid "open vm folder on microblocks.fun"
+msgstr "mở thư mục vm trên microblocks.fun"
+
+#. Settings menu option
+msgid "show program size on board"
+msgstr "hiển thị kích thước chương trình trên bảng"
+
+#. Program size information
+msgid "Using %1 out of %2 bytes"
+msgstr "Sử dụng %1 trên %2 byte"
+
+#. Graph context menu option
+msgid "increase range"
+msgstr "tăng phạm vi"
+
+#. Graph context menu option
+msgid "decrease range"
+msgstr "giảm phạm vi"
+
+#. Script right-click context menu
+msgid "copy callable name"
+msgstr "sao chép tên có thể gọi được"

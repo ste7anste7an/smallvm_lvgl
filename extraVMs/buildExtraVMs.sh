@@ -3,8 +3,8 @@
 rm -f *.hex *.bin *.uf2
 cd ..
 
-pio run -e clue
-python precompiled/uf2conv.py -c -f 0xada52840 .pio/build/clue/firmware.hex -o extraVMs/vm_clue.uf2
+pio run -e clue-ble
+python precompiled/uf2conv.py -c -f 0xada52840 .pio/build/clue-ble/firmware.hex -o extraVMs/vm_clue.uf2
 pio run -e pico-ed
 cp .pio/build/pico-ed/firmware.uf2 extraVMs/vm_pico_ed.uf2
 pio run -e m5stack
@@ -46,8 +46,6 @@ cp .pio/build/m5atom-s3-lite/firmware.bin extraVMs/vm_m5atom_s3_lite.bin
 pio run -e m5atom-s3-tft
 cp .pio/build/m5atom-s3-tft/firmware.bin extraVMs/vm_m5atom_s3_tft.bin
 
-pio run -e m5stick
-cp .pio/build/m5stick/firmware.bin extraVMs/vm_m5stick.bin
 pio run -e m5stick-plus
 cp .pio/build/m5stick-plus/firmware.bin extraVMs/vm_m5stick_plus.bin
 
@@ -56,8 +54,8 @@ cp .pio/build/m5core2/firmware.bin extraVMs/vm_m5core2_1.0.bin
 
 pio run -e esp32-s3
 cp .pio/build/esp32-s3/firmware.bin extraVMs/vm_esp32-s3.bin
-pio run -e esp32-s3-lonely-binary
-cp .pio/build/esp32-s3-lonely-binary/firmware.bin extraVMs/vm_esp32-s3-lonely-binary.bin
+pio run -e esp32-s3-metro
+cp .pio/build/esp32-s3-metro/firmware.bin extraVMs/vm_esp32-s3-metro.bin
 
 pio run -e esp32-c3-dev
 cp .pio/build/esp32-c3-dev/firmware.bin extraVMs/vm_esp32-c3-dev.bin
@@ -65,6 +63,8 @@ pio run -e esp32-c3-qtpy
 cp .pio/build/esp32-c3-qtpy/firmware.bin extraVMs/vm_esp32-c3-qtpy.bin
 pio run -e esp32-c3-mini
 cp .pio/build/esp32-c3-mini/firmware.bin extraVMs/vm_esp32-c3-mini.bin
+pio run -e esp32-c3-sparkle
+cp .pio/build/esp32-c3-sparkle/firmware.bin extraVMs/vm_esp32-c3-sparkle.bin
 
 pio run -e waveshare-s3-matrix
 esptool.py --chip ESP32-S3 merge_bin -o extraVMs/vm_waveshare_s3_matrix_all.bin --flash_mode dio --flash_size 4MB 0 .pio/build/waveshare-s3-matrix/bootloader.bin 0x8000 esp32/partitionsMicroBlocks.bin 0xe000 esp32/boot_app0.bin 0x10000 .pio/build/waveshare-s3-matrix/firmware.bin
@@ -82,3 +82,7 @@ cp .pio/build/rp2350-w/firmware.uf2 extraVMs/vm_rp2350_w.uf2
 
 pio run -e iot-bus
 cp .pio/build/iot-bus/firmware.bin extraVMs/vm_iot-bus.bin
+
+pio run -e pibody
+cp .pio/build/pibody/firmware.uf2 extraVMs/vm_pibody.uf2
+

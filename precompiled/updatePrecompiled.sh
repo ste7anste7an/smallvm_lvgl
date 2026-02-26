@@ -1,5 +1,25 @@
 #!/bin/bash
 # Rebuild and update the precompiled binaries.
+
+# Check that npm and node installed
+if ! command -v node > /dev/null; then
+        echo "node is not installed."
+        echo "Please read DEVELOPMENT.md"
+        exit
+fi
+
+if ! command -v npm > /dev/null; then
+        echo "npm is not installed."
+        echo "Please read DEVELOPMENT.md"
+        exit
+fi
+
+if ! command -v python > /dev/null; then
+        echo "python is not installed."
+        echo "Please read DEVELOPMENT.md"
+        exit
+fi
+
 rm -f *.hex *.bin *.uf2
 cd ..
 pio run -e microbit

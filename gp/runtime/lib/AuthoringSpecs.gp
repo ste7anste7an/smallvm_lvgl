@@ -505,6 +505,7 @@ method languageNameForCode AuthoringSpecs langCode {
 method languageCodeList AuthoringSpecs {
 	// Return an array of (<languageName> <abbreviation>) pairs."
 	return (array
+		(array 'Bahasa Indonesia' 'id')
 		(array 'Castellano' 'es')
 		(array 'Català' 'ca')
 		(array 'Deutsch' 'de')

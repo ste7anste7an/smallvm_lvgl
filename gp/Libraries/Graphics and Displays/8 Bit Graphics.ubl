@@ -1,6 +1,6 @@
 module '8 Bit Graphics' Output
 author MicroBlocks
-version 1 5 
+version 1 6 
 depends _TFT _Files 
 tags graphics 
 choices eightBitPalettes MicroBlocks 'red hues' 'green hues' 'blue hues' grayscale 
@@ -17,32 +17,34 @@ By using a buffer and bitmap merge operations, you can work with sprites and bac
 '
 variables _8bit_scale _8bit_alpha_index _8bit_buffer _8bit_palette _bmpIsRGB565 _bmpHeight _bmpCompression _bmpWidth _bmpPalette _bmpPixelsOffset _bmpBPP _bmpLine 
 
-  spec ' ' 'set scale _' 'set scale _' 'num' 4
+  spec ' ' '8bit_set scale _' 'set scale _' 'num' 4
   space
   spec ' ' 'clear display' 'clear display'
-  spec ' ' 'draw buffer' 'draw buffer : starting at x _ y _ width _ height _' 'num num num num' 10 20 7 7
+  spec ' ' '8bit_draw buffer' 'draw buffer : starting at x _ y _ width _ height _' 'num num num num' 10 20 7 7
   space
-  spec 'r' 'bitmap from BMP file' 'bitmap from BMP file _' 'auto' '8bit.bmp'
-  spec 'r' 'bitmap from file' 'bitmap of width _ from raw indexed file _' 'num str' 32 'filename.data'
-  spec 'r' 'bitmap' 'bitmap of width _ from string _' 'num str' 7 '0003000003B30003BFB30003B3000003000'
+  spec 'r' '8bit_bitmap from BMP file' 'bitmap from BMP file _' 'auto' '8bit.bmp'
+  spec 'r' '8bit_bitmap from file' 'bitmap of width _ from raw indexed file _' 'num str' 32 'filename.data'
+  spec 'r' '8bit_bitmap' 'bitmap of width _ from string _' 'num str' 7 '0003000003B30003BFB30003B3000003000'
   space
-  spec 'r' 'rotated sprite' 'bitmap _ rotated _ º' 'auto menu.orthoRotations' 'aBitmap' 270
-  spec 'r' 'mirrored bitmap' 'bitmap _ mirrored across _ axis' 'auto menu.mirrorAxis' 'aBitmap' 'vertical'
+  spec 'r' '8bit_rotated sprite' 'bitmap _ rotated _ º' 'auto menu.orthoRotations' 'aBitmap' 270
+  spec 'r' '8bit_mirrored bitmap' 'bitmap _ mirrored across _ axis' 'auto menu.mirrorAxis' 'aBitmap' 'vertical'
   space
-  spec ' ' 'merge' 'merge bitmap _ at _ , _' 'auto num num' '' 10 20
+  spec ' ' '8bit_merge' 'merge bitmap _ at _ , _' 'auto num num' '' 10 20
+  spec ' ' '8bit_merge3 tile' 'merge tile _ from _ , _ to _ , _' 'auto auto auto auto auto' 'aBitmap' 10 20 15 30
+  spec ' ' '8bit_merge2 tile' 'merge tile _ at tile position _ , _' 'auto auto auto' 'aBitmap' 1 2
   space
-  spec ' ' 'set palette' 'set palette _' 'auto' ''
-  spec ' ' 'set transparent color index _' 'set transparent color index _' 'num' 0
-  spec 'r' 'palette from pal format' 'palette from pal file _' 'auto' 'filename.data.pal'
-  spec 'r' 'palette from BMP file' 'palette from BMP file _' 'auto' '8bit.bmp'
-  spec 'r' '4 bit palette' '4 bit _ palette' 'menu.fourBitPalettes' 'CGA'
-  spec 'r' '8 bit palette' '8 bit _ palette' 'menu.eightBitPalettes' 'MicroBlocks'
+  spec ' ' '8bit_set palette' 'set palette _' 'auto' ''
+  spec ' ' '8bit_set transparent color index _' 'set transparent color index _' 'num' 0
+  spec 'r' '8bit_palette from pal format' 'palette from pal file _' 'auto' 'filename.data.pal'
+  spec 'r' '8bit_palette from BMP file' 'palette from BMP file _' 'auto' '8bit.bmp'
+  spec 'r' '8bit_4 bit palette' '4 bit _ palette' 'menu.fourBitPalettes' 'CGA'
+  spec 'r' '8bit_8 bit palette' '8 bit _ palette' 'menu.eightBitPalettes' 'MicroBlocks'
   spec 'r' 'rgb_to_color' 'color number for r _ g _ b _ (0-255)' 'num num num' 128 0 0
-  spec ' ' 'draw palette table' 'draw palette table _' 'auto' ''
-  spec 'r' 'current palette' 'current palette'
+  spec ' ' '8bit_draw palette table' 'draw palette table _' 'auto' ''
+  spec 'r' '8bit_current palette' 'current palette'
   space
-  spec 'r' 'screen width' 'screen width'
-  spec 'r' 'screen height' 'screen height'
+  spec 'r' '8bit_screen width' 'screen width'
+  spec 'r' '8bit_screen height' 'screen height'
   space
   spec 'r' '_8bit_4bit_CGA palette' '_8bit_4bit_CGA palette'
   spec 'r' '_8bit_4bit_Machintosh II palette' '_8bit_4bit_Machintosh II palette'
@@ -65,14 +67,12 @@ variables _8bit_scale _8bit_alpha_index _8bit_buffer _8bit_palette _bmpIsRGB565 
   spec 'r' '_bmp_readInt16' '_bmp read int16 file _' 'str' ''
   spec 'r' '_bmp_readInt32' '_bmp read int32 file _' 'str' ''
   spec ' ' '_bmp_alignLineData' '_bmp_alignLineData file _' 'auto' ''
-  spec ' ' 'merge3 tile' 'merge tile _ from _ , _ to _ , _' 'auto auto auto auto auto' 'aBitmap' 10 20 15 30
-  spec ' ' 'merge2 tile' 'merge tile _ at tile position _ , _' 'auto auto auto' 'aBitmap' 1 2
 
-to '4 bit palette' selector {
+to '8bit_4 bit palette' selector {
   return (callCustomReporter ('[data:join]' '_8bit_4bit_' selector ' palette'))
 }
 
-to '8 bit palette' selector {
+to '8bit_8 bit palette' selector {
   return (callCustomReporter ('[data:join]' '_8bit_8bit_' selector ' palette'))
 }
 
@@ -246,7 +246,7 @@ to '_sqrt _' n {
   }
 }
 
-to bitmap width 'bitmap string' {
+to '8bit_bitmap' width 'bitmap string' {
   local 'list' ('[data:makeList]')
   for line ('[data:split]' (v 'bitmap string') ('[data:unicodeString]' 10)) {
     for bit line {
@@ -256,7 +256,7 @@ to bitmap width 'bitmap string' {
   return ('[data:makeList]' width ('[data:asByteArray]' list))
 }
 
-to 'bitmap from BMP file' filename {
+to '8bit_bitmap from BMP file' filename {
   if (not ('_bmp_readHeader' filename)) {return 0}
   if (_bmpBPP > 8) {return 1}
   '[file:setReadPosition]' _bmpPixelsOffset filename
@@ -273,7 +273,7 @@ to 'bitmap from BMP file' filename {
   return ('[data:makeList]' _bmpWidth buf)
 }
 
-to 'bitmap from file' width 'file name' {
+to '8bit_bitmap from file' width 'file name' {
   '[file:open]' (v 'file name')
   local 'bitmap' ('[data:newByteArray]' ('[file:fileSize]' (v 'file name')))
   for i ('[file:fileSize]' (v 'file name')) {
@@ -287,11 +287,11 @@ to 'clear display' {
   '[display:mbDisplayOff]'
 }
 
-to 'current palette' {
+to '8bit_current palette' {
   return _8bit_palette
 }
 
-to 'draw buffer' 'region x' 'region y' width height {
+to '8bit_draw buffer' 'region x' 'region y' width height {
   if (not (isType _8bit_palette 'list')) {_8bit_palette = ('[data:makeList]' '0' 'AA' 'AA00' 'AAAA' 'AA0000' 'AA00AA' 'AA5500' 'AAAAAA' '555555' '5555FF' '55FF55' '55FFFF' 'FF5555' 'FF55FF' 'FFFF55' 'FFFFFF')}
   if ((pushArgCount) < 1) {
     '[tft:drawBuffer]' _8bit_buffer _8bit_palette _8bit_scale
@@ -301,7 +301,7 @@ to 'draw buffer' 'region x' 'region y' width height {
   waitMicros 500
 }
 
-to 'draw palette table' palette {
+to '8bit_draw palette table' palette {
   if (not (isType palette 'list')) {if (isType _8bit_palette 'list') {
     palette = _8bit_palette
   } else {
@@ -319,18 +319,18 @@ to 'draw palette table' palette {
   }
 }
 
-to merge bitmap 'origin x' 'origin y' {
-  if (_8bit_scale == 0) {'set scale _' 2}
+to '8bit_merge' bitmap 'origin x' 'origin y' {
+  if (_8bit_scale == 0) {'8bit_set scale _' 2}
   '[tft:mergeBitmap]' (at 2 bitmap) (at 1 bitmap) _8bit_buffer _8bit_scale _8bit_alpha_index (v 'origin x') (v 'origin y')
 }
 
-to 'merge2 tile' bitmap x y {
+to '8bit_merge2 tile' bitmap x y {
   local 'tile width' (at 1 bitmap)
   local 'tile height' ((size (at 2 bitmap)) / (v 'tile width'))
-  merge bitmap ((x - 1) * (v 'tile width')) ((y - 1) * (v 'tile height'))
+  '8bit_merge' bitmap ((x - 1) * (v 'tile width')) ((y - 1) * (v 'tile height'))
 }
 
-to 'merge3 tile' bitmap x1 y1 x2 y2 {
+to '8bit_merge3 tile' bitmap x1 y1 x2 y2 {
   local 'tile width' (at 1 bitmap)
   local 'tile height' ((size (at 2 bitmap)) / (v 'tile width'))
   local 'first x' (((x1 - 1) / (v 'tile width')) + 1)
@@ -339,12 +339,12 @@ to 'merge3 tile' bitmap x1 y1 x2 y2 {
   local 'last y' (((y2 - 1) / (v 'tile height')) + 1)
   for x ('[data:range]' (v 'first x') (v 'last x')) {
     for y ('[data:range]' (v 'first y') (v 'last y')) {
-      'merge2 tile' bitmap x y
+      '8bit_merge2 tile' bitmap x y
     }
   }
 }
 
-to 'mirrored bitmap' bitmap axis {
+to '8bit_mirrored bitmap' bitmap axis {
   local 'bitmap width' (at 1 bitmap)
   local 'index list' (at 2 bitmap)
   local 'index length' (size (v 'index list'))
@@ -369,11 +369,11 @@ to 'mirrored bitmap' bitmap axis {
   return ('[data:makeList]' (v 'bitmap width') (v 'new array'))
 }
 
-to 'palette from BMP file' filename {
+to '8bit_palette from BMP file' filename {
   if ('_bmp_readHeader' filename) {return _bmpPalette}
 }
 
-to 'palette from pal format' 'file name' {
+to '8bit_palette from pal format' 'file name' {
   '[file:open]' (v 'file name')
   local 'palette' (newList (('[file:fileSize]' (v 'file name')) / 3))
   for i (('[file:fileSize]' (v 'file name')) / 3) {
@@ -390,7 +390,7 @@ to rgb_to_color r g b {
   return (((r << 16) | (g << 8)) | b)
 }
 
-to 'rotated sprite' bitmap degs {
+to '8bit_rotated sprite' bitmap degs {
   local 'bitmap width' (at 1 bitmap)
   local 'index list' (at 2 bitmap)
   local 'index length' (size (v 'index list'))
@@ -415,26 +415,26 @@ to 'rotated sprite' bitmap degs {
   return ('[data:makeList]' (v 'bitmap width') (v 'new array'))
 }
 
-to 'screen height' {
-  if (_8bit_scale == 0) {'set scale _' 2}
+to '8bit_screen height' {
+  if (_8bit_scale == 0) {'8bit_set scale _' 2}
   return (('[tft:getHeight]') / _8bit_scale)
 }
 
-to 'screen width' {
-  if (_8bit_scale == 0) {'set scale _' 2}
+to '8bit_screen width' {
+  if (_8bit_scale == 0) {'8bit_set scale _' 2}
   return (('[tft:getWidth]') / _8bit_scale)
 }
 
-to 'set palette' 'color list' {
+to '8bit_set palette' 'color list' {
   _8bit_palette = (v 'color list')
 }
 
-to 'set scale _' scale {
+to '8bit_set scale _' scale {
   _8bit_scale = scale
-  _8bit_buffer = ('[data:newByteArray]' (('screen width') * ('screen height')) 0)
+  _8bit_buffer = ('[data:newByteArray]' (('8bit_screen width') * ('8bit_screen height')) 0)
 }
 
-to 'set transparent color index _' 'alpha index' {
+to '8bit_set transparent color index _' 'alpha index' {
   _8bit_alpha_index = (v 'alpha index')
 }
 
