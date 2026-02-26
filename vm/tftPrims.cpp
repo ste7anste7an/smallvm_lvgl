@@ -552,7 +552,9 @@ static int deferUpdates = false;
 		#include <Arduino_GFX_Library.h>
 		#include <XPT2046_Touchscreen.h>
 		#if !defined(PICO)
-			#include "touch_cst820.h"
+			//#include "touch_cst820.h"
+			//#include "touch_ft62xx.h"
+			#include "touch_universal.h"
 		#endif
 		#include <SPI.h>
 		#include "configurator.h"
@@ -594,6 +596,24 @@ static int deferUpdates = false;
 			c.touch.scl = 33;
 			c.touch.rotation = 0;
 			c.touch.flip_y = true;
+			#elif defined(S3_ELECROW_TERMINAL)
+			c.lcd.backlight = 46;
+			c.lcd.width = 480;
+			c.lcd.height = 320;
+			
+			// [lvgl]
+			c.lvgl.width = 480;
+			c.lvgl.height = 320;
+
+			strcpy(c.touch.controller, "ft62xx");
+			strcpy(c.touch.interface, "i2c");
+			c.touch.i2c = 1;
+			c.touch.sda = 38;
+			c.touch.scl = 39;
+			c.touch.rotation = 0;
+			c.touch.flip_y = true;
+			c.touch.flip_x_y = true;
+
 			#elif defined(S3_ELECROW) 
 			Serial.printf("configured S3_ELECROW\r\n");
 			useTFT = true;
@@ -662,14 +682,40 @@ static int deferUpdates = false;
 
 		// New (I2C/CST820):
 		#if !defined(PICO)
-			static TouchCST820 *touchI2C = nullptr;
+			//static TouchCST820 *touchI2C_CST = nullptr;
+			//static TouchFT62xx *touchI2C_FT = nullptr;
+			//static TouchUniversal touchi2c; 
+			//TouchUniversal touchi2c;
+			static TouchUniversal touchI2C;
+
 		#endif
 		// Cache last point for XPT so we don’t call getPoint() multiple times per frame
 		static TS_Point lastP;
 		static bool lastPTouched = false;
 		static uint32_t lastTouchPoll = 0;
 	
-	
+		void tft_deinit()
+		{
+			if (gfx) {
+				delete gfx;
+				gfx = nullptr;
+			}
+
+			if (bus) {
+				delete bus;
+				bus = nullptr;
+			}
+
+			if (touch) {
+				delete touch;
+				touch = nullptr;
+			}
+
+			if (touchSPI) {
+				delete touchSPI;
+				touchSPI = nullptr;
+			}
+		}
 
 		void tftInit() {
 			//Serial.println("starting tftinit\r\n");
@@ -707,9 +753,17 @@ static int deferUpdates = false;
 				config_file_exists=true;
 				cfg={};
 			}  
+			
+			if (config_file_exists) {
+				if (!configurator::loadConfig(&cfg)) {
+						sprintf(s,"Defaults used");
+						
+						outputString(s);
+				}
+			}
 			/*
 			 Serial.printf("non configured: touch.i2c %d, touch.scl:%d touch:sda %d,  cfg.lcd.invert %d,cfg.touch.flip_x %d,cfg.touch.flip_y %d,cfg.touch.flip_x_y %d\r\n",
-			 	 cfg.touch.i2c,toGPIO(cfg.touch.scl),toGPIO(cfg.touch.scl),cfg.lcd.invert,cfg.touch.flip_x,cfg.touch.flip_y,cfg.touch.flip_x_y);
+			 	 cfg.touch.i2c,toGPIO(cfg.touch.sda),toGPIO(cfg.touch.scl),cfg.lcd.invert,cfg.touch.flip_x,cfg.touch.flip_y,cfg.touch.flip_x_y);
 
 			 Serial.printf("cfg.lcd.controller %s , cfg.touch.interface %s, cfg.touch.controller %s\r\n", cfg.lcd.controller,cfg.touch.interface,cfg.touch.controller);
 
@@ -719,16 +773,50 @@ static int deferUpdates = false;
 			 Serial.printf(" toGPIO(cfg.lcd.rst) %d, cfg.lcd.rotation %d, cfg.lcd.invert %d,cfg.lcd.width %d, cfg.lcd.height %d,cfg.lcd.col_offset %d,cfg.lcd.row_offset %d\r\n",
 				 toGPIO(cfg.lcd.rst), cfg.lcd.rotation, cfg.lcd.invert,cfg.lcd.width, cfg.lcd.height,cfg.lcd.col_offset,cfg.lcd.row_offset);
 			*/
-			if (config_file_exists) {
-				if (!configurator::loadConfig(&cfg)) {
-						sprintf(s,"Defaults used");
-						
-						outputString(s);
-				}
-			}
 
-	
-					
+	#if defined(S3_ELECROW_TERMINAL)
+
+// IMPORTANT on many parallel panels:
+// - RD must be held HIGH when not reading.
+#define LCD_RD 48
+
+// Create 16-bit parallel bus using Elecrow pin map
+bus = new Arduino_ESP32LCD16(
+  45,   // DC/RS  (Elecrow: cfg.pin_rs = 45)  :contentReference[oaicite:3]{index=3}
+  -1,   // CS     (Elecrow sets pin_cs = -1)  :contentReference[oaicite:4]{index=4}
+  18,   // WR     (cfg.pin_wr = 18)           :contentReference[oaicite:5]{index=5}
+  48,   // RD     (cfg.pin_rd = 48)           :contentReference[oaicite:6]{index=6}
+  47,   // D0     (cfg.pin_d0 = 47)           :contentReference[oaicite:7]{index=7}
+  21,   // D1                                 :contentReference[oaicite:8]{index=8}
+  14,   // D2                                 :contentReference[oaicite:9]{index=9}
+  13,   // D3                                 :contentReference[oaicite:10]{index=10}
+  12,   // D4                                 :contentReference[oaicite:11]{index=11}
+  11,   // D5                                 :contentReference[oaicite:12]{index=12}
+  10,   // D6                                 :contentReference[oaicite:13]{index=13}
+  9,    // D7                                 :contentReference[oaicite:14]{index=14}
+  3,    // D8                                 :contentReference[oaicite:15]{index=15}
+  8,    // D9                                 :contentReference[oaicite:16]{index=16}
+  16,   // D10                                :contentReference[oaicite:17]{index=17}
+  15,   // D11                                :contentReference[oaicite:18]{index=18}
+  7,    // D12                                :contentReference[oaicite:19]{index=19}
+  6,    // D13                                :contentReference[oaicite:20]{index=20}
+  5,    // D14                                :contentReference[oaicite:21]{index=21}
+  4     // D15                                :contentReference[oaicite:22]{index=22}
+);
+
+// ILI9488 display driver on that bus
+// RST = -1 because Elecrow example sets pin_rst = -1 :contentReference[oaicite:23]{index=23}
+// Rotation: try 0/1/2/3 to match your enclosure orientation
+gfx = new Arduino_ILI9488(
+  bus,
+  -1,   // RST
+  1,    // rotation (try 1 or 3 for landscape)
+  false // IPS (leave false unless you know it is IPS)
+);
+
+
+
+    #else		// S3_ELECROW_TERMINAL			
 		// } else {
 			if (cfg.lcd.dc != PIN_UNUSED && cfg.lcd.cs != PIN_UNUSED && cfg.lcd.sclk != PIN_UNUSED && cfg.lcd.mosi != PIN_UNUSED && cfg.lcd.spi>=0 &&
 				 strlen(cfg.lcd.controller)>0)
@@ -748,7 +836,7 @@ static int deferUpdates = false;
 											toGPIO(cfg.lcd.miso), cfg.lcd.spi, (cfg.lcd.spi==cfg.touch.spi));
 											// last boolean is: shared spi interface
 				
-		#endif							
+			#endif	//ESP32_C3						
 
 
 		
@@ -771,7 +859,7 @@ static int deferUpdates = false;
 				//else {
 				//	Serial.println("Unknown controller\r\n");
 				//}
-				#else
+				#else // PICO
 				bus = new Arduino_RPiPicoSPI(
 						toGPIO(cfg.lcd.dc), toGPIO(cfg.lcd.cs),
 						toGPIO(cfg.lcd.sclk), toGPIO(cfg.lcd.mosi), toGPIO(cfg.lcd.miso),
@@ -793,8 +881,10 @@ static int deferUpdates = false;
 					Serial.println("Unknown controller\r\n");
 					
 				}
-			#endif
-
+			
+			#endif // PICO
+			 }
+		#endif //// S3_ELECROW_TERMINAL	
 				if (gfx != nullptr) {
 					//Serial.printf("tft.begin()\r\n");
 					delay(100); 
@@ -805,9 +895,15 @@ static int deferUpdates = false;
 					//Serial.printf("backlight %d\r\n",cfg.lcd.backlight);
 					pinMode(toGPIO(cfg.lcd.backlight), OUTPUT);
 					digitalWrite(toGPIO(cfg.lcd.backlight), HIGH); // turn backlight ON (or LOW if your display is inverted)
+
+					#if defined(S3_ELECROW_TERMINAL)
+						// Hold RD high (prevents random reads / bus contention)
+						pinMode(LCD_RD, OUTPUT);
+						digitalWrite(LCD_RD, HIGH);
+					#endif
 					//Serial.printf("TFT completely initilaized\r\n");
 				}
-			} //else Serial.printf("No TFT used\r\n");
+			 //else Serial.printf("No TFT used\r\n");
 		}
 		
 	
@@ -824,6 +920,11 @@ static int deferUpdates = false;
 		static inline bool isTouchCST(void) {
 			return (0 == strcmp(cfg.touch.interface, "i2c")) &&
 				(0 == strcmp(cfg.touch.controller, "cst820"));
+		}
+
+		static inline bool isTouchFT(void) {
+			return (0 == strcmp(cfg.touch.interface, "i2c")) &&
+				(0 == strcmp(cfg.touch.controller, "ft62xx"));
 		}
 
 		// --- Initialization ---
@@ -859,17 +960,27 @@ static int deferUpdates = false;
 			#if !defined(PICO)
 			if (isTouchCST()) {
 				Serial.printf("initialize CST820\r\n");
-				touchI2C = new TouchCST820();
-				touchI2C->configure(cfg.touch.i2c, toGPIO(cfg.touch.sda), toGPIO(cfg.touch.scl));
-				touchI2C->setScreenSize(cfg.lvgl.width, cfg.lvgl.height);
-				touchI2C->begin();
-				hasTouch = true;
+				// touchI2C = new TouchCST820();
+				// touchI2C->configure(cfg.touch.i2c, toGPIO(cfg.touch.sda), toGPIO(cfg.touch.scl));
+				// touchI2C->setScreenSize(cfg.lvgl.width, cfg.lvgl.height);
+				// touchI2C->begin();
+				touchI2C.configureCST820(cfg.touch.i2c, toGPIO(cfg.touch.sda), toGPIO(cfg.touch.scl),0x15);
 				touchEnabled = true;
-				return;
+    			hasTouch = true;
 			}
-			#endif
+			else if (isTouchFT()) {
+				touchI2C.configureFT62XX(cfg.touch.i2c, toGPIO(cfg.touch.sda), toGPIO(cfg.touch.scl),0x38);
+				touchEnabled = true;
+    			hasTouch = true;
+			}
+				// hasTouch = true;
+				// touchEnabled = true;
+				// return;
+			
+			#else //PICO
 			touchEnabled = false;
 			hasTouch = false;
+			#endif
 		}
 
 		// --- Helper to check readiness ---
@@ -894,8 +1005,8 @@ static int deferUpdates = false;
 				return lastPTouched ? 1 : 0;
 			}
 		#if !defined(PICO)
-			if (isTouchCST()) {
-				return (touchI2C && touchI2C->touched()) ? 1 : 0;
+			if (isTouchCST()|| isTouchFT()) {
+				return (touchI2C.touched()) ? 1 : 0;
 			}
 		#endif
 			return 0;
@@ -919,12 +1030,12 @@ static int deferUpdates = false;
 					return (int)map((int)lastP.x, 200, 3800, (int)cfg.lvgl.width, 0);
 			}
 		#if !defined(PICO)
-			if (isTouchCST()) {
-				if (!touchI2C) return 0;
+			if (isTouchCST() || isTouchFT()) {
+				//if (!touchI2C) return 0;
 				if (cfg.touch.flip_x_y)
-					x = touchI2C->y();
+					x = touchI2C.y();
 				else
-					x = touchI2C->x();
+					x = touchI2C.x();
 
 				if (cfg.touch.flip_x)
 					return cfg.lvgl.width - x;
@@ -953,12 +1064,12 @@ static int deferUpdates = false;
 					return (int)map((int)lastP.y, 300, 3900, 0, (int)cfg.lvgl.height);
 			}
 		#if !defined(PICO)
-			if (isTouchCST()) {
-				if (!touchI2C) return 0;
+			if (isTouchCST() || isTouchFT()) {
+				//if (!touchI2C) return 0;
 				if (cfg.touch.flip_x_y)
-					y = touchI2C->x();
+					y = touchI2C.x();
 				else
-					y = touchI2C->y();
+					y = touchI2C.y();
 
 				if (cfg.touch.flip_y)
 					return cfg.lvgl.height - y;
@@ -977,9 +1088,9 @@ static int deferUpdates = false;
 				return (int)lastP.z;
 			}
 		#if !defined(PICO)
-			if (isTouchCST()) {
-				if (!touchI2C) return 0;
-				return touchI2C->pressure();  // 1000 when touched, -1 otherwise
+			if (isTouchCST() || isTouchFT()) {
+				//if (!touchI2C) return 0;
+				return touchI2C.pressure();  // 1000 when touched, -1 otherwise
 			}
 		#endif
 			return 0;
@@ -992,8 +1103,8 @@ static int deferUpdates = false;
 				return 0;  // no gesture support
 			}
 		#if !defined(PICO)
-			if (isTouchCST()) {
-				return touchI2C ? touchI2C->gesture() : 0;
+			if (isTouchCST() || isTouchFT()) {
+				return touchI2C.gesture();
 			}
 		#endif
 			return 0;
@@ -1566,7 +1677,17 @@ OBJ primSetBacklight(int argCount, OBJ *args) {
 	#if defined(ARDUINO_IOT_BUS)
 		pinMode(33, OUTPUT);
 		digitalWrite(33, (brightness > 0) ? HIGH : LOW);
-	#elif defined(COCUBE) || defined(TFT_CONFIG)
+	#elif defined(TFT_CONFIG) && defined(PICO)
+		// esp32 hangs on this analogWrite
+		// PICO works fine
+		pinMode(cfg.lcd.backlight, OUTPUT);
+		if (brightness < 0) brightness = 0;
+		if (brightness > 10) brightness = 10;
+		char s[100];
+		printf(s,"TFTConfig brightness pin: %d, brightness: %d",cfg.lcd.backlight,brightness);
+		outputString(s);
+		analogWrite(cfg.lcd.backlight, brightness * 25);
+	#elif defined(COCUBE)
 		pinMode(TFT_BL, OUTPUT);
 		if (brightness < 0) brightness = 0;
 		if (brightness > 10) brightness = 10;
@@ -2402,6 +2523,14 @@ void setup_lvgl() {
 	#endif
 	// size_t psramFree = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
 	int psramFree = heap_caps_get_free_size(MALLOC_CAP_SPIRAM); // in bytes
+	if (buf1) {
+		heap_caps_free(buf1);
+		buf1 = NULL;
+	}
+	if (buf2) {
+		heap_caps_free(buf2);
+		buf2 = NULL;
+	}
 	if (psramFree>0) {
 		//Serial.printf("psramfree = %d\r\n",psramFree);
 		buf1 = (lv_color_t *)heap_caps_malloc(TFT_WIDTH * LV_NR_ROWS * sizeof(lv_color_t), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
@@ -4112,6 +4241,21 @@ static OBJ primTftTouchPressure(int argCount, OBJ *args) {
 	return int2obj(-1);
 }
 
+static OBJ primTftInit(int argCount, OBJ *args) {
+	#if defined(TFT_CONFIG)
+	  tft_deinit(); // free all objects 
+	#endif
+	tftInit();
+	return falseObj;
+}
+
+#if !defined(PICO)
+static OBJ primESPReboot(int argCount, OBJ *args) {
+	ESP.restart();
+	return falseObj;
+}
+#endif
+
 // Primitives
 
 static PrimEntry entries[] = {
@@ -4138,7 +4282,12 @@ static PrimEntry entries[] = {
 	{"tftTouchX", primTftTouchX},
 	{"tftTouchY", primTftTouchY},
 	{"tftTouchPressure", primTftTouchPressure},
-
+	#if defined(TFT_CONFIG)
+	{"tftInit",primTftInit},
+	#if !defined(PICO)
+		{"tftReboot",primESPReboot},
+	#endif
+	#endif
 	{"aruco", primAruco},
 	{"aprilTag", primAprilTag},
 
