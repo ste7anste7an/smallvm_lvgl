@@ -554,6 +554,7 @@ uint16_t bufferPixels[BUFFER_PIXELS_SIZE];
 			c.lcd.rst = 13;
 			c.lcd.rotation = 1;
 			c.lcd.invert = true;
+			c.lcd.colorBGR = false;
 			c.lcd.backlight = 12;
 			c.lcd.width = 240;
 			c.lcd.height = 280;
@@ -638,11 +639,11 @@ uint16_t bufferPixels[BUFFER_PIXELS_SIZE];
     	// Arduino_RGB_Display tft = Arduino_RGB_Display(
 		//  		 480 /* width */, 272 /* height */, rgbpanel, 0 /* rotation */, true /* auto_flush */);
 
-		static Arduino_GFX *gfx = nullptr;
+		//static Arduino_GFX *tft = nullptr;
 		//static Arduino_RGB_Display *rgb_tft = nullptr; 
 		//Arduino_RGB_Display *tft2=nullptr;
 		//Arduino_RGB_Display tft
-		#define tft (*gfx)
+		//#define tft (*gfx)
 		//Arduino_GFX& tft = *gfx;
 		XPT2046_Touchscreen *touch = nullptr;
 		#if defined(PICO)
@@ -671,9 +672,9 @@ uint16_t bufferPixels[BUFFER_PIXELS_SIZE];
 	
 		void tft_deinit()
 		{
-			if (gfx) {
-				delete gfx;
-				gfx = nullptr;
+			if (tft) {
+				delete tft;
+				tft = nullptr;
 			}
 
 			if (bus) {
@@ -816,20 +817,20 @@ gfx = new Arduino_ILI9488(
 
 		
 				if (strcmp(cfg.lcd.controller, "ILI9341") == 0) {
-					gfx = new Arduino_ILI9341(bus, toGPIO(cfg.lcd.rst), cfg.lcd.rotation, cfg.lcd.invert);
+					tft = new Arduino_ILI9341(bus, toGPIO(cfg.lcd.rst), cfg.lcd.rotation, cfg.lcd.invert);
 				} else if (strcmp(cfg.lcd.controller, "ST7789") == 0) {
 					//Serial.printf("ST7789 controller configured\r\n");
-					gfx = new Arduino_ST7789(bus, toGPIO(cfg.lcd.rst), cfg.lcd.rotation, cfg.lcd.invert,cfg.lcd.width, cfg.lcd.height,cfg.lcd.col_offset,cfg.lcd.row_offset);
+					tft = new Arduino_ST7789(bus, toGPIO(cfg.lcd.rst), cfg.lcd.rotation, cfg.lcd.invert,cfg.lcd.width, cfg.lcd.height,cfg.lcd.col_offset,cfg.lcd.row_offset);
 				}  else if (strcmp(cfg.lcd.controller, "ST7796") == 0) {
 					//if (cfg.lcd.col_offset==0 && cfg.lcd.row_offset==0)
 					//  gfx = new Arduino_ST7796(bus, cfg.lcd.rst, cfg.lcd.rotation, false);
 					//else
-					gfx = new Arduino_ST7796(bus, toGPIO(cfg.lcd.rst), cfg.lcd.rotation, cfg.lcd.invert,cfg.lcd.width, cfg.lcd.height,cfg.lcd.col_offset,cfg.lcd.row_offset);
+					tft = new Arduino_ST7796(bus, toGPIO(cfg.lcd.rst), cfg.lcd.rotation, cfg.lcd.invert,cfg.lcd.width, cfg.lcd.height,cfg.lcd.col_offset,cfg.lcd.row_offset);
 				} else if (strcmp(cfg.lcd.controller, "GC9A01") == 0) {
 					//if (cfg.lcd.col_offset==0 && cfg.lcd.row_offset==0)
 					//  gfx = new Arduino_ST7796(bus, cfg.lcd.rst, cfg.lcd.rotation, false);
 					//else
-					gfx = new Arduino_GC9A01(bus, toGPIO(cfg.lcd.rst), cfg.lcd.rotation, cfg.lcd.invert,cfg.lcd.width, cfg.lcd.height,cfg.lcd.col_offset,cfg.lcd.row_offset);
+					tft = new Arduino_GC9A01(bus, toGPIO(cfg.lcd.rst), cfg.lcd.rotation, cfg.lcd.invert,cfg.lcd.width, cfg.lcd.height,cfg.lcd.col_offset,cfg.lcd.row_offset);
 				}
 				//else {
 				//	Serial.println("Unknown controller\r\n");
@@ -843,15 +844,15 @@ gfx = new Arduino_ILI9488(
 
 			
 				if (strcmp(cfg.lcd.controller, "ILI9341") == 0) {
-					gfx = new Arduino_ILI9341(bus, toGPIO(cfg.lcd.rst), cfg.lcd.rotation, cfg.lcd.invert);
+					tft = new Arduino_ILI9341(bus, toGPIO(cfg.lcd.rst), cfg.lcd.rotation, cfg.lcd.invert);
 				} else if (strcmp(cfg.lcd.controller, "ST7789") == 0) {
 					Serial.printf("ST7789 controller configured\r\n");
-					gfx = new Arduino_ST7789(bus, toGPIO(cfg.lcd.rst), cfg.lcd.rotation, cfg.lcd.invert,cfg.lcd.width, cfg.lcd.height,cfg.lcd.col_offset,cfg.lcd.row_offset);
+					tft = new Arduino_ST7789(bus, toGPIO(cfg.lcd.rst), cfg.lcd.rotation, cfg.lcd.invert,cfg.lcd.width, cfg.lcd.height,cfg.lcd.col_offset,cfg.lcd.row_offset);
 				}  else if (strcmp(cfg.lcd.controller, "ST7796") == 0) {
 					//if (cfg.lcd.col_offset==0 && cfg.lcd.row_offset==0)
 					//  gfx = new Arduino_ST7796(bus, cfg.lcd.rst, cfg.lcd.rotation, false);
 					//else
-					gfx = new Arduino_ST7796(bus, toGPIO(cfg.lcd.rst), cfg.lcd.rotation, cfg.lcd.invert,cfg.lcd.width, cfg.lcd.height,cfg.lcd.col_offset,cfg.lcd.row_offset);
+					tft = new Arduino_ST7796(bus, toGPIO(cfg.lcd.rst), cfg.lcd.rotation, cfg.lcd.invert,cfg.lcd.width, cfg.lcd.height,cfg.lcd.col_offset,cfg.lcd.row_offset);
 				}else {
 					Serial.println("Unknown controller\r\n");
 					
@@ -860,11 +861,11 @@ gfx = new Arduino_ILI9488(
 			#endif // PICO
 			 }
 		#endif //// S3_ELECROW_TERMINAL	
-				if (gfx != nullptr) {
+				if (tft != nullptr) {
 					//Serial.printf("tft.begin()\r\n");
 					delay(100); 
-					tft.begin();
-					tft.fillScreen(RGB565_BLACK);
+					tft->begin();
+					tft->fillScreen(RGB565_BLACK);
 					delay(1); 
 					useTFT = true;
 					//Serial.printf("backlight %d\r\n",cfg.lcd.backlight);
@@ -1718,10 +1719,10 @@ static OBJ primPixelRow(int argCount, OBJ *args) {
 		   //tft.pushImageDMA(x,y,pixelCount,1,bufferPixels);
 		   // no DMA possible from PSRAM
 		   tft.pushImage(x,y,pixelCount,1,bufferPixels);
-		#elif defined(TFT_CONFIG) 
-		tft.draw16bitRGBBitmap(x, y, bufferPixels, pixelCount, 1);
+		// #elif defined(TFT_CONFIG) 
+		// tft.draw16bitRGBBitmap(x, y, bufferPixels, pixelCount, 1);
 		#else
-		tft.drawRGBBitmap(x, y, bufferPixels, pixelCount, 1);
+		tft->draw16bitRGBBitmap(x, y, bufferPixels, pixelCount, 1);
 		#endif
 	} else if (IS_TYPE(pixelDataObj, ByteArrayType)) {
 		int isRGB565 = true;
@@ -1758,10 +1759,10 @@ static OBJ primPixelRow(int argCount, OBJ *args) {
 		   //tft.pushImageDMA(x,y,pixelCount,1,bufferPixels);
 		   // no DMA possible from PSRAM
 		   tft.pushImage(x,y,pixelCount,1,bufferPixels);
-		#elif defined(TFT_CONFIG) 
-		tft.draw16bitRGBBitmap(x, y, bufferPixels, pixelCount, 1);
+//		#elif defined(TFT_CONFIG) 
+//		tft.draw16bitRGBBitmap(x, y, bufferPixels, pixelCount, 1);
 		#else
-		tft.drawRGBBitmap(x, y, bufferPixels, pixelCount, 1);
+		tft->draw16bitRGBBitmap(x, y, bufferPixels, pixelCount, 1);
 		#endif
 	}
 	UPDATE_DISPLAY();
@@ -2542,7 +2543,7 @@ void my_disp_flush(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map)
   uint32_t w = lv_area_get_width(area);
   uint32_t h = lv_area_get_height(area);
 
-  tft.draw16bitBeRGBBitmap(area->x1, area->y1, (uint16_t *)px_map, w, h);
+  tft->draw16bitRGBBitmap(area->x1, area->y1, (uint16_t *)px_map, w, h);
   
 //#endif // #ifndef DIRECT_RENDER_MODE
 
