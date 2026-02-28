@@ -292,11 +292,21 @@ static void serialOpen(int baudRate) {
 			SERIAL_PORT.begin(baudRate, SERIAL_8N1, RX, TX);
 		#endif
 	#elif defined(ESP32_ORIGINAL)
-		if (hasPSRAM()) { // GPIO16 and GPIO17 are used by PSRAM on original ESP32
-			SERIAL_PORT.begin(baudRate, SERIAL_8N1, 21, 22);
-		} else {
-			SERIAL_PORT.begin(baudRate, SERIAL_8N1, 16, 17);
-		}
+		#if defined(LMS_ESP32)
+			// sodb: lms-esp32vw: SERIAL_PORT.begin(baudRate, SERIAL_8N1, 8, 7); rx=8, tx=7
+			// lms-esp32v1 rx=18, tx=19
+
+			if (getESPVersion() == 2) {
+				SERIAL_PORT.begin(baudRate, SERIAL_8N1, 8, 7);	
+			} else {
+				SERIAL_PORT.begin(baudRate, SERIAL_8N1, 18, 19);
+			}
+		#else
+			if (hasPSRam())  // do not use GPIO16 and GPIO17
+				SERIAL_PORT.begin(baudRate, SERIAL_8N1, 21, 22);
+			else
+				SERIAL_PORT.begin(baudRate, SERIAL_8N1, 16, 17);
+		#endif
 	#elif defined(METRO_S3)
 		SERIAL_PORT.begin(baudRate, SERIAL_8N1, 41, 40);
 	#elif defined(ESP32)
@@ -314,28 +324,8 @@ static void serialOpen(int baudRate) {
 		}
 		SERIAL_PORT.begin(baudRate);
 	
-	#elif defined(ESP32)
-		// all other ESP32 boards that do not have cases above
-		#if defined(LMS_ESP32)
-			// sodb: lms-esp32vw: SERIAL_PORT.begin(baudRate, SERIAL_8N1, 8, 7); rx=8, tx=7
-			// lms-esp32v1 rx=18, tx=19
-
-			if (getESPVersion() == 2) {
-				SERIAL_PORT.begin(baudRate, SERIAL_8N1, 8, 7);	
-			} else {
-				SERIAL_PORT.begin(baudRate, SERIAL_8N1, 18, 19);
-			}
-		#elif defined(CYDIO)
+	#elif defined(CYDIO)
 			SERIAL_PORT.begin(baudRate, SERIAL_8N1, 22, 35);	
-		#elif defined(ESP32_ORIGINAL)
-
-			if (hasPSRam())  // do not use GPIO16 and GPIO17
-				SERIAL_PORT.begin(baudRate, SERIAL_8N1, 21, 22);
-			else
-				SERIAL_PORT.begin(baudRate, SERIAL_8N1, 16, 17);
-		#else
-			SERIAL_PORT.begin(baudRate, SERIAL_8N1, 16, 17);
-		#endif
 	#else
 		SERIAL_PORT.begin(baudRate);
 	#endif
