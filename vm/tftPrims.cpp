@@ -26,6 +26,16 @@
 Adafruit_GFX *tft;
 #define HAS_TFT_PRIMS true
 
+#elif defined(S3_ROTARY)
+	#include <Arduino_GFX_Library.h>
+	//#include "mt8901.hpp"
+	#include "button.hpp"
+	static button_t *g_btn;
+	// invert BGR
+	#define draw16bitRGBBitmap draw16bitBeRGBBitmap
+	Arduino_GFX *tft;
+	#define HAS_TFT_PRIMS true
+
 #else
 
 #include <Arduino_GFX_Library.h>
@@ -521,6 +531,108 @@ uint16_t bufferPixels[BUFFER_PIXELS_SIZE];
 			return pressure;
 		}
 
+	#elif defined(S3_ROTARY)
+		#include <LittleFS.h>
+		#include "driver/pcnt.h"
+		#include <stdint.h>
+		#include <limits.h>
+
+		#define PCNT_H_LIM_VAL INT16_MAX
+		#define PCNT_L_LIM_VAL INT16_MIN
+
+		static pcnt_unit_t unit = PCNT_UNIT_0;
+
+		void mt8901_init(int16_t sig_pin, int16_t dir_pin) {
+			pcnt_config_t pcnt_config = {};
+
+			pcnt_config.pulse_gpio_num = sig_pin;
+			pcnt_config.ctrl_gpio_num  = dir_pin;
+
+			pcnt_config.lctrl_mode = PCNT_MODE_REVERSE;
+			pcnt_config.hctrl_mode = PCNT_MODE_KEEP;
+
+			pcnt_config.pos_mode = PCNT_COUNT_DEC;
+			pcnt_config.neg_mode = PCNT_COUNT_INC;
+
+			pcnt_config.counter_h_lim = PCNT_H_LIM_VAL;
+			pcnt_config.counter_l_lim = PCNT_L_LIM_VAL;
+
+			pcnt_config.unit    = unit;
+			pcnt_config.channel = PCNT_CHANNEL_0;
+
+			pcnt_unit_config(&pcnt_config);
+			pcnt_set_filter_value(unit, 1000);
+			pcnt_filter_enable(unit);
+			pcnt_counter_pause(unit);
+			pcnt_counter_clear(unit);
+			pcnt_counter_resume(unit);
+		}
+
+		int16_t mt8901_get_count() {
+			int16_t count = 0;
+			pcnt_get_counter_value(unit, &count);
+			return count;
+		}
+
+		
+		#define ECO_O(y) (y > 0) ? -1 : 1
+		#define ECO_STEP(x) x ? ECO_O(x) : 0
+		#define GFX_BL 38
+
+		Arduino_DataBus *bus = new Arduino_SWSPI(
+		GFX_NOT_DEFINED /* DC */, 21 /* CS */,
+		47 /* SCK */, 41 /* MOSI */, GFX_NOT_DEFINED /* MISO */);
+		Arduino_ESP32RGBPanel *rgbpanel = new Arduino_ESP32RGBPanel(
+		39 /* DE */, 48 /* VSYNC */, 40 /* HSYNC */, 45 /* PCLK */,
+		10 /* R0 */, 16 /* R1 */, 9 /* R2 */, 15 /* R3 */, 46 /* R4 */,
+		8 /* G0 */, 13 /* G1 */, 18 /* G2 */, 12 /* G3 */, 11 /* G4 */, 17 /* G5 */,
+		47 /* B0 */, 41 /* B1 */, 0 /* B2 */, 42 /* B3 */, 14 /* B4 */,
+		1 /* hsync_polarity */, 10 /* hsync_front_porch */, 10 /* hsync_pulse_width */, 10 /* hsync_back_porch */,
+		1 /* vsync_polarity */, 14 /* vsync_front_porch */, 2 /* vsync_pulse_width */, 12 /* vsync_back_porch */);
+		
+
+
+void tftInit() {
+			//Serial.println("starting tftinit\r\n");
+
+			useTFT = false;
+			#ifndef TFT_WIDTH
+			#define TFT_WIDTH  (480)
+			#endif
+
+			#ifndef TFT_HEIGHT
+			#define TFT_HEIGHT (480)
+			#endif
+
+			#ifndef TFT_BL
+			#define TFT_BL (GFX_BL)
+			#endif
+			g_btn = button_attach(3, 0, 10);
+			mt8901_init(5,6);
+
+
+			tft = new Arduino_RGB_Display(
+				480 /* width */, 480 /* height */, rgbpanel, 0 /* rotation */, true /* auto_flush */,
+				bus, GFX_NOT_DEFINED /* RST */, st7701_type7_init_operations, sizeof(st7701_type7_init_operations));
+
+				if (tft != nullptr) {
+					//Serial.printf("tft.begin()\r\n");
+					delay(100); 
+					tft->begin();
+					tft->fillScreen(RGB565_BLACK);
+					delay(1); 
+					useTFT = true;
+					//Serial.printf("backlight %d\r\n",cfg.lcd.backlight);
+					pinMode(TFT_BL, OUTPUT);
+					digitalWrite(TFT_BL, HIGH); // turn backlight ON (or LOW if your display is inverted)
+
+					//Serial.printf("TFT completely initilaized\r\n");
+				}
+			 //else Serial.printf("No TFT used\r\n");
+		}
+		
+//--------------------------------
+
 	#elif defined(TFT_CONFIG)
 
 		#include <Arduino.h>
@@ -820,7 +932,8 @@ gfx = new Arduino_ILI9488(
 					tft = new Arduino_ILI9341(bus, toGPIO(cfg.lcd.rst), cfg.lcd.rotation, cfg.lcd.invert);
 				} else if (strcmp(cfg.lcd.controller, "ST7789") == 0) {
 					//Serial.printf("ST7789 controller configured\r\n");
-					tft = new Arduino_ST7789(bus, toGPIO(cfg.lcd.rst), cfg.lcd.rotation, cfg.lcd.invert,cfg.lcd.width, cfg.lcd.height,cfg.lcd.col_offset,cfg.lcd.row_offset);
+					tft = new Arduino_ST7789(bus, toGPIO(cfg.lcd.rst), cfg.lcd.rotation, cfg.lcd.invert,cfg.lcd.width, cfg.lcd.height,cfg.lcd.col_offset,cfg.lcd.row_offset,
+														 cfg.lcd.col_offset,cfg.lcd.row_offset);
 				}  else if (strcmp(cfg.lcd.controller, "ST7796") == 0) {
 					//if (cfg.lcd.col_offset==0 && cfg.lcd.row_offset==0)
 					//  gfx = new Arduino_ST7796(bus, cfg.lcd.rst, cfg.lcd.rotation, false);
@@ -847,7 +960,9 @@ gfx = new Arduino_ILI9488(
 					tft = new Arduino_ILI9341(bus, toGPIO(cfg.lcd.rst), cfg.lcd.rotation, cfg.lcd.invert);
 				} else if (strcmp(cfg.lcd.controller, "ST7789") == 0) {
 					Serial.printf("ST7789 controller configured\r\n");
-					tft = new Arduino_ST7789(bus, toGPIO(cfg.lcd.rst), cfg.lcd.rotation, cfg.lcd.invert,cfg.lcd.width, cfg.lcd.height,cfg.lcd.col_offset,cfg.lcd.row_offset);
+					tft = new Arduino_ST7789(bus, toGPIO(cfg.lcd.rst), cfg.lcd.rotation, cfg.lcd.invert,cfg.lcd.width, cfg.lcd.height,cfg.lcd.col_offset,cfg.lcd.row_offset,
+														 cfg.lcd.col_offset,cfg.lcd.row_offset);
+				);
 				}  else if (strcmp(cfg.lcd.controller, "ST7796") == 0) {
 					//if (cfg.lcd.col_offset==0 && cfg.lcd.row_offset==0)
 					//  gfx = new Arduino_ST7796(bus, cfg.lcd.rst, cfg.lcd.rotation, false);
@@ -2502,6 +2617,11 @@ static OBJ primAprilTag(int argCount, OBJ *args) { return falseObj; }
 #include <lvgl.h>
 extern bool useLVGL;
 extern bool LVGL_initialized;
+
+#if defined(COCUBE)	|| defined(S3_ROTARY)
+	static lv_group_t * group;
+#endif	
+
 void setup_lvgl(void); 
 
 static uint32_t screenWidth;
@@ -2551,6 +2671,31 @@ void my_disp_flush(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map)
   lv_disp_flush_ready(disp);
 }
 #endif
+#if defined(S3_ROTARY)
+
+#include "button.hpp"
+void encoder_read(lv_indev_t * indev, lv_indev_data_t * data)
+		{
+			static int16_t cont_last = 0;
+
+			int16_t cont_now = mt8901_get_count();
+			// char s[100];
+			// sprintf(s,"cont_now %d ",cont_now);		
+			// outputString(s);
+			data->enc_diff = ECO_STEP(cont_now - cont_last);
+
+			cont_last = cont_now;
+
+			if (btn_isPressed(g_btn)) {
+				data->state = LV_INDEV_STATE_PRESSED;
+				// char s[100];
+			    // sprintf(s,"pressed");		
+				// outputString(s);
+			} else {
+				data->state = LV_INDEV_STATE_RELEASED;
+			}
+		}
+#else
 void my_touchpad_read(lv_indev_t *indev, lv_indev_data_t *data)
 {
 			if (screenTouched()) {
@@ -2564,6 +2709,9 @@ void my_touchpad_read(lv_indev_t *indev, lv_indev_data_t *data)
 		
 }
 
+
+
+#endif
 #define TFT_BUFFER_LINES 40
 static lv_draw_buf_t draw_buf;
 static lv_color_t *buf1;
@@ -2676,6 +2824,7 @@ void setup_lvgl() {
 	if (useTFT) {
   	#include "esp_heap_caps.h"
 	lv_init();
+
 	// double buffer
 	
  	size_t buf_size = TFT_WIDTH * TFT_BUFFER_LINES * sizeof(lv_color_t);
@@ -2774,10 +2923,30 @@ if (!ptr) {
 	lv_indev_set_long_press_repeat_time(indev, 100); // repeat interval in ms
 
     // Optional: create a group so widgets can get focus
-	group = lv_group_create();
+
+		   // Optional: create a group so widgets can get focus
+		group = lv_group_create();
 	// Attach the keypad input device to the group
 	lv_indev_set_group(indev, group);
+   #elif defined(S3_ROTARY)
+
+		
+		/* Initialize the input device driver */
+		lv_indev_t * indev = lv_indev_create();
+
+		lv_indev_set_type(indev, LV_INDEV_TYPE_ENCODER);
+		lv_indev_set_read_cb(indev, encoder_read);
+		lv_indev_set_long_press_time(indev, 400);        // ms until LV_EVENT_LONG_PRESSED
+		lv_indev_set_long_press_repeat_time(indev, 100); // repeat interval in ms
+
+		   // Optional: create a group so widgets can get focus
+		group = lv_group_create();
+		lv_indev_set_group(indev, group);
+	// Attach the keypad input device to the group
    #endif
+
+
+
  fs_init() ;
 //lv_fs_littlefs_init();
 	LVGL_initialized = true;
@@ -4051,15 +4220,45 @@ static OBJ primLVGLsetParent(int argCount, OBJ *args) {
 	return falseObj;
 }
 
-#if defined(COCUBE)
+#if defined(COCUBE) || defined(S3_ROTARY)
 static OBJ primLVGLaddgroup(int argCount, OBJ *args) {
 	char* obj_name = obj2str(args[0]);
 	lv_obj_t* obj = registry.get(obj_name);
 	lv_group_add_obj(group, obj);
 	return falseObj;
 }
+
+static OBJ primLVGLgroupfocus(int argCount, OBJ *args) {
+	int next_prev = obj2int(args[0]);
+	if (next_prev==1) 
+		lv_group_focus_next(group);
+	else if (next_prev==-1) 
+		lv_group_focus_prev(group);
+	return falseObj;
+}
+
+static OBJ primLVGLgroupkey(int argCount, OBJ *args) {
+	if (argCount==0) {
+		lv_group_send_data(group, LV_KEY_ENTER);
+		return falseObj;
+	}
+	int key = obj2int(args[0]);
+	lv_group_send_data(group, key);
+	return falseObj;
+}
+
+
 #endif
 
+#if defined(S3_ROTARY)
+static OBJ primLVGLencoder(int argCount, OBJ *args) {
+	int val = mt8901_get_count();
+	char s[100];
+	sprintf(s,"Encoder count: %d",val);
+	outputString(s);
+	return int2obj(mt8901_get_count());
+}
+#endif
 static OBJ primLVGLdelObj(int argCount, OBJ *args) {
 	char* obj_name = obj2str(args[0]);
 	ui_delete_obj(obj_name);
@@ -4320,6 +4519,8 @@ static OBJ primLVGLpsram(int argCount, OBJ *args) {
 	return int2obj(val);
 }
 
+
+
 #if defined(LVGL_SNAPSHOT)
 #include <WiFi.h>
 #include <HTTPClient.h>
@@ -4528,8 +4729,13 @@ static PrimEntry entries[] = {
 	#if (defined(LMSDIAPLY) && defined(BREAKOUT))||defined(CYDROT)
 		{"fliptouch",primfliptouch},
 	#endif
-	#if defined(COCUBE)
+	#if defined(COCUBE) || defined(S3_ROTARY)
 		{"LVGLaddgroup",primLVGLaddgroup},
+		{"LVGLgroupfocus",primLVGLgroupfocus},
+		{"LVGLgroupkey",primLVGLgroupkey},
+	#endif
+	#if defined(S3_ROTARY)
+	 {"LVGLencoder",primLVGLencoder},
 	#endif
 
 #endif
