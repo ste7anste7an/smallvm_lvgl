@@ -1,0 +1,66 @@
+module 'CoCube Soccer'
+author 'Liang Shuai'
+version 1 0 
+depends Tone NeoPixel 
+tags 'cocube soccer robot' 
+choices cocube_rotate_Menu 'cocube;left' 'cocube;right' 
+choices cocube_move_Menu 'cocube;forward' 'cocube;backward' 
+description 'CoCube Soccer Robot library
+
+CoCube is a tabletop modular multi-robot platform for education and research.
+https://www.cocubefun.com/
+https://wiki.cocube.fun/
+sliang23@m.fudan.edu.cn
+
+v1.0 Basic functions for CoCube Soccer
+'
+variables _cocube_set_right_speed _cocube_set_left_speed _cocube_error_angle _cocube_pid_flag _cocube_error_distance _cocube_error_y _cocube_error_x _cocube_target_angle 
+
+  spec 'r' 'CoCube Soccer position_X' 'X position'
+  spec 'r' 'CoCube Soccer position_Y' 'Y position'
+  spec 'r' 'CoCube Soccer direction' 'direction'
+  space
+  spec 'r' 'CoCube Soccer on the mat' 'on the mat'
+  spec 'r' 'CoCube Soccer card ID' 'card ID'
+  space
+  spec 'r' 'CoCube Soccer battery percentage' 'battery percentage'
+  space
+  spec ' ' 'CoCube Soccer attach NeoPixels' 'attach NeoPixels'
+  spec ' ' 'CoCube Soccer set NeoPixels color' 'set NeoPixels color _' 'color'
+  spec ' ' 'CoCube Soccer clear NeoPixels' 'clear NeoPixels'
+
+to 'CoCube Soccer battery percentage' {
+  return (minimum (((58 * (analogReadOp 0)) / 100) - 320) 100)
+}
+
+to 'CoCube Soccer card ID' {
+  return (callCustomReporter '[sensors:cube_index]')
+}
+
+to 'CoCube Soccer direction' {
+  return (callCustomReporter '[sensors:position_yaw]')
+}
+
+to 'CoCube Soccer on the mat' {
+  return (callCustomReporter '[sensors:cube_status]')
+}
+
+to 'CoCube Soccer position_X' {
+  return (callCustomReporter '[sensors:position_x]')
+}
+
+to 'CoCube Soccer position_Y' {
+  return (callCustomReporter '[sensors:position_y]')
+}
+
+to 'CoCube Soccer attach NeoPixels' {
+  neoPixelAttach 1 1
+}
+
+to 'CoCube Soccer set NeoPixels color' color {
+  neoPixelSetAllToColor color
+}
+
+to 'CoCube Soccer clear NeoPixels' {
+  clearNeoPixels
+}

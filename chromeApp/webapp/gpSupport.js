@@ -64,10 +64,45 @@ var GP = {
 //	Safari: navigator.clipboard exists since 13.1 but is blocked for security reasons
 
 GP.clipboard = document.createElement('textarea');
-GP.clipboard.style.position = 'absolute';
-GP.clipboard.style.right = '101%'; // placed just out of view
+GP.clipboard.style.position = 'fixed';
+GP.clipboard.style.left = '0px';
 GP.clipboard.style.top = '0px';
+GP.clipboard.style.width = '1px';
+GP.clipboard.style.height = '1em';
+GP.clipboard.style.border = '0';
+GP.clipboard.style.padding = '0';
+GP.clipboard.style.margin = '0';
+GP.clipboard.style.outline = 'none';
+GP.clipboard.style.opacity = '0';
 document.body.appendChild(GP.clipboard);
+
+function GP_focusClipboardForInput(selectAll, forceRefocus) {
+	if (typeof selectAll === 'undefined') selectAll = true;
+	if (typeof forceRefocus === 'undefined') forceRefocus = false;
+	if (forceRefocus && (document.activeElement === GP.clipboard)) {
+		GP.clipboard.blur();
+	}
+	try {
+		GP.clipboard.focus({ preventScroll: true });
+	} catch (err) {
+		GP.clipboard.focus();
+	}
+	if (selectAll) GP.clipboard.select();
+}
+
+function GP_setInputPosition(x, y) {
+	var canvas = document.getElementById('canvas');
+	if (!canvas) return;
+
+	var rect = canvas.getBoundingClientRect();
+	if (GP.isRetina) {
+		x = x / 2;
+		y = y / 2;
+	}
+
+	GP.clipboard.style.left = (rect.left + x) + 'px';
+	GP.clipboard.style.top = (rect.top + y) + 'px';
+}
 
 function isChromeOS() {
 	return (
@@ -229,6 +264,7 @@ function initGPEventHandlers() {
 	}
 	document.onkeydown = function(evt) {
 		var key = evt.which;
+		if (GP.isComposing || evt.isComposing || (229 == key)) return;
 		if ((13 == key) && (/Android/i.test(navigator.userAgent))) {
 			// On Android, generate text input events for entire string when the enter key is pressed
 			var s = GP.clipboard.value;
@@ -264,9 +300,11 @@ function initGPEventHandlers() {
 		}
 	}
 	document.onkeyup = function(evt) {
+		if (GP.isComposing || evt.isComposing || (229 == evt.which)) return;
 		GP.events.push(keyEvent(KEY_UP, evt));
 	}
 	document.onkeypress = function(evt) {
+		if (GP.isComposing || evt.isComposing) return;
 		var charCode = evt.charCode;
 		if (13 == charCode) return; // don't report a text input event for cr/enter
 		if (evt.char && (evt.char.length == 1)) charCode = evt.char.codePointAt(0);
@@ -275,16 +313,19 @@ function initGPEventHandlers() {
 
 	// IME composition events
 	document.addEventListener('compositionstart', function(evt) {
+		GP.isComposing = true;
 		GP.compositionText = '';
 	});
 	document.addEventListener('compositionupdate', function(evt) {
 		GP.compositionText = evt.data;
 	});
 	document.addEventListener('compositionend', function(evt) {
-		for (let ch of GP.compositionText) {
+		let composedText = evt.data || GP.compositionText || '';
+		for (let ch of composedText) {
 			GP.events.push([TEXTINPUT, ch.codePointAt(0)]);
 		}
 		GP.compositionText = '';
+		GP.isComposing = false;
 	});
 
 	canvas.onwheel = function(evt) {
@@ -1560,7 +1601,18 @@ function GP_createFloatingUI() {
 
 // 显示浮动输入框
 function GP_showFloatingInput() {
-	if (!GP_isMobile()) return;
+	if (!GP_isMobile()) {
+		GP.clipboard.value = GP.defaultEditText || '';
+		// Delay focus to next animation frame so all setInputPosition calls
+		// complete before focus triggers IME candidate window positioning.
+		// Fixes Edge/Chromium not picking up new textarea position on focus.
+		if (GP._pendingFocusRAF) cancelAnimationFrame(GP._pendingFocusRAF);
+		GP._pendingFocusRAF = requestAnimationFrame(function() {
+			GP._pendingFocusRAF = null;
+			GP_focusClipboardForInput(true, true);
+		});
+		return;
+	}
 	if (GP_isFloatingInputActive) return;
 
 	GP_createFloatingUI();
@@ -1642,6 +1694,15 @@ function GP_cancelFloatingInput() {
 
 // 隐藏浮动输入框
 function GP_hideFloatingInput() {
+	if (!GP_isMobile()) {
+		if (GP._pendingFocusRAF) {
+			cancelAnimationFrame(GP._pendingFocusRAF);
+			GP._pendingFocusRAF = null;
+		}
+		GP.clipboard.blur();
+		document.getElementById('canvas').focus();
+		return;
+	}
 	if (!GP_floatingContainer) return;
 
 	GP_floatingContainer.style.display = 'none';

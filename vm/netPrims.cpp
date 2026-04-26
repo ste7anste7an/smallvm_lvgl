@@ -519,7 +519,7 @@ static OBJ primHttpConnect(int argCount, OBJ *args) {
 		if (IS_TYPE(args[1], StringType)) port = atoi(obj2str(args[1]));
 	}
 
-	if (activeHttpClient->connected()) activeHttpClient->stop(); // in case previous connection is still active
+	if (httpClient.connected()) httpClient.stop(); // in case previous connection is still active
 
 	uint32 start = millisecs();
 	const int timeout = 3000;
@@ -564,9 +564,10 @@ static OBJ primHttpSecureConnect(int argCount, OBJ *args) {
 		if (IS_TYPE(args[1], StringType)) port = atoi(obj2str(args[1]));
 	}
 
-	if (activeHttpClient->connected()) activeHttpClient->stop(); // in case previous connection is still active
+	if (httpClient.connected()) httpClient.stop(); // in case previous connection is still active
 
 	#if HAS_HTTPS_CLIENT
+		if (httpsClient.connected()) httpsClient.stop();
 		httpsClient.setInsecure();
 		activeHttpClient = &httpsClient;
 	#endif
@@ -624,7 +625,7 @@ static OBJ primHttpRequest(int argCount, OBJ *args) {
 	}
 
 	// Protocol
-	activeHttpClient->write((const uint8_t *) " HTTP/1.0\r\n", 11);
+	activeHttpClient->write((const uint8_t *) " HTTP/1.1\r\n", 11);
 
 	// Host
 	activeHttpClient->write((const uint8_t *) "Host: ", 6);
@@ -984,6 +985,7 @@ static OBJ primWebSocketSendToClient(int argCount, OBJ *args) { return fail(noWi
 #define ESP_NOW_HEADER_VERSION 1
 #define ESP_NOW_HEADER_LEN 2
 #define ESP_NOW_HEADER ((ESP_NOW_HEADER_VERSION << 5) | ESP_NOW_HEADER_LEN)
+#define ESP_MSG_MAX 250
 
 // reserve the first N bytes of the 250 payload bytes for the MicroBlocks ESP Now header
 #define ESP_NOW_MAX_MSG (250 - ESP_NOW_HEADER_LEN)
@@ -991,8 +993,8 @@ static OBJ primWebSocketSendToClient(int argCount, OBJ *args) { return fail(noWi
 static volatile int esp_now_send_buffers = 10;
 static uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
-static int esp_now_msg_bytecount = 0;
-static char esp_now_msg[250];
+static volatile int esp_now_msg_bytecount = 0;
+static char esp_now_msg[ESP_MSG_MAX];
 static uint8_t esp_now_group = 255; // 255 is wildcard; receives messages from all groups
 
 // ESP Now send callback
@@ -1018,6 +1020,7 @@ static uint8_t esp_now_group = 255; // 255 is wildcard; receives messages from a
 
 	// receive the message
 	esp_now_msg_bytecount = length - ESP_NOW_HEADER_LEN;
+	if (esp_now_msg_bytecount > ESP_MSG_MAX) esp_now_msg_bytecount = ESP_MSG_MAX;
 	memcpy(esp_now_msg, data + ESP_NOW_HEADER_LEN, esp_now_msg_bytecount);
 }
 
@@ -1099,6 +1102,7 @@ static OBJ primESPNowSend(int argCount, OBJ *args) {
 	if (!esp_now_started) startESPNow();
 
 	if (esp_now_send_buffers < 1) {
+		taskSleep(5);
 		return falseObj;
 	}
 	esp_now_send_buffers--;
@@ -1114,7 +1118,6 @@ static OBJ primESPNowSend(int argCount, OBJ *args) {
 		int rc = esp_now_send(broadcastAddress, sendBuf, ESP_NOW_HEADER_LEN + byteCount);
 	#endif
 
-	taskSleep(10);
 	return trueObj;
 }
 

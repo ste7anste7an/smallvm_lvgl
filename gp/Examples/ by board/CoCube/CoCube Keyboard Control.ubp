@@ -147,7 +147,7 @@ whenBroadcastReceived 'k'
 
 module CoCube
 author 'Liang Shuai'
-version 2 17 
+version 2 18 
 depends Tone Display TFT '_Motors/PID' 'Robots/CoCube Module' 
 tags 'cocube robot' 
 choices cocube_rotate_Menu 'cocube;left' 'cocube;right' 
@@ -174,8 +174,9 @@ v2.14 Improve the accuracy of move_to_target and optimize the loop exit mechanis
 v2.15 Remove "set TFT backlight" function
 v2.16 Change PID global variables into local
 v2.17 Modify the movement function on the map
+v2.18 Fix "_cocube_move_flag" variable missing
 '
-variables _cocube_set_right_speed _cocube_set_left_speed _cocube_error_angle _cocube_pid_flag _cocube_error_distance _cocube_error_y _cocube_error_x _cocube_target_angle 
+variables _cocube_set_right_speed _cocube_set_left_speed _cocube_error_angle _cocube_pid_flag _cocube_error_distance _cocube_error_y _cocube_error_x _cocube_target_angle _cocube_move_flag 
 
   spec ' ' 'CoCube move for msecs' 'move _ at _ speed (0-50) for _ msecs' 'menu.cocube_move_Menu num num' 'cocube;forward' 40 1000
   spec ' ' 'CoCube rotate for msecs' 'rotate _ at _ speed (0-50) for _ msecs' 'menu.cocube_rotate_Menu num num' 'cocube;left' 30 1000
@@ -511,8 +512,9 @@ to '_cocube_pid_control' {
 
 module 'CoCube Module'
 author 'Liang Shuai'
-version 1 13 
+version 1 14 
 depends _Servo NeoPixel 
+choices trackerMenu '1' '2' '3' '4' '5' ALL 
 description 'External modules of CoCube.
 
 CoCube is a tabletop modular multi-robot platform for education and research.
@@ -522,7 +524,7 @@ sliang23@m.fudan.edu.cn
 
 Note: All functions start by turning on pin 13 to power the module.
 The power pin is off by default and is also turned off by the IDE stop button.'
-variables _cc_cam_init_flag _cc_asr_snc 
+variables _cc_cam_init_flag _cc_asr_snc _cc_PCF8574_address 
 
   spec ' ' 'ccmodule_gripper open' 'gripper open'
   spec ' ' 'ccmodule_gripper close' 'gripper close'
@@ -541,12 +543,15 @@ variables _cc_cam_init_flag _cc_asr_snc
   spec 'r' 'ccmodule_ASR get command' 'ASR get command'
   spec ' ' 'ccmodule_ASR play command' 'ASR play command _' 'num' 19
   space
+  spec 'r' 'ccmodule_tracker on black' 'Tracker _ on black' 'menu.trackerMenu' 1
+  spec 'r' 'ccmodule_tracker on white' 'Tracker _ on white' 'menu.trackerMenu' 1
+  space
   spec ' ' 'ccmodule_power on module' 'power on module'
   space
   spec ' ' '_ccmodule_check_camera' 'check_camera'
-  spec 'r' 'ccmodule_gesture connected' 'obsolete 3D gesture connected'
-  spec 'r' 'ccmodule_gesture read' 'obsolete 3D gesture read'
-  spec 'r' '_ccmodule_ultrasonic distance' 'obsolete obsolete ultrasonic distance (mm)'
+  spec 'r' 'ccmodule_gesture connected' 'obsolete obsolete 3D gesture connected'
+  spec 'r' 'ccmodule_gesture read' 'obsolete obsolete 3D gesture read'
+  spec 'r' '_ccmodule_ultrasonic distance' 'obsolete obsolete obsolete ultrasonic distance (mm)'
 
 to '_ccmodule_check_camera' {
   if (_cc_cam_init_flag == 1) {
@@ -681,6 +686,48 @@ to 'ccmodule_power on module' {
 to 'ccmodule_set all NeoPixels color' color {
   digitalWriteOp 13 true
   neoPixelSetAllToColor color
+}
+
+to 'ccmodule_tracker on black' which {
+  if (_cc_PCF8574_address != 32) {
+    stopServo 22
+    digitalWriteOp 13 true
+    waitMillis 100
+    _cc_PCF8574_address = 32
+    if ((i2cGet _cc_PCF8574_address 0) < 0) {
+      sayIt 'init fail, please check i2c address and try again.'
+      return 0
+    }
+    '[sensors:i2cWrite]' _cc_PCF8574_address ('[data:makeList]' (hexToInt 'FF'))
+  }
+  local 'var' (newList 1)
+  '[sensors:i2cRead]' _cc_PCF8574_address var
+  if ('ALL' == which) {
+    if ((at 1 var) == 7) {return (booleanConstant true)}
+  } else {
+    return (not ('[data:convertType]' (1 & ((at 1 var) >> (8 - which))) 'boolean'))
+  }
+}
+
+to 'ccmodule_tracker on white' which {
+  if (_cc_PCF8574_address != 32) {
+    stopServo 22
+    digitalWriteOp 13 true
+    waitMillis 100
+    _cc_PCF8574_address = 32
+    if ((i2cGet _cc_PCF8574_address 0) < 0) {
+      sayIt 'init fail, please check i2c address and try again.'
+      return 0
+    }
+    '[sensors:i2cWrite]' _cc_PCF8574_address ('[data:makeList]' (hexToInt 'FF'))
+  }
+  local 'var' (newList 1)
+  '[sensors:i2cRead]' _cc_PCF8574_address var
+  if ('ALL' == which) {
+    if ((at 1 var) == 255) {return (booleanConstant true)}
+  } else {
+    return ('[data:convertType]' (1 & ((at 1 var) >> (8 - which))) 'boolean')
+  }
 }
 
 
@@ -1018,7 +1065,7 @@ to 'paj7620 read' {
 
 module 'LED Display' Output
 author MicroBlocks
-version 1 14 
+version 1 15 
 choices led_imageMenu heart 'small heart' yes no happy sad confused angry asleep surprised silly fabulous meh 't-shirt' 'roller skate' duck house tortoise butterfly 'stick figure' ghost sword giraffe skull umbrella snake rabbit cow 'quarter note' 'eight note' pitchfork target triangle 'left triangle' 'chess board' diamond 'small diamond' square 'small square' scissors 
 description 'Display primitives for the 5x5 LED display on the BBC micro:bit, Calliope mini and M5Atom Matrix. Boards with TFT displays (such as the Citilab ED1 or the M5Stack family) support these primitives with a simulated "fat pixel" display.
 '
@@ -1093,7 +1140,7 @@ to scroll_text text optionalDelay {
       '[tft:text]' text (17 - position) 0 (colorSwatch 125 125 125 255) 1 true
       waitMillis (delay / 2)
     }
-  } ('kidsIOT' == (boardType)) {
+  } (or ('KidsIOT' == (boardType)) ('CodingBox' == (boardType))) {
     for position (((size text) * 6) + 21) {
       if _stop_scrolling_text {return 0}
       '[tft:deferUpdates]'
@@ -1276,18 +1323,6 @@ to neoPixelSetAllToColor color {
 
 to neoPixel_colorSwatch color {
   return color
-}
-
-to randomColor {
-  local 'n1' (random 100 200)
-  local 'n2' (random 0 100)
-  if (1 == (random 1 3)) {
-    return ((n1 << 16) | (n2 << 8))
-  } (1 == (random 1 2)) {
-    return ((n2 << 16) | n1)
-  } else {
-    return ((n1 << 8) | n2)
-  }
 }
 
 to rotateNeoPixelsBy n {
@@ -1650,7 +1685,7 @@ to stopServo which {
 
 module TFT Output
 author MicroBlocks
-version 1 12 
+version 1 17 
 description 'Draw graphics and write text on boards with a TFT display, such as the M5Stack, M5Stick, Citilab ED1 or (discontinued) IoT-Bus.'
 
   spec ' ' '[tft:clear]' 'clear TFT display'
@@ -1675,10 +1710,18 @@ Line 2' 50 20 nil 2
   spec 'r' 'makeGray' 'gray _ %' 'num' 50
   spec 'r' 'randomColor' 'random color'
   space
+  spec ' ' 'tft_drawImage' 'draw image _ on TFT at x _ y _ color _ : #BR# scale _' 'str num num color num' '' 0 0 nil 1
+  spec 'r' 'tft_image' 'image _' 'str' '00000
+01010
+00000
+10001
+01110'
+  space
   spec 'r' '[tft:getWidth]' 'TFT width'
   spec 'r' '[tft:getHeight]' 'TFT height'
   space
   spec ' ' '[tft:setBacklight]' 'set TFT backlight _ (0-10)' 'num' 10
+  spec ' ' '[tft:invertDisplay]' 'invert TFT display _' 'bool' false
   space
   spec ' ' '_deferMonochromeDisplayUpdates' '_defer monochrome display updates'
   spec ' ' '_resumeMonochromeDisplayUpdates' '_resume monochrome display updates'
@@ -1704,8 +1747,36 @@ to makeGray percent {
   return ((gray << 16) | ((gray << 8) | gray))
 }
 
+to randomColor {
+  local 'n1' (random 100 200)
+  local 'n2' (random 0 100)
+  if (1 == (random 1 3)) {
+    return ((n1 << 16) | (n2 << 8))
+  } (1 == (random 1 2)) {
+    return ((n2 << 16) | n1)
+  } else {
+    return ((n1 << 8) | n2)
+  }
+}
+
 to tft_colorSwatch color {
   return color
+}
+
+to tft_drawImage imageString x y c optionalScale {
+  comment 'Draw an image at the given position. An image is represented by a multi-line string
+of 0 and 1 characters where each line is one row of the image. 1 means that pixel on (lit).'
+  local 'scale' (argOrDefault 5 1)
+  local 'left' x
+  for ch ('[data:convertType]' imageString 'byte array') {
+    if (ch == 10) {
+      y += scale
+      x = left
+    } else {
+      if (ch == 49) {'[tft:rect]' x y scale scale true}
+      x += scale
+    }
+  }
 }
 
 to tft_drawText s x y color optionalScale optionalBGColor {
@@ -1727,6 +1798,10 @@ to tft_drawVector x y angle length color {
   local 'endX' (x + ((length * ('[misc:sin]' (100 * (angle + 90)))) >> 14))
   local 'endY' (y + ((length * ('[misc:sin]' (100 * angle))) >> 14))
   '[tft:line]' x y endX endY color
+}
+
+to tft_image s {
+  return ('[data:convertType]' s 'string')
 }
 
 

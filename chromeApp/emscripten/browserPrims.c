@@ -1479,6 +1479,23 @@ OBJ primSetEditText(int nargs, OBJ args[]) {
 	return nilObj;
 }
 
+OBJ primSetInputPosition(int nargs, OBJ args[]) {
+	if (nargs < 2) return notEnoughArgsFailure();
+	if (!(isInt(args[0]) || IS_CLASS(args[0], FloatClass) || IS_CLASS(args[0], LargeIntegerClass))) {
+		return primFailed("First argument must be a number");
+	}
+	if (!(isInt(args[1]) || IS_CLASS(args[1], FloatClass) || IS_CLASS(args[1], LargeIntegerClass))) {
+		return primFailed("Second argument must be a number");
+	}
+
+	EM_ASM_({
+		if (typeof GP_setInputPosition === 'function') {
+			GP_setInputPosition($0, $1);
+		}
+	}, intOrFloatArg(0, 0, nargs, args), intOrFloatArg(1, 0, nargs, args));
+	return nilObj;
+}
+
 OBJ primSetCursor(int nargs, OBJ args[]) {
 	if ((nargs < 1) || !IS_CLASS(args[0], StringClass)) return nilObj;
 
@@ -1547,6 +1564,7 @@ static PrimEntry graphicsPrimList[] = {
 	{"setClipboard",	primSetClipboard,		"Set the clipboard to the given string."},
 	{"showKeyboard",	primShowKeyboard,		"Show or hide the on-screen keyboard on a touchsceen devices. Argument: true or false."},
 	{"setEditText",		primSetEditText,		"Browser only. Set the default contents of the floating text input window. Argument: string"},
+	{"setInputPosition", primSetInputPosition, "Browser only. Position the hidden text input used for IME composition. Arguments: x y"},
 	{"setCursor",		primSetCursor,			"Change the mouse pointer appearance. Argument: cursorNumber (0 -> arrow, 3 -> crosshair, 11 -> hand...)"},
 };
 

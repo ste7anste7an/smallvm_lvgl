@@ -355,7 +355,16 @@ static OBJ primFileSize(int argCount, OBJ *args) {
 }
 
 static OBJ primStartFileList(int argCount, OBJ *args) {
-	EM_ASM_({ window.currentFileIndex = 0; });
+	char *dirPath = "";
+	if ((argCount > 0) && (IS_TYPE(args[0], StringType))) {
+		dirPath = obj2str(args[0]);
+		if (dirPath[0] == '/') dirPath++; // skip leading slash, if any
+	}
+	EM_ASM_({
+		window.currentFileIndex = 0;
+		window.dirPath = UTF8ToString($0);
+		window.lastDir = "";
+	}, dirPath);
 	return falseObj;
 }
 
@@ -364,15 +373,63 @@ static OBJ primNextFileInList(int argCount, OBJ *args) {
 	char *s = fileName;
 	EM_ASM_({
 		var origin = window.useSessionStorage ? 'session' : 'local';
+		var fileNames = Object.keys(
+			window[origin + 'Storage']).filter(fn =>
+				((fn !== 'user-prefs') && !fn.startsWith('-snap-')));
+		if (window.currentFileIndex === undefined) {
+			// initialize file list variables in case primStartFileList was not called
+			window.currentFileIndex = 0;
+			window.dirPath = "";
+			window.lastDir = "";
+		}
+		stringToUTF8("", $0, 100); // init result to empty string
+		while (window.currentFileIndex < fileNames.length) {
+			var path = fileNames[window.currentFileIndex];
+			if (path.startsWith(window.dirPath) &&
+				(path.length > window.dirPath.length) &&
+				(!path.includes('/', window.dirPath.length + 1)))
+			{
+				stringToUTF8(path, $0, 100);
+				window.currentFileIndex ++;
+				break;
+			}
+			window.currentFileIndex++;
+		}
+	}, s);
+	return newStringFromBytes(s, strlen(s));
+}
+
+static OBJ primNextDirInList(int argCount, OBJ *args) {
+	char fileName[100];
+	char *s = fileName;
+	EM_ASM_({
+		var origin = window.useSessionStorage ? 'session' : 'local';
 		var fileNames =
 			Object.keys(
 				window[origin + 'Storage']).filter(fn => fn !== 'user-prefs');
-		if (!window.currentFileIndex) { window.currentFileIndex = 0; }
-		if (window.currentFileIndex >= fileNames.length) {
-			stringToUTF8("", $0, 100);
-		} else {
-			stringToUTF8(fileNames[window.currentFileIndex], $0, 100);
-			window.currentFileIndex ++;
+		if (window.currentFileIndex === undefined) {
+			// initialize file list variables in case primStartFileList was not called
+			window.currentFileIndex = 0;
+			window.dirPath = "";
+			window.lastDir = "";
+		}
+		stringToUTF8("", $0, 100); // init result to empty string
+		while (window.currentFileIndex < fileNames.length) {
+			var path = fileNames[window.currentFileIndex];
+			if (path.startsWith(window.dirPath)) {
+				var dirName = path.substring(window.dirPath.length);
+				if (dirName.startsWith('/')) dirName = dirName.substring(1);
+				var i = dirName.indexOf('/');
+				if ((i > 0) && !dirName.includes('/', i + 1)) {
+					dirName = dirName.substring(0, i);
+					if ((dirName != window.lastDir) && (dirName != window.dirPath)) {
+						stringToUTF8(dirName, $0, 100);
+						window.lastDir = dirName;
+						break;
+					}
+				}
+			}
+			window.currentFileIndex++;
 		}
 	}, s);
 	return newStringFromBytes(s, strlen(s));
@@ -403,6 +460,7 @@ static PrimEntry entries[] = {
 	{"fileSize", primFileSize},
 	{"startList", primStartFileList},
 	{"nextInList", primNextFileInList},
+	{"nextDirInList", primNextDirInList},
 	{"systemInfo", primSystemInfo},
 };
 

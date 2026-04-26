@@ -24,7 +24,6 @@ OBJ primDigitalRead(int argCount, OBJ *args) { return int2obj(0); }
 void primDigitalWrite(OBJ *args) { }
 void primDigitalSet(int pinNum, int flag) { };
 
-
 // Stubs for other functions not used by Boardie
 
 void resetServos() {}
@@ -32,6 +31,8 @@ void stopPWM() {}
 void systemReset() {}
 void turnOffPins() {}
 void stopServos() { }
+void lightSleep(int msecs) {}
+void deepSleep(int secs) {}
 
 // Button simulation (use keyboard)
 

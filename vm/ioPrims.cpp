@@ -370,20 +370,21 @@ void hardwareInit() {
 #elif defined(ARDUINO_NRF52840_CLUE)
 
 	#define BOARD_TYPE "Clue"
-	#define DIGITAL_PINS 23
+	#define DIGITAL_PINS 24
 	#define ANALOG_PINS 8
 	#define TOTAL_PINS 48
 	#define USE_DIGITAL_PIN_MAP true
 	static const int analogPin[] = {A0, A1, A2, A3, A4, A5, A6, A7};
-	static const char digitalPin[23] = {
+	static const char digitalPin[24] = {
 		// Pins 0-20 Edge connector pins (except 17 & 18)
 		// Pin 17 - red LED (internal; not on edge connector)
 		// Pin 18 - NeoPixel (internal; not on edge connector)
 		// Pin 21 - speaker (internal pin 46)
 		// Pin 22 - white LED (internal pin 43)
+		// Pin 23 - TFT backlight (internal pin 34)
 		0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
 		11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-		46, 43};
+		46, 43, 34};
 	#define PIN_LED 17
 	#define PIN_BUTTON_A 5
 	#define PIN_BUTTON_B 11
@@ -551,13 +552,6 @@ void hardwareInit() {
 	static const char digitalPin[9] = {16, 5, 4, 0, 2, 14, 12, 13, 15};
 	#define PIN_LED LED_BUILTIN
 	#define PIN_BUTTON_A 0
-
-
-extern "C" void esp8266DeepSleep(uint64_t usecs) {
-	uint64_t maxSleep = ESP.deepSleepMax() - 10000;
-	if (usecs > maxSleep) usecs = maxSleep;
-	ESP.deepSleep(usecs);
-}
 
 #elif defined(ARDUINO_CITILAB_ED1)
 
@@ -856,20 +850,21 @@ extern "C" void esp8266DeepSleep(uint64_t usecs) {
 	#define BOARD_TYPE "micro:STEAMakers"
 	#define PIN_BUTTON_A 0
 	#define PIN_BUTTON_B 17
-	#define DIGITAL_PINS 25
+	#define DIGITAL_PINS 28
 	#define ANALOG_PINS 16
 	#define TOTAL_PINS 40
 	#define USE_DIGITAL_PIN_MAP true
 	static const int analogPin[] = {};
-	static const char digitalPin[25] = {
+	static const char digitalPin[28] = {
 		12, 14, 32, 13, 27, 0, 2, 25, 4, 16,
 		26, 17, 15, 18, 19, 23, 5, 255, 255, 22,
-		21, 33, 35, 36, 39}; // edge connector pins 17 & 18 are not used (255 in map)
+		21, 33, 35, 36, 39, 20, 24, 34}; // edge connector pins 17 & 18 are not used (255 in map)
+
 	#define DEFAULT_TONE_PIN 21
 	static char reservedPin[TOTAL_PINS] = {
 		0, 1, 0, 1, 0, 0, 1, 1, 1, 1,
 		1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
-		1, 0, 0, 0, 1, 0, 0, 0, 1, 1,
+		0, 0, 0, 0, 0, 0, 0, 0, 1, 1,
 		1, 1, 0, 0, 0, 0, 0, 1, 1, 0};
 	// analog inputs (ESP32=edge pin): 12=0, 14=1, 32=2, 13=3, 27=4, 0=5, 2=6, 25=7, 4=8, 26=10, 15=12
 	// UART: edge connector pins 9 (RX) and 11 (TX)
@@ -879,7 +874,9 @@ extern "C" void esp8266DeepSleep(uint64_t usecs) {
 	// Microphone - 22 (was 35)
 	// Current - 23 (was 36)
 	// LDR - 24 (was 39)
-	// Unused - 34
+	// Unused - 25 (was 20)
+	// Unused - 26 (was 24)
+	// Unused - 27 (was 34)
 
 #elif defined(ARDUINO_XIAO_ESP32S3)
 	#define BOARD_TYPE "Xiao ESP32S3"
@@ -944,7 +941,7 @@ extern "C" void esp8266DeepSleep(uint64_t usecs) {
 	#else
 		#define BOARD_TYPE "Springbot Green"
 	#endif
-	#define DIGITAL_PINS 43
+	#define DIGITAL_PINS 41
 	#define ANALOG_PINS 20
 	#define TOTAL_PINS 43
 	static const int analogPin[] = {};
@@ -952,9 +949,31 @@ extern "C" void esp8266DeepSleep(uint64_t usecs) {
 	#define PIN_LED 40
 	#define PIN_BUTTON_A 11
 	#define PIN_BUTTON_B 12
-	#define DEFAULT_TONE_PIN 33 // maps to speaker pin
+	#define DEFAULT_TONE_PIN 23 // maps to speaker pin, GPIO 33
 	#undef PIN_NEOPIXEL
 	#define PIN_NEOPIXEL 39
+
+	// Special pins (MicroBlocks pin numbers):
+	// 21 - red LED (GPIO 40)
+	// 22 - Neopixel (GPIO 29)
+	// 23 - buzzer (GPIO 33)
+	// 24 - phototransistor (GPIO 7)
+	// 25 - SD Card CS (GPIO 34)
+	// 26 - IMU interrupt (GPIO 21)
+	// 27 - touch button A (GPIO 11)
+	// 28 - touch button B (GPIO 12)
+	// 29 - touch button logo (GPIO 13)
+	// 30 - double-tap (GPIO 42)
+	// 31-35 - 5x5 LED row pins (Springbot Green only) (GPIO 8, 17, 10, 38, 6)
+	// 36-40 - 5x5 LED column pins (Springbot Green only) (GPIO 3, 2, 14, 15, 16)
+	// Note: 255 entries in the digitalPin[] array indicate unused pins.
+	#define USE_DIGITAL_PIN_MAP true
+	static const char digitalPin[DIGITAL_PINS] = {
+		  1,   9, 18, 255, 255, 255, 41, 255,  44, 255,
+		255, 255,  0,  36,  37,  35, 43, 255, 255,   4,
+		  5,  40, 39,  33,   7,  34, 21,  11,  12,  13,
+		 42,   8,  17, 10,  38,   6,  3,   2,  14,  15,
+		 16};
 
 	// See https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/api-reference/peripherals/gpio.html
 	// strapping pins 0 (Boot), 3 (JTAG), 45 (VSPI), 46 (LOG)
@@ -970,9 +989,9 @@ extern "C" void esp8266DeepSleep(uint64_t usecs) {
 
 #elif defined(ESP32_S2)
 	#define BOARD_TYPE "ESP32-S2"
-	#define DIGITAL_PINS 48
+	#define DIGITAL_PINS 47
 	#define ANALOG_PINS 20
-	#define TOTAL_PINS 48
+	#define TOTAL_PINS 47
 	static const int analogPin[] = {};
 	#ifdef LED_BUILTIN
 		#define PIN_LED LED_BUILTIN
@@ -986,15 +1005,16 @@ extern "C" void esp8266DeepSleep(uint64_t usecs) {
 			#define PIN_BUTTON_A 0
 		#endif
 	#endif
-	// See https://docs.espressif.com/projects/esp-idf/en/stable/esp32s2/hw-reference/esp32s2/user-guide-saola-1-v1.2.html
-	// strapping pins 0 (Boot), 45 (VSPI), 46 (LOG)
+	// See https://docs.espressif.com/projects/esp-idf/en/stable/esp32s2/api-reference/peripherals/gpio.html
+	// GPIO26-32 are used for SPI flash and PSRAM and not recommended for other uses
+	// strapping pins 0 (Boot), 45 (VSPI), 46 (LOG; input only)
 	// USB pins: 19 (USB D-), 20 (USB D+)
 	static const char reservedPin[TOTAL_PINS] = {
-		1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-		1, 1, 1, 1, 1, 1, 0, 1, 1, 1,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
 		1, 1, 1, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0, 0};
+		0, 0, 0, 0, 0, 0, 0};
 
 #elif defined(ESP32_S3)
 	#define BOARD_TYPE "ESP32-S3"
@@ -1539,10 +1559,10 @@ static void initPins(void) {
 		// The analog write primitve takes a 10-bit value, as it does on all MicroBlocks boards,
 		// but on NRF52 only the 8 most signifcant bits are used.
 		analogWriteResolution(8);
-	#elif !defined(ESP8266) && !defined(ARDUINO_ARCH_ESP32) && !defined(__ZEPHYR__)
-		analogWriteResolution(10); // 0-1023; low-order bits ignored on boards with lower resolution
 	#elif defined(ARDUINO_WEACT) || defined(ARDUINO_SAM_DUE)
 		analogWriteResolution(12);
+	#elif !defined(ESP8266) && !defined(ARDUINO_ARCH_ESP32) && !defined(__ZEPHYR__)
+		analogWriteResolution(10); // 0-1023; low-order bits ignored on boards with lower resolution
 	#endif
 
 	for (int i = 0; i < TOTAL_PINS; i++) {
@@ -1782,7 +1802,15 @@ OBJ primAnalogRead(int argCount, OBJ *args) {
 	if ((pinNum < 0) || (pinNum >= ANALOG_PINS)) return int2obj(0);
 	int pin = analogPin[pinNum];
 	SET_MODE(pin, mode);
-	return int2obj(analogRead(pin));
+	int result = analogRead(pin);
+
+	#if defined(NRF52)
+		// disconnect pin from ADC so it can be used for other pin operations
+		NRF_SAADC->CH[0].PSELN = SAADC_CH_PSELP_PSELP_NC;
+		NRF_SAADC->CH[0].PSELP = SAADC_CH_PSELP_PSELP_NC;
+	#endif
+
+	return int2obj(result);
 }
 
 #if defined(ESP32)
@@ -1802,6 +1830,7 @@ OBJ primAnalogRead(int argCount, OBJ *args) {
 	void analogAttach(int pin) {
 		int esp32Channel = 1;
 		// Note: Do not use channels 0-1 or 8-9; those use timer0, which is used by Tone.
+		// Note: Channel 2 is used by audio pwm
 		while ((esp32Channel < MAX_ESP32_CHANNELS) && ((esp32Channels[esp32Channel] > 0) || ((esp32Channel & 7) <= 1))) {
 			esp32Channel++;
 		}
@@ -2154,10 +2183,7 @@ OBJ primButtonA(OBJ *args) {
 		#endif
 		return (BUTTON_PRESSED == digitalRead(PIN_BUTTON_A)) ? trueObj : falseObj;
 	#elif defined(DUELink)
-		int pinButton = -1;
-		if (DUE_HAS_EDGE_CONNECTOR) { pinButton = 28;
-		} else if (IS_DUE_STEM) { pinButton = 28;
-		} else { return falseObj; }
+		int pinButton = 28; // Button A, the LDR button (PA_14), is the same on all DUELink boards.
 		setPinMode(pinButton, INPUT_PULLDOWN); // Arduino pin, not edge pin number
 		return (HIGH == digitalRead(pinButton)) ? trueObj : falseObj;
 	#else
@@ -2843,6 +2869,74 @@ static int writeDAC(int sample) { return 0; }
 
 #endif
 
+// Experimental LEDC PWM audio output
+// Note: LEDC channels are also used by servos and by analog write; this feature could conflict.
+// Maybe just set PWM to 10-bits, 39062 Hz for analog output and use analog write primitive?
+
+#if defined(ESP32)
+
+#define LEDC_AUDIO_CHANNEL 5 // last LEDC channel on C3
+static int pwmAudioPin = -1; // -1 means audio is not initialized
+static int pwmAudioResolution = 10;
+
+static OBJ primPWMAudioInit(int argCount, OBJ *args) {
+	// Sampling rate is 40 MHz / 2^resolution:
+	//	 8 bits, 156250 kSamples/sec
+	//	 9 bits, 78125 kSamples/sec
+	//	10 bits, 39062 kSamples/sec
+	//	11 bits, 19531 kSamples/sec
+	// 9-bit at 78k sounds good up for a 6 kHz sine wave with no low-pass filter on output
+	// Have not tested the different sample rates with a low-pass filter.
+
+	if (argCount < 2) return fail(notEnoughArguments);
+	if (!isInt(args[0]) || !isInt(args[0])) return fail(needsIntegerError);
+
+	if (pwmAudioPin >= 0) ledcDetachPin(pwmAudioPin);
+	pwmAudioPin = -1;
+
+	int outputPin = mapDigitalPinNum(obj2int(args[0]));
+	if (outputPin < 0) return falseObj;
+
+	pwmAudioResolution = obj2int(args[1]);
+	if (pwmAudioResolution < 8) pwmAudioResolution = 8;
+	if (pwmAudioResolution > 11) pwmAudioResolution = 11;
+
+	uint32_t sampleRate = 40000000 / (1 << pwmAudioResolution);
+
+	int rc = ledcSetup(LEDC_AUDIO_CHANNEL, sampleRate, pwmAudioResolution);
+	ledcAttachPin(outputPin, LEDC_AUDIO_CHANNEL);
+	pwmAudioPin = outputPin;
+
+	return falseObj;
+}
+
+static OBJ primPWMAudioOut(int argCount, OBJ *args) {
+	if ((argCount < 1) || !isInt(args[0])) return fail(needsIntegerError);
+
+	int signed16bit = obj2int(args[0]); // signed 16-bit sample
+
+	if (pwmAudioPin < 0) {
+		outputString("PWM Audio not initialized");
+		return falseObj;
+	}
+
+	int pwmAudioMaxSample = (1 << pwmAudioResolution) - 1;
+
+	int pwm = (signed16bit >> (16 - pwmAudioResolution)) + (1 << (pwmAudioResolution - 1));
+	if (pwm < 0) pwm = 0;
+	if (pwm > pwmAudioMaxSample) pwm = pwmAudioMaxSample;
+
+	ledcWrite(LEDC_AUDIO_CHANNEL, pwm);
+	return falseObj;
+}
+
+#else
+
+static OBJ primPWMAudioInit(int argCount, OBJ *args) { return fail(primitiveNotImplemented); }
+static OBJ primPWMAudioOut(int argCount, OBJ *args) { return fail(primitiveNotImplemented); }
+
+#endif
+
 // Tone Primitives
 
 #ifndef DEFAULT_TONE_PIN
@@ -3243,6 +3337,80 @@ static OBJ primSquareWave(int argCount, OBJ *args) {
 	return isSupported ? trueObj : falseObj;
 }
 
+// power savings
+
+#if defined(ESP32)
+ 	#include <esp32-hal-cpu.h> // setCpuFrequencyMhz() and friends
+ 	#include <esp_sleep.h>
+
+	extern "C" void lightSleep(int msecs) {
+		#if defined(ESP32_S2) || defined(ESP32_C3) || defined(ESP32_C6)
+			setCpuFrequencyMhz(80); // lowest safe clock speed on S2, C3, and C6 is 80 MHz
+		#else
+			setCpuFrequencyMhz(bleRunning ? 80 : 10); // must use 80 MHz if BLE is enabled
+		#endif
+
+		delay(msecs);
+
+		#if defined(ESP32_C3) || defined(ESP32_C6)
+			setCpuFrequencyMhz(160); // max clock speed on C3 and C6
+		#else
+			setCpuFrequencyMhz(240);
+		#endif
+	}
+
+	extern "C" void deepSleep(int secs) {
+		esp_sleep_enable_timer_wakeup(1000000 * (uint64_t) secs);
+		esp_deep_sleep_start();
+	}
+
+#elif defined(ESP8266)
+	#include "user_interface.h"
+
+	extern "C" void lightSleep(int msecs) {
+		system_update_cpu_freq(80);
+		delay(msecs);
+		system_update_cpu_freq(160);
+	}
+
+	extern "C" void deepSleep(int secs) {
+		uint64_t usecs = 1000000 * secs;
+		uint64_t maxSleep = ESP.deepSleepMax() - 10000;
+		if (usecs > maxSleep) usecs = maxSleep;
+		ESP.deepSleep(usecs);
+	}
+
+#elif defined(ARDUINO_ARCH_SAMD) && !(defined(MAKERPORT) || defined(MAKERPORT_V2) || defined(MAKERPORT_V3))
+	#include <ArduinoLowPower.h>
+
+	extern "C" void lightSleep(int msecs) {
+		LowPower.idle(msecs);
+	}
+
+	extern "C" void deepSleep(int secs) {
+		// not yet implemented
+		fail(primitiveNotImplemented);
+	}
+
+#elif defined(ARDUINO_ARCH_RP2040) || defined(PICO_RP2350)
+	#include <time.h>
+
+	extern "C" void lightSleep(int msecs) {
+		sleep_ms(msecs);
+	}
+
+	extern "C" void deepSleep(int secs) {
+		// not yet implemented
+		fail(primitiveNotImplemented);
+	}
+
+#else
+
+	extern "C" void lightSleep(int msecs) { } // stub
+	extern "C" void deepSleep(int secs) { } // stub
+
+#endif
+
 //sodb
 /*
 static OBJ primGetCpuFreq(int argCount, OBJ *args) {
@@ -3271,6 +3439,8 @@ static OBJ primAnalogWrite2(int argCount, OBJ *args) { primAnalogWrite(args); re
 static OBJ primDigitalWrite2(int argCount, OBJ *args) { primDigitalWrite(args); return falseObj; }
 
 static PrimEntry entries[] = {
+	{"pwmAudioOut", primPWMAudioOut},
+	{"pwmAudioInit", primPWMAudioInit},
 	{"hasTone", primHasTone},
 	{"playTone", primPlayTone},
 	{"hasServo", primHasServo},

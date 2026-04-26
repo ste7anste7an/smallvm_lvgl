@@ -153,6 +153,7 @@ extern int extraByteDelay;
 #define enableBLEMsg			31
 #define chunkCode16Msg			32
 #define codeStoreUsedMsg		33
+#define snapshotCodeToFileMsg	34
 
 // Serial Protocol Messages: CRC Exchange
 
@@ -212,6 +213,8 @@ extern int extraByteDelay;
 #define encoderNotStarted		53	// Encoder not started; pin may not support interrupts
 #define scriptTooLarge			54	// Script too large
 #define udpPortNotOpen			55	// UDP port not open
+#define cannotUseWhileIDEConnected 56 // This primitive cannot be used while connected to the IDE
+#define newSnapshotSignal		254 // Not a real error; used when launching a code snapshot
 #define sleepSignal				255	// Not a real error; used to make current task sleep
 
 // Runtime Operations
@@ -282,6 +285,9 @@ OBJ charAt(OBJ stringObj, int i);
 int unicodeCodePoint(char *s);
 char *nextUTF8(char *s);
 int UTF8ToCP437(char* src, char* dst, int dstSize);
+int codepointToCP437(int codepoint);
+
+extern const unsigned char mbFont[];
 
 // Platform Specific Operations
 
@@ -298,15 +304,16 @@ int recvBytes(uint8 *buf, int count);
 int sendBytes(uint8 *buf, int start, int end);
 void captureIncomingBytes();
 void restartSerial();
+void lightSleep(int msecs);
+void deepSleep(int secs);
 
 const char *boardType();
 int hasPSRAM();
 void hardwareInit(void);
+void processStartupGesture();
 
 int readI2CReg(int deviceID, int reg);
 void writeI2CReg(int deviceID, int reg, int value);
-
-void initSPI();
 
 // I/O Support
 
@@ -401,7 +408,9 @@ void cocubeSensorUpdate();
 
 // BLE Support
 
+extern int BLE_allowShutdown;
 extern int BLE_connected_to_IDE;
+extern int bleRunning;
 extern char BLE_ThreeLetterID[4];
 extern uint32 lastRcvTime;
 

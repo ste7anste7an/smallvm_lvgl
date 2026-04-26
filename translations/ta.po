@@ -3,16 +3,16 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: interest@microblocks.fun\n"
 "POT-Creation-Date: 2025-01-18 05:53+0200\n"
-"PO-Revision-Date: 2025-08-10 14:01+0000\n"
-"Last-Translator: தமிழ்நேரம் <anishprabu.t@gmail.com>\n"
-"Language-Team: Tamil <https://hosted.weblate.org/projects/microblocks/ide/ta/"
-">\n"
+"PO-Revision-Date: 2026-03-21 04:09+0000\n"
+"Last-Translator: தமிழ்நேரம் <tamilneram247@gmail.com>\n"
+"Language-Team: Tamil <https://hosted.weblate.org/projects/microblocks/ide/"
+"ta/>\n"
 "Language: ta\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.13-dev\n"
+"X-Generator: Weblate 5.17-dev\n"
 
 #. "Output" blocks category label
 msgid "cat;Output"
@@ -556,15 +556,15 @@ msgstr "I2C சாதனம் _ இருக்கிறதா?"
 
 #. Block in Comm category
 msgid "spi send _"
-msgstr "SPI அனுப்பு _"
+msgstr "எச்பிஐ அனுப்பு _"
 
 #. Block in Comm category
 msgid "spi receive"
-msgstr "SPI பெறுதல்"
+msgstr "எச்பிஐ பெறுதல்"
 
 #. Block in Comm category
 msgid "spi setup speed _"
-msgstr "SPI அமைவு விரைவு _"
+msgstr "எச்பிஐ அமைவு விரைவு _"
 
 #. Block in Comm category
 msgid "mode _"
@@ -572,11 +572,11 @@ msgstr "பயன்முறை _"
 
 #. Block in Comm category
 msgid "rpi channel _"
-msgstr "RPI சேனல் _"
+msgstr "ஆர்பிஐ சேனல் _"
 
 #. Block in Comm category
 msgid "spi exchange bytes _"
-msgstr "SPI பரிமாற்ற பைட்டுகள் _"
+msgstr "எச்பிஐ பரிமாற்ற பைட்டுகள் _"
 
 #. Example string. Tells the user this input accepts a byte array
 msgid "aByteArray"
@@ -636,7 +636,7 @@ msgstr "கடிதத்திற்கான வடிவம் _"
 
 #. Primitive block. Mostly hidden from end users.
 msgid "send NeoPixel rgb _"
-msgstr "நியோபிக்சல் RGB _ ஐ அனுப்பவும்"
+msgstr "நியோபிக்சல் ஆர்சீபி _ ஐ அனுப்பவும்"
 
 #. Primitive block. Mostly hidden from end users.
 msgid "has tone support"
@@ -1389,7 +1389,7 @@ msgstr "சர்வோ _ முதல் _ டிகிரி வரை (-90 �
 
 #. Servo motor library block
 msgid "set servo _ to speed _ (-100 to 100)"
-msgstr "SERVO _ வேகத்தை அமைக்கவும் _ (-100 முதல் 100 வரை)"
+msgstr "சர்வோ _ வேகத்தை அமைக்கவும் _ (-100 முதல் 100 வரை)"
 
 #. Servo motor library block
 msgid "stop servo _"
@@ -1930,7 +1930,7 @@ msgstr "g#"
 
 #. Musical note name
 msgid "nt;a"
-msgstr "a"
+msgstr "அ"
 
 #. Musical note name
 msgid "nt;a#"
@@ -1938,7 +1938,7 @@ msgstr "ஒரு#"
 
 #. Musical note name
 msgid "nt;b"
-msgstr "b"
+msgstr "பி"
 
 #. Ringtone library label
 #. Can play Nokring-formatted music. Also known as RTTTL.
@@ -6980,3 +6980,1212 @@ msgstr "இந்த தொகுதி இன்னும் பயன்பட
 #. MicroBlocks IDE block deletion error message.
 msgid "scripts or functions."
 msgstr "கைஉரைகள் அல்லது செயல்பாடுகள்."
+
+#. Option in dropdown menu of editable input slots on mobile devices:
+msgid "edit"
+msgstr "தொகு"
+
+#. Block in Function Calls library
+msgid "function _ exists"
+msgstr "செயல்பாடு _ உள்ளது"
+
+#. 5x5 LED Display library block
+msgid "LED image #BR# _"
+msgstr "LED படம் #BR# _"
+
+#. OLED Graphics library block
+msgid "initialize i2c(auto) reset pin# _ flip _"
+msgstr "i2c(auto) மீட்டமை pin# _ flip _ ஐ துவக்கவும்"
+
+#. External Displays Library block
+#. The #BR# tag must be kept intact. It translates to a new line
+msgid "attach ST7735 w _ h _ rotation _ #BR# dc pin _ cs pin _ backlight pin _"
+msgstr ""
+"ST7735 w _ h _ சுழற்சியை இணைக்கவும் _ #BR# நேர்மின்னழுத்தம் முள் _ cs முள் _ "
+"backlight முள் _"
+
+#. External Displays Library block
+#. The #BR# tag must be kept intact. It translates to a new line
+msgid "#BR# reset pin _ invert colors _"
+msgstr "#BR# ரீசெட் முள் _ நிறங்களை மாற்றவும் _"
+
+#. External Displays Library block
+#. The #BR# tag must be kept intact. It translates to a new line
+msgid "#BR# x offset _ y offset _"
+msgstr "#BR# ஃச் ஆஃப்செட் _ ஒய் ஆஃப்செட் _"
+
+#. External Displays Library block
+#. The #BR# tag must be kept intact. It translates to a new line
+msgid "attach ST7789 w _ h _ rotation _ #BR# dc pin _ cs pin _ backlight pin _"
+msgstr ""
+"ST7789 w _ h _ சுழற்சியை இணைக்கவும் _ #BR# நேர்மின்னழுத்தம் முள் _ cs முள் _ "
+"backlight முள் _"
+
+#. External Displays Library block
+#. The #BR# tag must be kept intact. It translates to a new line
+msgid "attach ST7796 w _ h _ rotation _ #BR# dc pin _ cs pin _ backlight pin _"
+msgstr ""
+"ST7796 w _ h _ சுழற்சியை இணைக்கவும் _ #BR# நேர்மின்னழுத்தம் முள் _ cs முள் _ "
+"backlight முள் _"
+
+#. External Displays Library block
+msgid "attach ILI9341 rotation _ dc pin _ cs pin _ backlight pin _"
+msgstr ""
+"ILI9341 சுழற்சியை இணைக்கவும் _ நேர்மின்னழுத்தம் முள் _ cs முள் _ backlight முள் _"
+
+#. External Displays Library block
+msgid "attach OLED w _ h _"
+msgstr "OLED w _ h _ ஐ இணைக்கவும்"
+
+#. External Displays Library block
+msgid "reset pin _"
+msgstr "முள் _ மீட்டமை"
+
+#. External Displays Library block
+msgid "detach display"
+msgstr "காட்சியை பிரிக்கவும்"
+
+#. 8 Bit Graphics Library block
+msgid "set scale _"
+msgstr "செட் அளவு _"
+
+#. 8 Bit Graphics Library block
+msgid "draw buffer"
+msgstr "இடையகத்தை வரையவும்"
+
+#. 8 Bit Graphics Library block
+msgid "starting at x _ y _ width _ height _"
+msgstr "ஃச் _ ஒய் _ அகலம் _ உயரம் _ இல் தொடங்குகிறது"
+
+#. 8 Bit Graphics Library block
+msgid "bitmap from BMP file _"
+msgstr "BMP கோப்பிலிருந்து பிட்மேப் _"
+
+#. 8 Bit Graphics Library block
+msgid "bitmap of width _ from raw indexed file _"
+msgstr "அகலத்தின் பிட்மேப் _ மூல அட்டவணைப்படுத்தப்பட்ட கோப்பிலிருந்து _"
+
+#. 8 Bit Graphics Library block
+msgid "bitmap of width _ from string _"
+msgstr "அகலத்தின் பிட்மேப் _ சரத்திலிருந்து _"
+
+#. 8 Bit Graphics Library block
+msgid "bitmap _ rotated _ º"
+msgstr "பிட்மேப் _ சுழற்றப்பட்ட _ º"
+
+#. 8 Bit Graphics Library block
+msgid "bitmap _ mirrored across _ axis"
+msgstr "பிட்மேப் _ பிரதிபலித்தது _ அச்சு"
+
+#. 8 Bit Graphics Library block
+msgid "merge bitmap _ at _ , _"
+msgstr "பிட்மேப்பை _ இல் _ , _ ஒன்றிணை"
+
+#. 8 Bit Graphics Library block
+msgid "merge tile _ from _ , _ to _ , _"
+msgstr "ஓடு _ இலிருந்து _, _ க்கு _, _ ஐ ஒன்றிணை"
+
+#. 8 Bit Graphics Library block
+msgid "merge tile _ at tile position _ , _"
+msgstr "ஓடுகளை ஒன்றிணைக்கவும் _ ஓடு நிலையில் _ , _"
+
+#. 8 Bit Graphics Library block
+msgid "set palette _"
+msgstr "தொகுப்பு தட்டு _"
+
+#. 8 Bit Graphics Library block
+msgid "set transparent color index _"
+msgstr "வெளிப்படையான வண்ண குறியீட்டை அமைக்கவும் _"
+
+#. 8 Bit Graphics Library block
+msgid "palette from pal file _"
+msgstr "பால் கோப்பில் இருந்து தட்டு _"
+
+#. 8 Bit Graphics Library block
+msgid "palette from BMP file _"
+msgstr "BMP கோப்பில் இருந்து தட்டு _"
+
+#. 8 Bit Graphics Library block
+msgid "4 bit _ palette"
+msgstr "4 பிட் _ தட்டு"
+
+#. 8 Bit Graphics Library block
+msgid "8 bit _ palette"
+msgstr "8 பிட் _ தட்டு"
+
+#. 8 Bit Graphics Library block
+msgid "color number for r _ g _ b _ (0-255)"
+msgstr "r _ g _ b _ க்கான வண்ண எண் (0-255)"
+
+#. 8 Bit Graphics Library block
+msgid "draw palette table _"
+msgstr "தட்டு அட்டவணையை வரையவும் _"
+
+#. 8 Bit Graphics Library block
+msgid "current palette"
+msgstr "தற்போதைய தட்டு"
+
+#. 8 Bit Graphics Library block
+msgid "screen width"
+msgstr "திரை அகலம்"
+
+#. 8 Bit Graphics Library block
+msgid "screen height"
+msgstr "திரை உயரம்"
+
+#. Fractions library block
+msgid "fract _ − _"
+msgstr "பின்னம் _ - _"
+
+#. General MIDI drum set
+msgid "Standard 1"
+msgstr "தரநிலை 1"
+
+#. General MIDI drum set
+msgid "Standard 2"
+msgstr "தரநிலை 2"
+
+#. General MIDI drum set
+msgid "Standard L/R"
+msgstr "நிலையான எல்/ஆர்"
+
+#. General MIDI drum set
+msgid "Room"
+msgstr "அறை"
+
+#. General MIDI drum set
+msgid "Hip Hop"
+msgstr "இப் ஆப்"
+
+#. General MIDI drum set
+msgid "Jungle Techno"
+msgstr "சங்கிள் டெக்னோ"
+
+#. General MIDI drum set
+msgid "Room L/R"
+msgstr "அறை எல்/ஆர்"
+
+#. General MIDI drum set
+msgid "House Power Electronic"
+msgstr "அவுச் பவர் எலக்ட்ரானிக்"
+
+#. General MIDI drum set
+msgid "Dance"
+msgstr "நடனம்"
+
+#. General MIDI drum set
+msgid "CR-78"
+msgstr "CR-78"
+
+#. General MIDI drum set
+msgid "TR-606"
+msgstr "TR-606"
+
+#. General MIDI drum set
+msgid "TR-707"
+msgstr "TR-707"
+
+#. General MIDI drum set
+msgid "TR-909"
+msgstr "TR-909"
+
+#. General MIDI drum set
+msgid "Jazz"
+msgstr "சாச்"
+
+#. General MIDI drum set
+msgid "Jazz L/R"
+msgstr "சாச் எல்/ஆர்"
+
+#. General MIDI drum set
+msgid "Brush"
+msgstr "மின்தொடி"
+
+#. General MIDI drum set
+msgid "Brush 2"
+msgstr "தூரிகை 2"
+
+#. General MIDI drum set
+msgid "Brush 2 L/R"
+msgstr "தூரிகை 2 எல்/ஆர்"
+
+#. General MIDI drum set
+msgid "Orchestra Ethnic"
+msgstr "ஆர்கெச்ட்ரா இன"
+
+#. General MIDI drum set
+msgid "Kick & Snare"
+msgstr "கிக் & ச்னேர்"
+
+#. General MIDI drum set
+msgid "Kick & Snare 2"
+msgstr "கிக் & ச்னேர் 2"
+
+#. General MIDI drum set
+msgid "Asia"
+msgstr "ஆசியா"
+
+#. General MIDI drum set
+msgid "Cymbal&claps"
+msgstr "சங்கு & கைதட்டல்கள்"
+
+#. General MIDI drum set
+msgid "Gamelan 1"
+msgstr "கேம்லான் 1"
+
+#. General MIDI drum set
+msgid "Gamelan 2"
+msgstr "கேம்லான் 2"
+
+#. General MIDI drum set
+msgid "SFX"
+msgstr "SFX"
+
+#. General MIDI drum set
+msgid "Rhythm FX"
+msgstr "ரிதம் எஃப்எக்ச்"
+
+#. General MIDI drum set
+msgid "Rhythm FX 2"
+msgstr "ரிதம் எஃப்எக்ச் 2"
+
+#. General MIDI drum set
+msgid "Rhythm FX 3"
+msgstr "ரிதம் எஃப்எக்ச் 3"
+
+#. General MIDI drum set
+msgid "SFX 2"
+msgstr "SFX 2"
+
+#. General MIDI drum set
+msgid "Voice"
+msgstr "குரல்"
+
+#. General MIDI drum set
+msgid "Cym&Claps 2"
+msgstr "சைம் & கிளாப்ச் 2"
+
+#. MIDI library block
+msgid "stop all notes on channel _ in _ ms"
+msgstr "சேனல் _ இல் _ ms இல் உள்ள அனைத்து குறிப்புகளையும் நிறுத்தவும்"
+
+#. Musical scale name
+msgid "chromatic"
+msgstr "வண்ணமயமான"
+
+#. Musical scale name
+msgid "tonal"
+msgstr "தொனி"
+
+#. Sound destination for arpeggiate block in Scales & Chords library
+msgid "gate trigger"
+msgstr "வாயில் தூண்டுதல்"
+
+#. Files library block
+msgid "contents of file _"
+msgstr "கோப்பின் உள்ளடக்கங்கள் _"
+
+#. WiFi library block
+msgid "stop wifi"
+msgstr "வைஃபை நிறுத்து"
+
+#. Generic servo type
+msgid "180°"
+msgstr "180°"
+
+#. Generic servo type
+msgid "270°"
+msgstr "270°"
+
+#. Generic servo type
+msgid "360°"
+msgstr "360°"
+
+#. Octostudio communication library block
+msgid "Octo last beam group"
+msgstr "அக்டோபர் கடைசி பீம் குழு"
+
+#. CoCube Module library block
+msgid "ASR get command"
+msgstr "ASR கட்டளையைப் பெறுங்கள்"
+
+#. CoCube Module library block
+msgid "ASR play command _"
+msgstr "ஏஎச்ஆர் பிளே கட்டளை _"
+
+#. CoCube Module library block
+msgid "DLight level"
+msgstr "DLight நிலை"
+
+#. CoCube Sengo1 library choice
+msgid "Color Recog"
+msgstr "கலர் ரெகோக்"
+
+#. CoCube Sengo1 library choice
+msgid "Blob Detect"
+msgstr "குமிழ் கண்டறிதல்"
+
+#. CoCube Sengo1 library choice
+msgid "Ball Detect"
+msgstr "பந்து கண்டறிதல்"
+
+#. CoCube Sengo1 library choice
+msgid "Line Detect"
+msgstr "வரி கண்டறிதல்"
+
+#. CoCube Sengo1 library choice
+msgid "Card Recog"
+msgstr "அட்டை ரெகோக்"
+
+#. CoCube Sengo1 library choice
+msgid "Face Recog"
+msgstr "ஃபேச் ரெகோக்"
+
+#. CoCube Sengo1 library choice
+msgid "QRcode"
+msgstr "QR குறியீடு"
+
+#. CoCube Sengo1 library choice
+msgid "black"
+msgstr "கருப்பு"
+
+#. CoCube Sengo1 library choice
+msgid "white"
+msgstr "வெள்ளை"
+
+#. CoCube Sengo1 library choice
+msgid "blue"
+msgstr "நீலம்"
+
+#. CoCube Sengo1 library choice
+msgid "x1"
+msgstr "x1"
+
+#. CoCube Sengo1 library choice
+msgid "y1"
+msgstr "y1"
+
+#. CoCube Sengo1 library choice
+msgid "x2"
+msgstr "ஆடைகள்"
+
+#. CoCube Sengo1 library choice
+msgid "y2"
+msgstr "y2"
+
+#. CoCube Sengo1 library choice
+msgid "degree"
+msgstr "பட்டம்"
+
+#. CoCube Sengo1 library choice
+msgid "w"
+msgstr "டபிள்யூ"
+
+#. CoCube Sengo1 library choice
+msgid "h"
+msgstr "ம"
+
+#. CoCube Sengo1 library choice
+msgid "R"
+msgstr "ஆர்"
+
+#. CoCube Sengo1 library choice
+msgid "G"
+msgstr "ஐயா"
+
+#. CoCube Sengo1 library choice
+msgid "B"
+msgstr "பி"
+
+#. CoCube Sengo1 library block
+msgid "Sengo1 read QRcode"
+msgstr "செங்கோ1 QRcode ஐப் படித்தார்"
+
+#. CoCube Sengo1 library block
+msgid "Sengo1 change algorithm _"
+msgstr "செங்கோ1 மாற்ற வழிமுறை _"
+
+#. CoCube Sengo1 library block
+msgid "Sengo1 delete face ID _ (1-10)"
+msgstr "செங்கோ1 முக ஐடியை நீக்குகிறது _ (1-10)"
+
+#. CoCube Sengo1 library block
+msgid "Sengo1 detect ball (ping pong or tennis)"
+msgstr "செங்கோ1 பந்தைக் கண்டறிதல் (பிங் பாங் அல்லது டென்னிச்)"
+
+#. CoCube Sengo1 library block
+msgid "Sengo1 get QRcode _"
+msgstr "செங்கோ1 QRcode ஐப் பெறுகிறது _"
+
+#. CoCube Sengo1 library block
+msgid "Sengo1 get ball _"
+msgstr "செங்கோ1 பெறு பந்து _"
+
+#. CoCube Sengo1 library block
+msgid "Sengo1 get blob _"
+msgstr "செங்கோ1 ப்ளாப் கிடைக்கும் _"
+
+#. CoCube Sengo1 library block
+msgid "Sengo1 get card _"
+msgstr "செங்கோ1 அட்டையைப் பெறுங்கள் _"
+
+#. CoCube Sengo1 library block
+msgid "Sengo1 get color _"
+msgstr "செங்கோ1 நிறம் கிடைக்கும் _"
+
+#. CoCube Sengo1 library block
+msgid "Sengo1 get face _"
+msgstr "செங்கோ1 முகம் பெறு _"
+
+#. CoCube Sengo1 library block
+msgid "Sengo1 get face ID"
+msgstr "செங்கோ1 முக அடையாளத்தைப் பெறுகிறார்"
+
+#. CoCube Sengo1 library block
+msgid "Sengo1 get line _"
+msgstr "செங்கோ1 பெறு வரி _"
+
+#. CoCube Sengo1 library block
+msgid "Sengo1 init"
+msgstr "செங்கோ1 வெப்பம்"
+
+#. CoCube Sengo1 library block
+msgid "Sengo1 read blob"
+msgstr "செங்கோ1 படிக்கும் குமிழ்"
+
+#. CoCube Sengo1 library block
+msgid "Sengo1 read card"
+msgstr "செங்கோ1 ரீட் அட்டை"
+
+#. CoCube Sengo1 library block
+msgid "Sengo1 read color"
+msgstr "செங்கோ1 படித்த வண்ணம்"
+
+#. CoCube Sengo1 library block
+msgid "Sengo1 record face ID _ (1-10)"
+msgstr "செங்கோ1 பதிவு முக அடையாளம் _ (1-10)"
+
+#. CoCube Sengo1 library block
+msgid "Sengo1 reset"
+msgstr "செங்கோ1 மீட்டமைப்பு"
+
+#. CoCube Sengo1 library block
+msgid "Sengo1 set blob detect property color _ width _ height _"
+msgstr "செங்கோ1 செட் ப்ளாப் சொத்து நிறம் _ அகலம் _ உயரம் _ கண்டறிதல்"
+
+#. CoCube Sengo1 library block
+msgid "Sengo1 set color recog area x _ y _ width _ height _ (0-100)"
+msgstr "செங்கோ1 செட் கலர் ரெகோக் ஏரியா ஃச் _ ஒய் _ அகலம் _ உயரம் _ (0-100)"
+
+#. CoCube Sengo2 library choice
+msgid "16H5"
+msgstr "16H5"
+
+#. CoCube Sengo2 library choice
+msgid "25H9"
+msgstr "நான் நிபுணத்துவம் பெற்றேன்"
+
+#. CoCube Sengo2 library choice
+msgid "36H11"
+msgstr "36H11"
+
+#. CoCube Sengo2 library choice
+msgid "AprilTag"
+msgstr "ஏப்ரல் குறிச்சொல்"
+
+#. CoCube Sengo2 library choice
+msgid "Deep Learning"
+msgstr "ஆழ்ந்த கற்றல்"
+
+#. CoCube Sengo2 library choice
+msgid "Obj20Class"
+msgstr "Obj20 வகுப்பு"
+
+#. CoCube Sengo2 library choice
+msgid "Motion Detect"
+msgstr "மோசன் டிடெக்ட்"
+
+#. CoCube Sengo2 library block
+msgid "Sengo2 read QRcode"
+msgstr "செங்கோ2 QRcode ஐப் படித்தது"
+
+#. CoCube Sengo2 library block
+msgid "Sengo2 change algorithm _"
+msgstr "செங்கோ2 மாற்ற வழிமுறை _"
+
+#. CoCube Sengo2 library block
+msgid "Sengo2 delete face ID _ (1-10)"
+msgstr "செங்கோ2 முக ஐடியை நீக்குகிறது _ (1-10)"
+
+#. CoCube Sengo2 library block
+msgid "Sengo2 delete learning ID _ (1-15)"
+msgstr "செங்கோ2 கற்றல் ஐடியை நீக்குகிறது _ (1-15)"
+
+#. CoCube Sengo2 library block
+msgid "Sengo2 get AprilTag _"
+msgstr "செங்கோ2 ஏப்ரல் டேக்கைப் பெறுகிறது _"
+
+#. CoCube Sengo2 library block
+msgid "Sengo2 get Obj20Class _"
+msgstr "செங்கோ2 Obj20 வகுப்பைப் பெறுகிறது _"
+
+#. CoCube Sengo2 library block
+msgid "Sengo2 get QRcode _"
+msgstr "செங்கோ2 QRcode ஐப் பெறுகிறது _"
+
+#. CoCube Sengo2 library block
+msgid "Sengo2 get blob _"
+msgstr "செங்கோ2 ப்ளாப் கிடைக்கும் _"
+
+#. CoCube Sengo2 library block
+msgid "Sengo2 get card _"
+msgstr "செங்கோ2 கார்டைப் பெறுங்கள் _"
+
+#. CoCube Sengo2 library block
+msgid "Sengo2 get color _"
+msgstr "செங்கோ2 நிறம் கிடைக்கும் _"
+
+#. CoCube Sengo2 library block
+msgid "Sengo2 get face ID"
+msgstr "செங்கோ2 முக அடையாளத்தைப் பெறுகிறது"
+
+#. CoCube Sengo2 library block
+msgid "Sengo2 get learning ID"
+msgstr "செங்கோ2 கற்றல் ஐடியைப் பெறுகிறது"
+
+#. CoCube Sengo2 library block
+msgid "Sengo2 get line _"
+msgstr "செங்கோ2 பெறு வரி _"
+
+#. CoCube Sengo2 library block
+msgid "Sengo2 get motion _"
+msgstr "செங்கோ2 இயக்கத்தைப் பெறு _"
+
+#. CoCube Sengo2 library block
+msgid "Sengo2 init"
+msgstr "செங்கோ2 வெப்பம்"
+
+#. CoCube Sengo2 library block
+msgid "Sengo2 read AprilTag"
+msgstr "செங்கோ2 ஏப்ரல் டேக்கைப் படித்தது"
+
+#. CoCube Sengo2 library block
+msgid "Sengo2 read Obj20Class"
+msgstr "செங்கோ2 Obj20 வகுப்பைப் படித்தார்"
+
+#. CoCube Sengo2 library block
+msgid "Sengo2 read blob"
+msgstr "செங்கோ2 படிக்கும் குமிழ்"
+
+#. CoCube Sengo2 library block
+msgid "Sengo2 read card"
+msgstr "செங்கோ2 ரீட் அட்டை"
+
+#. CoCube Sengo2 library block
+msgid "Sengo2 read color"
+msgstr "செங்கோ2 வண்ணம் படித்தது"
+
+#. CoCube Sengo2 library block
+msgid "Sengo2 record face ID _ (1-10)"
+msgstr "செங்கோ2 பதிவு முக அடையாளம் _ (1-10)"
+
+#. CoCube Sengo2 library block
+msgid "Sengo2 record learning ID _ (1-15)"
+msgstr "செங்கோ2 பதிவு கற்றல் அடையாளம் _ (1-15)"
+
+#. CoCube Sengo2 library block
+msgid "Sengo2 reset"
+msgstr "செங்கோ2 மீட்டமை"
+
+#. CoCube Sengo2 library block
+msgid "Sengo2 set AprilTag type _"
+msgstr "செங்கோ2 தொகுப்பு AprilTag வகை _"
+
+#. CoCube Sengo2 library block
+msgid "Sengo2 set blob detect property color _ width _ height _"
+msgstr "செங்கோ2 செட் ப்ளாப் சொத்து நிறம் _ அகலம் _ உயரம் _ கண்டறிதல்"
+
+#. CoCube Sengo2 library block
+msgid "Sengo2 set color recog area x _ y _ width _ height _ (0-100)"
+msgstr "செங்கோ2 செட் கலர் ரெகோக் ஏரியா ஃச் _ ஒய் _ அகலம் _ உயரம் _ (0-100)"
+
+#. Calliope MotionKit library block
+msgid "mk2;bright"
+msgstr "பிரகாசமான"
+
+#. Calliope MotionKit library block
+msgid "mk2;dark"
+msgstr "இருண்ட"
+
+#. Calliope MotionKit library block
+msgid "mk2;ok"
+msgstr "சரி"
+
+#. Calliope MotionKit library block
+msgid "mk2;up"
+msgstr "மேலே"
+
+#. Calliope MotionKit library block
+msgid "mk2;down"
+msgstr "கீழே"
+
+#. Calliope MotionKit library block
+msgid "mk2;S1"
+msgstr "S1"
+
+#. Calliope MotionKit library block
+msgid "mk2;S2"
+msgstr "மோசமான"
+
+#. Calliope MotionKit library block
+msgid "MotionKit distance (cm)"
+msgstr "MotionKit தூரம் (செ.மீ.)"
+
+#. Calliope MotionKit library block
+msgid "IR key _ pressed?"
+msgstr "ஐஆர் விசை _ அழுத்தப்பட்டதா?"
+
+#. Calliope MotionKit library block
+msgid "MotionKit set NeoPixels _"
+msgstr "MotionKit தொகுப்பு NeoPixels _"
+
+#. Calliope MotionKit library block
+msgid "MotionKit clear NeoPixels"
+msgstr "MotionKit தெளிவான NeoPixels"
+
+#. Calliope MotionKit library block
+msgid "MotionKit set motor _ _ speed _ (0~100)"
+msgstr "மோசன்கிட் செட் மின்னோடி _ _ விரைவு _ (0~100)"
+
+#. Calliope MotionKit library block
+msgid "MotionKit stop motor _"
+msgstr "மோசன்கிட் நிறுத்த மின்னோடி _"
+
+#. Calliope MotionKit library block
+msgid "MotionKit stop all"
+msgstr "MotionKit அனைத்தையும் நிறுத்துங்கள்"
+
+#. Calliope MotionKit library block
+msgid "MotionKit set led _ _"
+msgstr "மோசன்கிட் செட் _ _"
+
+#. Calliope MotionKit library block
+msgid "MotionKit line sensor _ _"
+msgstr "மோசன்கிட் லைன் சென்சார் _ _"
+
+#. Calliope MotionKit library block
+msgid "IR code received?"
+msgstr "ஐஆர் குறியீடு பெறப்பட்டதா?"
+
+#. Calliope MotionKit library block
+msgid "MotionKit set servo _ to _ degrees (0-180)"
+msgstr "MotionKit செட் சர்வோ _ முதல் _ டிகிரி (0-180)"
+
+#. Calliope MotionKit library block
+msgid "MotionKit set _ servo _ to _ degrees"
+msgstr "மோசன்கிட் செட் _ சர்வோ _ முதல் _ டிகிரி வரை"
+
+#. Calliope MotionKit library block
+msgid "MotionKit rotate servo _ _ speed _ (0~100)"
+msgstr "MotionKit சுழற்ற சர்வோ _ _ விரைவு _ (0~100)"
+
+#. Calliope Callibot library choice
+msgid "callibot;left front"
+msgstr "இடது முன்"
+
+#. Calliope Callibot library choice
+msgid "callibot;right front"
+msgstr "வலது முன்"
+
+#. Calliope Callibot library choice
+msgid "callibot;left back"
+msgstr "மீண்டும் விட்டு"
+
+#. Calliope Callibot library choice
+msgid "callibot;right back"
+msgstr "வலது திரும்பி"
+
+#. Calliope Callibot library choice
+msgid "violett"
+msgstr "ஊதா"
+
+#. Calliope Callibot library choice
+msgid "aqua"
+msgstr "அக்வா"
+
+#. Calliope Callibot library choice
+msgid "callibot;bright"
+msgstr "பிரகாசமான"
+
+#. Calliope Callibot library choice
+msgid "callibot;dark"
+msgstr "இருண்ட"
+
+#. Calliope Callibot library choice
+msgid "callibot;S1"
+msgstr "S1"
+
+#. Calliope Callibot library choice
+msgid "callibot;S2"
+msgstr "மோசமான"
+
+#. Calliope Callibot library block
+msgid "Callibot2E encoder _"
+msgstr "Callibot2E குறியாக்கி _"
+
+#. Calliope Callibot library block
+msgid "Callibot2E reset encoder _"
+msgstr "Callibot2E ரீசெட் என்கோடர் _"
+
+#. Calliope Callibot library block
+msgid "Callibot2 battery (mV)"
+msgstr "Callibot2 பேட்டரி (mV)"
+
+#. Calliope Callibot library block
+msgid "Callibot2 bumper _ _"
+msgstr "காலிபோட்2 பம்பர்__"
+
+#. Calliope Callibot library block
+msgid "Callibot clear NeoPixels"
+msgstr "காலிபோட் நியோபிக்சல்களை அழிக்கவும்"
+
+#. Calliope Callibot library block
+msgid "Callibot distance (cm)"
+msgstr "காலிபோட் தூரம் (செ.மீ.)"
+
+#. Calliope Callibot library block
+msgid "Callibot line sensor _ _"
+msgstr "காலிபோட் லைன் சென்சார் _ _"
+
+#. Calliope Callibot library block
+msgid "Callibot set led _ _"
+msgstr "காலிபோட் செட் _ _"
+
+#. Calliope Callibot library block
+msgid "Callibot set motor _ _ speed _ (0~100)"
+msgstr "காலிபோட் செட் மின்னோடி _ _ விரைவு _ (0~100)"
+
+#. Calliope Callibot library block
+msgid "Callibot set neopixel _ to _ intensity _"
+msgstr "காலிபோட் நியோபிக்சல் _ முதல் _ தீவிரம்_"
+
+#. Calliope Callibot library block
+msgid "Callibot set servo _ to _ ° (0~180)"
+msgstr "Callibot செட் சர்வோ _ பெறுநர் _ ° (0~180)"
+
+#. Calliope Callibot library block
+msgid "Callibot set _ servo _ to _ °"
+msgstr "காலிபோட் செட் _ சர்வோ _ முதல் _ ° வரை"
+
+#. Calliope Callibot library block
+msgid "Callibot rotate servo _ _ speed _ (0~100)"
+msgstr "காலிபோட் சுழற்ற சர்வோ _ _ விரைவு _ (0~100)"
+
+#. Calliope Callibot library block
+msgid "Callibot stop all"
+msgstr "காலிபோ கீழே நிறுத்தம்"
+
+#. Calliope Callibot library block
+msgid "Callibot stop motor _"
+msgstr "காலிபோட் நிறுத்த மின்னோடி _"
+
+#. Nezha Pro library label
+msgid "Nezha Pro"
+msgstr "நெசா ப்ரோ"
+
+#. Nehza Pro library choice
+msgid "M1"
+msgstr "M1"
+
+#. Nehza Pro library choice
+msgid "M2"
+msgstr "என்ன"
+
+#. Nehza Pro library choice
+msgid "M3"
+msgstr "உடன்"
+
+#. Nehza Pro library choice
+msgid "M4"
+msgstr "Mch"
+
+#. Nehza Pro library choice
+msgid "nezhaPro;by shortest path"
+msgstr "குறுகிய பாதையில்"
+
+#. Nezha Pro library block
+msgid "np angle _"
+msgstr "np கோணம் _"
+
+#. Nezha Pro library block
+msgid "np move _ for _ mm speed _ %"
+msgstr "np நகர்வு _ க்கு _ மிமீ விரைவு _ %"
+
+#. Nezha Pro library block
+msgid "np speed _"
+msgstr "np விரைவு _"
+
+#. Nezha Pro library block
+msgid "np total angle _"
+msgstr "np மொத்த கோணம் _"
+
+#. Nezha Pro library block
+msgid "np reset total angle _"
+msgstr "np மொத்த கோணத்தை மீட்டமை _"
+
+#. Nezha Pro library block
+msgid "np rotate _ _ by _ degrees speed _ %"
+msgstr "np சுழலும் _ _ by _ டிகிரி விரைவு _ %"
+
+#. Nezha Pro library block
+msgid "np rotate _ _ to _ degrees speed _ %"
+msgstr "np சுழலும் _ _ முதல் _ டிகிரி விரைவு _ %"
+
+#. Nezha Pro library block
+msgid "np run motor _ _ speed _ %"
+msgstr "np இயக்க மின்னோடி _ _ விரைவு _ %"
+
+#. Nezha Pro library block
+msgid "np set _ angle _ to _ degrees"
+msgstr "np தொகுப்பு _ கோணம் _ முதல் _ டிகிரி வரை"
+
+#. Nezha Pro library block
+msgid "np set wheels left _ right _ #BR# circumference _ mm axle _ mm"
+msgstr "np செட் சக்கரங்கள் இடது _ வலது _ #BR# சுற்றளவு _ மிமீ அச்சு _ மிமீ"
+
+#. Nezha Pro library block
+msgid "np stop all motors"
+msgstr "np அனைத்து மோட்டார்களையும் நிறுத்து"
+
+#. Nezha Pro library block
+msgid "np stop motor _"
+msgstr "np நிறுத்த மின்னோடி _"
+
+#. Nezha Pro library block
+msgid "np turn _ by _ degrees speed _ %"
+msgstr "np திருப்பம் _ by _ டிகிரி விரைவு _ %"
+
+#. Nezha Pro library block
+msgid "np version"
+msgstr "np பதிப்பு"
+
+#. Foxbit library block
+msgid "fb scroll text _ _"
+msgstr "fb உருள் உரை _ _"
+
+#. KidsIOT library choice
+msgid "kiot;AD key"
+msgstr "AD விசை"
+
+#. KidsIOT library choice
+msgid "kiot;gas (MQ-135)"
+msgstr "எரிவாயு (MQ-135)"
+
+#. KidsIOT library choice
+msgid "kiot;film pressure"
+msgstr "திரைப்பட அழுத்தம்"
+
+#. KidsIOT library choice
+msgid "kiot;flame"
+msgstr "சுடர்"
+
+#. KidsIOT library choice
+msgid "kiot;light"
+msgstr "ஒளி"
+
+#. KidsIOT library choice
+msgid "kiot;microphone"
+msgstr "ஒலிவாங்கி"
+
+#. KidsIOT library choice
+msgid "kiot;potentiometer"
+msgstr "மின்னழுத்தவளவி"
+
+#. KidsIOT library choice
+msgid "kiot;steam"
+msgstr "நீராவி"
+
+#. KidsIOT library choice
+msgid "kiot;UV light"
+msgstr "புறவூதாவொளி"
+
+#. KidsIOT library choice
+msgid "kiot;active buzzer"
+msgstr "செயலில் ஒலிப்பவர்"
+
+#. KidsIOT library choice
+msgid "kiot;LED"
+msgstr "LED"
+
+#. KidsIOT library choice
+msgid "kiot;laser"
+msgstr "ஊடொளி"
+
+#. KidsIOT library choice
+msgid "kiot;relay"
+msgstr "அஞ்சல் சுருள்"
+
+#. KidsIOT library choice
+msgid "kiot;button pressed?"
+msgstr "பட்டனை அழுத்தினாரா?"
+
+#. KidsIOT library choice
+msgid "kiot;humidity"
+msgstr "ஈரப்பதம்"
+
+#. KidsIOT library choice
+msgid "kiot;magnet detected?"
+msgstr "காந்தம் கண்டறியப்பட்டதா?"
+
+#. KidsIOT library choice
+msgid "kiot;movement detected?"
+msgstr "இயக்கம் கண்டறியப்பட்டதா?"
+
+#. KidsIOT library choice
+msgid "kiot;obstacle?"
+msgstr "தடையா?"
+
+#. KidsIOT library choice
+msgid "kiot;photo sensor interrupted?"
+msgstr "புகைப்பட சென்சார் தடைபட்டதா?"
+
+#. KidsIOT library choice
+msgid "kiot;receive IR code"
+msgstr "ஐஆர் குறியீட்டைப் பெறுங்கள்"
+
+#. KidsIOT library choice
+msgid "kiot;temperature (Celsius)"
+msgstr "வெப்பநிலை (செல்சியச்)"
+
+#. KidsIOT library choice
+msgid "kiot;tilt?"
+msgstr "சாய்வா?"
+
+#. KidsIOT library choice
+msgid "kiot;touching?"
+msgstr "தொடுகிறதா?"
+
+#. KidsIOT library choice
+msgid "X"
+msgstr "ஃச்"
+
+#. KidsIOT library choice
+msgid "Y"
+msgstr "ஒய்"
+
+#. KidsIOT library choice
+msgid "kiot;rotation"
+msgstr "சுழற்சி"
+
+#. KidsIOT library choice
+msgid "kiot;clockwise"
+msgstr "கடிகார திசையில்"
+
+#. KidsIOT library choice
+msgid "kiot;counter-clockwise"
+msgstr "எதிரெதிர் திசையில்"
+
+#. KidsIOT library choice
+msgid "kiot;stop"
+msgstr "நிறுத்து"
+
+#. KidsIOT library choice
+msgid "kiot;left"
+msgstr "இடது"
+
+#. KidsIOT library choice
+msgid "kiot;right"
+msgstr "வலது"
+
+#. KidsIOT library block
+msgid "#SVG#square11#ffffff RGB color _ port _"
+msgstr "#SVG#square11#ffffff RGB வண்ணம் _ துறைமுகம் _"
+
+#. KidsIOT library block
+msgid "#SVG#square11#ff0000 analog _ port _"
+msgstr "#SVG#square11#ff0000 அனலாக் _ போர்ட்_"
+
+#. KidsIOT library block
+msgid "#SVG#square11#0070ff digital _ port _"
+msgstr "#SVG#square11#0070ff டிசிட்டல்_போர்ட்_"
+
+#. KidsIOT library block
+msgid "#SVG#square11#fff000 distance (cm) port _"
+msgstr "#SVG#சதுரம்11#fff000 தூரம் (செமீ) துறைமுகம் _"
+
+#. KidsIOT library block
+msgid "#SVG#square11#fff000 line sensor _ port _"
+msgstr "#SVG#square11#fff000 லைன் சென்சார் _ போர்ட்_"
+
+#. KidsIOT library block
+msgid "#SVG#square11#00c612 get _"
+msgstr "#SVG#சதுரம்11#00c612 பெறவும் _"
+
+#. KidsIOT library block
+msgid "#SVG#square11#00c612 joystick _"
+msgstr "#SVG#square11#00c612 சாய்ச்டிக் _"
+
+#. KidsIOT library block
+msgid "#SVG#square11#0070ff play note _ octave _ for _ port _"
+msgstr "#SVG#square11#0070ff ப்ளே நோட் _ ஆக்டேவ் _ ஃபார் _ துறைமுகம் _"
+
+#. KidsIOT library block
+msgid "#SVG#square11#ffffff rotary encoder _ port _"
+msgstr "#SVG#square11#ffffff ரோட்டரி குறியாக்கி _ போர்ட்_"
+
+#. KidsIOT library block
+msgid "#SVG#square11#0070ff set NeoPixels _ _ _ _ port _"
+msgstr "#SVG#square11#0070ff கணம் NeoPixels ______port_"
+
+#. KidsIOT library block
+msgid "#SVG#square11#0070ff set _ _ port _"
+msgstr "#SVG#square11#0070ff set__port_"
+
+#. KidsIOT library block
+msgid "#SVG#square11#fff000 set motor _ port _"
+msgstr "#SVG#square11#fff000 செட் மின்னோடி _ போர்ட்_"
+
+#. KidsIOT library block
+msgid "#SVG#square11#00c612 set year _ month _ day _"
+msgstr "#SVG#square11#00c612 அமைக்கப்பட்ட ஆண்டு_மாதம்_நாள்_"
+
+#. KidsIOT library block
+msgid "#SVG#square11#00c612 set hours _ minutes _ seconds _"
+msgstr "#SVG#square11#00c612 அமை மணி _ நிமிடங்கள்_ வினாடிகள்_"
+
+#. KidsIOT library block
+msgid "#SVG#square11#0070ff temperature (DS18B20) _ port _"
+msgstr "#SVG#square11#0070ff வெப்பநிலை (DS18B20) _ போர்ட்_"
+
+#. KidsIOT library block
+msgid "#SVG#square11#ffffff traffic light red _ yellow _ green _ port _"
+msgstr ""
+"#SVG#square11#ffffff போக்குவரத்து ஒளி சிவப்பு _ மஞ்சள் _ பச்சை _ துறைமுகம் _"
+
+#. Real Time Clock library block
+msgid "time (H:M:S)"
+msgstr "நேரம் (H:M:S)"
+
+#. Real Time Clock library block
+msgid "date (Y-M-D)"
+msgstr "தேதி (Y-M-D)"
+
+#. Real Time Clock library block
+msgid "second"
+msgstr "இரண்டாவது"
+
+#. Real Time Clock library block
+msgid "minute"
+msgstr "மணித்துளி"
+
+#. Real Time Clock library block
+msgid "hour"
+msgstr "மணி"
+
+#. Real Time Clock library block
+msgid "day"
+msgstr "நாள்"
+
+#. Real Time Clock library block
+msgid "month"
+msgstr "மாதம்"
+
+#. Real Time Clock library block
+msgid "year"
+msgstr "ஆண்டு"
+
+#. Real Time Clock library block
+msgid "day of week"
+msgstr "வாரத்தின் நாள்"
+
+#. Real Time Clock library block
+msgid "set day of week _ (1-7)"
+msgstr "வாரத்தின் நாளை அமைக்கவும் _ (1-7)"
+
+#. Real Time Clock library block
+msgid "init clock _"
+msgstr "init கடிகாரம் _"
+
+#. Real Time Clock library block
+msgid "clock _"
+msgstr "கடிகாரம் _"
+
+#. Real Time Clock library block
+msgid "set year _ month _ day _"
+msgstr "ஆண்டு _ மாதம் _ நாள்_ அமை"
+
+#. Real Time Clock library block
+msgid "set hours _ minutes _ seconds _"
+msgstr "மணி _ நிமிடங்கள் _ வினாடிகள் _ அமை"
+
+#. Settings menu option
+msgid "open vm folder on microblocks.fun"
+msgstr "microblocks.fun இல் vm கோப்புறையைத் திறக்கவும்"
+
+#. Settings menu option
+msgid "show program size on board"
+msgstr "போர்டில் நிரலின் அளவைக் காட்டு"
+
+#. Program size information
+msgid "Using %1 out of %2 bytes"
+msgstr "% 2 பைட்டுகளில் % 1 ஐப் பயன்படுத்துகிறது"
+
+#. Graph context menu option
+msgid "increase range"
+msgstr "வரம்பை அதிகரிக்கும்"
+
+#. Graph context menu option
+msgid "decrease range"
+msgstr "வரம்பு குறைகிறது"
+
+#. Script right-click context menu
+msgid "copy callable name"
+msgstr "அழைக்கக்கூடிய பெயரை நகலெடுக்கவும்"
+
+#. Examples folder
+msgid "folder;MakerPort"
+msgstr "மேக்கர்போர்ட்"
+
+#. Library name
+msgid "8 Bit Graphics"
+msgstr "8 பிட் கிராபிக்ச்"
+
+#. Library name
+msgid "BMP"
+msgstr "BMP"
+
+#. Library name
+msgid "Color"
+msgstr "நிறம்"
+
+#. Library name
+msgid "External Displays"
+msgstr "வெளிப்புற காட்சிகள்"
+
+#. Library name
+msgid "Four Digit Display (TM1637)"
+msgstr "நான்கு இலக்கக் காட்சி (TM1637)"
+
+#. Library name
+msgid "Four Digit Display (TM1650)"
+msgstr "நான்கு இலக்க காட்சி (TM1650)"
+
+#. Library name
+msgid "TFT"
+msgstr "TFT"
+
+#. Library name
+msgid "CoCube Module"
+msgstr "CoCubes தொகுதி"
+
+#. Library name
+msgid "CoCube"
+msgstr "கோக்யூப்"
+
+#. Library name
+msgid "MIDI"
+msgstr "MIDI"
+
+#. Library name
+msgid "Function Calls"
+msgstr "செயல்பாட்டு அழைப்புகள்"

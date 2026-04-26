@@ -1,0 +1,158 @@
+module PiBody
+author Artisan
+version 1 0 
+depends TFT Tone NeoPixel '_Distance (VL53L0X)' '_Barometric Pressure (BMX280)' '_Motion (MPU 6050)' '_Color (VEML6040)' 
+choices pibody_allSlots0 'A (0)' 'B (2)' 'C (28)' 'D (4)' 'E (6)' 'F (26)' 'G (16)' 'H (18)' 
+choices pibody_allSlots1 'A (1)' 'B (3)' 'C (22)' 'D (5)' 'E (7)' 'F (27)' 'G (17)' 'H (19)' 
+choices pibody_tower '8' '9' '0' '2' '4' '6' '28' '26' '16' '18' 
+choices pibody_i2c 'A (0, 1)' 
+choices pibody_joystick X Y 
+choices pibody_servo '8' '9' 
+choices pibody_analog 'C (28)' 'F (26)' 
+description 'PiBody for Pi Pico W plug-and-play connector from Artisan.
+
+https://artisan.education/en'
+variables _pibody_avg_loudness 
+
+  spec ' ' 'pibody set LED' 'set LED _ slot _' 'bool menu.pibody_allSlots0' true 'A (0)'
+  spec ' ' 'pibody set Tower' 'set Tower _ _ _ _ _ _ _ _ #BR# pin _' 'color color color color color color color color menu.pibody_tower' nil nil nil nil nil nil nil nil 8
+  spec ' ' 'pibody set servo' 'set servo _ to _ ° (0~180)' 'menu.pibody_servo num' 9 90
+  spec ' ' 'pibody set servo speed' 'set servo _ to speed _ (-100~100)' 'menu.pibody_servo num' 9 100
+  spec ' ' 'pibody stop servo' 'stop servo _' 'menu.pibody_servo' 9
+  space
+  spec 'r' 'pibody button' 'button slot _' 'menu.pibody_allSlots0' 'A (0)'
+  spec 'r' 'pibody touch' 'touch slot _' 'menu.pibody_allSlots0' 'A (0)'
+  spec 'r' 'pibody motion' 'motion slot _' 'menu.pibody_allSlots0' 'A (0)'
+  spec 'r' 'pibody switch' 'switch slot _' 'menu.pibody_allSlots0' 'A (0)'
+  spec 'r' 'pibody sound digital' 'sound digital slot _' 'menu.pibody_allSlots1' 'A (1)'
+  space
+  spec 'r' 'pibody potentiometer' 'potentiometer slot _' 'menu.pibody_analog' 'C (28)'
+  spec 'r' 'pibody light' 'light slot _' 'menu.pibody_analog' 'C (28)'
+  spec 'r' 'pibody sound analog' 'sound analog slot _' 'menu.pibody_analog' 'C (28)'
+  space
+  spec 'r' 'pibody joystick' 'joystick _' 'menu.pibody_joystick' 'X'
+  spec 'r' 'pibody distance' 'distance (mm) slot _' 'menu.pibody_i2c' 'A (0, 1)'
+
+to 'pibody button' slot {
+  if (('[data:find]' ('[data:convertType]' slot 'string') ('[data:makeList]' 'A (0)' 'B (2)' 'C (28)' 'D (4)' 'E (6)' 'F (26)' 'G (16)' 'H (18)')) > 0) {
+    local 'pin' (at 1 ('[data:split]' (at 'last' ('[data:split]' slot '(')) ')' true))
+    return (digitalReadOp pin)
+  } else {
+    return 'Invalid pin number. Valid pins: 0, 2, 4, 6, 8, 9, 16, 18, 26 & 28'
+  }
+}
+
+to 'pibody distance' slot {
+  if ((not ('[data:find]' ('[data:convertType]' slot 'string') ('[data:makeList]' 'A (0, 1)'))) > 0) {sayIt 'Invalid slot number. Valid slot: A (0, 1)'}
+  i2cSet 41 0 1
+  waitMillis 70
+  if (((i2cGet 41 (hexToInt '14')) & 1) == 1) {
+    '[sensors:i2cWrite]' 41 ('[data:makeList]' (hexToInt '14'))
+    local 'buf' (newList 12)
+    '[sensors:i2cRead]' 41 buf
+    if ((at 1 buf) == 95) {
+      return (((at 11 buf) << 8) | (at 12 buf))
+    } else {
+      return -1
+    }
+  } else {
+    return -2
+    sayIt 'No distance sensor (VL53L0X) detected!'
+    stopTask
+  }
+}
+
+to 'pibody joystick' param {
+  if (param == 'X') {
+    return (analogReadOp 26)
+  } (param == 'Y') {
+    return (analogReadOp 27)
+  } else {
+    return 'Only "X" or "Y" are valid inputs'
+  }
+}
+
+to 'pibody light' slot {
+  if (('[data:find]' ('[data:convertType]' slot 'string') ('[data:makeList]' 'C (28)' 'F (26)')) > 0) {
+    local 'pin' (at 1 ('[data:split]' (at 'last' ('[data:split]' slot '(')) ')' true))
+    return (analogReadOp pin)
+  } else {
+    return 'Invalid pin number. Valid pins: 26 & 28'
+  }
+}
+
+to 'pibody motion' slot {
+  return ('pibody button' slot)
+}
+
+to 'pibody potentiometer' slot {
+  if (('[data:find]' ('[data:convertType]' slot 'string') ('[data:makeList]' 'C (28)' 'F (26)')) > 0) {
+    local 'pin' (at 1 ('[data:split]' (at 'last' ('[data:split]' slot '(')) ')' true))
+    return (analogReadOp pin)
+  } else {
+    return 'Invalid pin number. Valid pins: 26 & 28'
+  }
+}
+
+to 'pibody set LED' state slot {
+  if (('[data:find]' ('[data:convertType]' slot 'string') ('[data:makeList]' 'A (0)' 'B (2)' 'C (28)' 'D (4)' 'E (6)' 'F (26)' 'G (16)' 'H (18)' 0 2 4 6 8 9 16 18 26 28)) > 0) {
+    local 'pin' (at 1 ('[data:split]' (at 'last' ('[data:split]' slot '(')) ')' true))
+    digitalWriteOp pin state
+  } else {
+    sayIt 'Invalid pin number. Valid pins: 0, 2, 4, 6, 8, 9, 16, 18, 26 & 28'
+  }
+}
+
+to 'pibody set Tower' c0 c1 c2 c3 c4 c5 c6 c7 pin {
+  if (('[data:find]' ('[data:convertType]' pin 'number') ('[data:makeList]' 8 9 0 2 4 6 28 26 16 18)) > 0) {
+    neoPixelAttach 8 pin
+    '[display:neoPixelSend]' ('[data:makeList]' c0 c1 c2 c3 c4 c5 c6 c7)
+    waitMicros 300
+  } else {
+    sayIt 'Invalid pin number. Valid pins: 0, 2, 4, 6, 8, 9, 16, 18, 26 & 28'
+  }
+}
+
+to 'pibody set servo' pin degrees {
+  degrees = (maximum 0 (minimum degrees 180))
+  degrees = ('[misc:rescale]' degrees 0 180 -90 90)
+  setServoAngle pin degrees
+}
+
+to 'pibody set servo speed' pin speed {
+  setServoSpeed pin speed
+}
+
+to 'pibody sound analog' slot {
+  if (('[data:find]' ('[data:convertType]' slot 'string') ('[data:makeList]' 'C (28)' 'F (26)')) > 0) {
+    local 'pin' (at 1 ('[data:split]' (at 'last' ('[data:split]' slot '(')) ')' true))
+    local 'value' (analogReadOp pin)
+    comment 'Simple low-pass filter to smooth some of the noise.'
+    _pibody_avg_loudness = (((4 * _pibody_avg_loudness) + value) / 5)
+    return _pibody_avg_loudness
+  } else {
+    return 'Invalid pin number. Valid pins: 26 & 28'
+  }
+}
+
+to 'pibody sound digital' slot {
+  if (('[data:find]' ('[data:convertType]' slot 'string') ('[data:makeList]' 'A (1)' 'B (3)' 'C (22)' 'D (5)' 'E (7)' 'F (27)' 'G (17)' 'H (19)')) > 0) {
+    local 'pin' (at 1 ('[data:split]' (at 'last' ('[data:split]' slot '(')) ')' true))
+    return (digitalReadOp pin)
+  } else {
+    return 'Invalid pin number. Valid pins: 1, 3, 5, 7, 17, 19, 22 & 27'
+  }
+}
+
+to 'pibody stop servo' pin {
+  stopServo pin
+}
+
+to 'pibody switch' slot {
+  return ('pibody button' slot)
+}
+
+to 'pibody touch' slot {
+  return ('pibody button' slot)
+}
+

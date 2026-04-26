@@ -58,6 +58,9 @@ method gotoSlot Caret index {
 	setPosition morph (at pos 1) (at pos 2)
 	updateMark this
 	scrollIntoView this
+	if ('Browser' == (platform)) {
+		setInputPosition (at pos 1) (at pos 2)
+	}
 }
 
 method scrollIntoView Caret {

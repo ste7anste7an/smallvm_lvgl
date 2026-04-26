@@ -1,19 +1,19 @@
 module 'Motion (MPU 6050)' Input
 author MicroBlocks
-version 1 0 
+version 1 2 
 choices mpu6050_axis x y z 
 description 'MPU6050 6-DOF acclerometer + gyro motion sensor
 
 Based on code from Joan Guillén.
 '
-variables mpu6050_addr mpu6050_gyro_offset_x mpu6050_gyro_offset_y mpu6050_gyro_offset_z 
+variables _mpu6050_addr _mpu6050_gyro_offset_x _mpu6050_gyro_offset_y _mpu6050_gyro_offset_z 
 
   spec 'r' 'mpu6050_tiltX' 'm6050 tilt x'
   spec 'r' 'mpu6050_tiltY' 'm6050 tilt y'
   spec 'r' 'mpu6050_tiltZ' 'm6050 tilt z'
   spec 'r' 'mpu6050_acceleration' 'm6050 acceleration'
   space
-  spec 'r' 'mpu6050_gyro' '_mpu6050 gyro _' 'menu.mpu6050_axis' 'x'
+  spec 'r' 'mpu6050_gyro' 'mpu6050 gyro _' 'menu.mpu6050_axis' 'x'
   spec ' ' 'mpu6050_calibrate_gyro' 'mpu6050 calibrate gyro'
   space
   spec 'r' '_mpu6050_raw_accel' '_mpu6050_raw_accel _ sign _' 'menu.mpu6050_axis num' 'x' 1
@@ -23,8 +23,8 @@ variables mpu6050_addr mpu6050_gyro_offset_x mpu6050_gyro_offset_y mpu6050_gyro_
 to '_mpu6050_raw_accel' axis sign {
   '_mpu6050_setup'
   local 'reading' (newList 6)
-  '[sensors:i2cWrite]' mpu6050_addr ('[data:makeList]' (hexToInt '3B'))
-  '[sensors:i2cRead]' mpu6050_addr reading
+  '[sensors:i2cWrite]' _mpu6050_addr ('[data:makeList]' (hexToInt '3B'))
+  '[sensors:i2cRead]' _mpu6050_addr reading
   local 'msB' 3
   local 'lsB' 4
   if (axis == 'y') {
@@ -45,20 +45,20 @@ to '_mpu6050_raw_accel' axis sign {
 to '_mpu6050_raw_gyro' axis {
   '_mpu6050_setup'
   local 'reading' (newList 6)
-  '[sensors:i2cWrite]' mpu6050_addr ('[data:makeList]' (hexToInt '43'))
-  '[sensors:i2cRead]' mpu6050_addr reading
+  '[sensors:i2cWrite]' _mpu6050_addr ('[data:makeList]' (hexToInt '43'))
+  '[sensors:i2cRead]' _mpu6050_addr reading
   local 'msB' 1
   local 'lsB' 2
-  local 'offset' mpu6050_gyro_offset_x
+  local 'offset' _mpu6050_gyro_offset_x
   if (axis == 'y') {
     msB = 3
     lsB = 4
-    offset = mpu6050_gyro_offset_y
+    offset = _mpu6050_gyro_offset_y
   }
   if (axis == 'z') {
     msB = 5
     lsB = 6
-    offset = mpu6050_gyro_offset_z
+    offset = _mpu6050_gyro_offset_z
   }
   local 'result' (at msB reading)
   if (result > 127) {
@@ -68,39 +68,39 @@ to '_mpu6050_raw_gyro' axis {
 }
 
 to '_mpu6050_setup' {
-  if (mpu6050_addr != 0) {return}
-  mpu6050_addr = (hexToInt '68')
-  if (not ('[sensors:i2cExists]' mpu6050_addr)) {
-    mpu6050_addr = (hexToInt '69')
-    if (not ('[sensors:i2cExists]' mpu6050_addr)) {
-      mpu6050_addr = 0
+  if (_mpu6050_addr != 0) {return}
+  _mpu6050_addr = (hexToInt '68')
+  if (not ('[sensors:i2cExists]' _mpu6050_addr)) {
+    _mpu6050_addr = (hexToInt '69')
+    if (not ('[sensors:i2cExists]' _mpu6050_addr)) {
+      _mpu6050_addr = 0
       sayIt 'MPU6050 not found'
       stopTask
     }
   }
-  mpu6050_addr = (hexToInt '68')
+  _mpu6050_addr = (hexToInt '68')
   comment 'setclockSource  0x01'
-  local 'value' (i2cGet mpu6050_addr (hexToInt '6b'))
+  local 'value' (i2cGet _mpu6050_addr (hexToInt '6b'))
   value = (value & (hexToInt 'F8'))
   value = (value | (hexToInt '01'))
-  '[sensors:i2cWrite]' mpu6050_addr ('[data:makeList]' (hexToInt '6B') value)
+  '[sensors:i2cWrite]' _mpu6050_addr ('[data:makeList]' (hexToInt '6B') value)
   comment 'setScale amb MPU6050_SCALE_500DPS -> 0x01'
   comment 'dpsPerDigit = .060975f'
-  local 'value' (i2cGet mpu6050_addr (hexToInt '1B'))
+  local 'value' (i2cGet _mpu6050_addr (hexToInt '1B'))
   value = (value & (hexToInt 'E7'))
   value = (value | (1 << 3))
-  '[sensors:i2cWrite]' mpu6050_addr ('[data:makeList]' (hexToInt '1B') value)
+  '[sensors:i2cWrite]' _mpu6050_addr ('[data:makeList]' (hexToInt '1B') value)
   comment 'setRange amb MPU6050_RANGE_2G -> 0x00'
   comment 'rangePerDigit = .000061f'
-  local 'value' (i2cGet mpu6050_addr (hexToInt '1C'))
+  local 'value' (i2cGet _mpu6050_addr (hexToInt '1C'))
   value = (value & (hexToInt 'E7'))
   value = (value | (0 << 3))
-  '[sensors:i2cWrite]' mpu6050_addr ('[data:makeList]' (hexToInt '1C') value)
+  '[sensors:i2cWrite]' _mpu6050_addr ('[data:makeList]' (hexToInt '1C') value)
   comment 'setSleepEnabled -> false'
   comment 'registerBit (0x6B,6)'
-  local 'value' (i2cGet mpu6050_addr (hexToInt '6B'))
+  local 'value' (i2cGet _mpu6050_addr (hexToInt '6B'))
   value = (value & ('~' (1 << 6)))
-  '[sensors:i2cWrite]' mpu6050_addr ('[data:makeList]' (hexToInt '6B') value)
+  '[sensors:i2cWrite]' _mpu6050_addr ('[data:makeList]' (hexToInt '6B') value)
 }
 
 to mpu6050_acceleration {
@@ -112,9 +112,9 @@ to mpu6050_acceleration {
 
 to mpu6050_calibrate_gyro {
   local 'sampleCount' 200
-  mpu6050_gyro_offset_x = 0
-  mpu6050_gyro_offset_y = 0
-  mpu6050_gyro_offset_z = 0
+  _mpu6050_gyro_offset_x = 0
+  _mpu6050_gyro_offset_y = 0
+  _mpu6050_gyro_offset_z = 0
   local 'xSum' 0
   local 'ySum' 0
   local 'zSum' 0
@@ -123,9 +123,9 @@ to mpu6050_calibrate_gyro {
     ySum += ('_mpu6050_raw_gyro' 'y')
     zSum += ('_mpu6050_raw_gyro' 'z')
   }
-  mpu6050_gyro_offset_x = (xSum / sampleCount)
-  mpu6050_gyro_offset_y = (ySum / sampleCount)
-  mpu6050_gyro_offset_z = (zSum / sampleCount)
+  _mpu6050_gyro_offset_x = (xSum / sampleCount)
+  _mpu6050_gyro_offset_y = (ySum / sampleCount)
+  _mpu6050_gyro_offset_z = (zSum / sampleCount)
 }
 
 to mpu6050_gyro axis {

@@ -2517,16 +2517,28 @@ msgid "Hip Hop"
 msgstr "Hip Hop"
 
 #. General MIDI drum set
-msgid "Jungle Techno"
-msgstr "Jungle Techno"
+msgid "Jungle"
+msgstr "Jungle"
+
+#. General MIDI drum set
+msgid "Techno"
+msgstr "Techno"
 
 #. General MIDI drum set
 msgid "Room L/R"
 msgstr "Room L/R"
 
 #. General MIDI drum set
-msgid "House Power Electronic"
-msgstr "House Power Electronic"
+msgid "House"
+msgstr "House"
+
+#. General MIDI drum set
+msgid "Power"
+msgstr "Power"
+
+#. General MIDI drum set
+msgid "Electronic"
+msgstr "Electronic"
 
 #. General MIDI drum set
 msgid "TR-808"
@@ -2573,8 +2585,12 @@ msgid "Brush 2 L/R"
 msgstr "Brush 2 L/R"
 
 #. General MIDI drum set
-msgid "Orchestra Ethnic"
-msgstr "Orchestra Ethnic"
+msgid "Orchestra"
+msgstr "Orchestra"
+
+#. General MIDI drum set
+msgid "Ethnic"
+msgstr "Ethnic"
 
 #. General MIDI drum set
 msgid "Kick & Snare"
@@ -5111,6 +5127,87 @@ msgstr "set TFT backlight _"
 msgid "battery percentage"
 msgstr "battery percentage"
 
+#. CoCube Emoji library label
+#. Show emojis on the TFT Screen.
+msgid "CoCube Emoji"
+msgstr "CoCube Emoji"
+
+#. CoCube emoji block
+msgid "set emoji _ scale _"
+msgstr "set emoji _ scale _"
+
+#. CoCube emoji block
+msgid "naughty"
+msgstr "naughty"
+
+#. CoCube emoji block
+msgid "star-struck"
+msgstr "star-struck"
+
+#. CoCube emoji block
+msgid "kiss"
+msgstr "kiss"
+
+#. CoCube emoji block
+msgid "laughing"
+msgstr "laughing"
+
+#. CoCube emoji block
+msgid "neutral"
+msgstr "neutral"
+
+#. CoCube emoji block
+msgid "smug"
+msgstr "smug"
+
+#. CoCube emoji block
+msgid "crying"
+msgstr "crying"
+
+#. CoCube emoji block
+msgid "sleeping"
+msgstr "sleeping"
+
+#. CoCube emoji block
+msgid "awkward"
+msgstr "awkward"
+
+#. CoCube emoji block
+msgid "shocked"
+msgstr "shocked"
+
+#. CoCube emoji block
+msgid "nerdy"
+msgstr "nerdy"
+
+#. CoCube emoji block
+msgid "cool"
+msgstr "cool"
+
+#. CoCube emoji block
+msgid "scared"
+msgstr "scared"
+
+#. CoCube emoji block
+msgid "cold"
+msgstr "cold"
+
+#. CoCube emoji block
+msgid "hot"
+msgstr "hot"
+
+#. CoCube emoji block
+msgid "nauseated"
+msgstr "nauseated"
+
+#. CoCube emoji block
+msgid "vomiting"
+msgstr "vomiting"
+
+#. CoCube emoji block
+msgid "dizzy"
+msgstr "dizzy"
+
 #. CoCube Module library block
 msgid "3D gesture connected"
 msgstr "3D gesture connected"
@@ -5166,6 +5263,14 @@ msgstr "DLight level"
 #. CoCube Module library block
 msgid "ultrasonic distance (mm)"
 msgstr "ultrasonic distance (mm)"
+
+#. CoCube Module library block
+msgid "Tracker _ on black"
+msgstr "tracker _ on black"
+
+#. CoCube Module library block
+msgid "Tracker _ on white"
+msgstr "tracker _ on white"
 
 #. CoCube Sengo1 library choice
 msgid "Color Recog"
@@ -5458,6 +5563,10 @@ msgstr "Sengo2 set blob detect property color _ width _ height _"
 #. CoCube Sengo2 library block
 msgid "Sengo2 set color recog area x _ y _ width _ height _ (0-100)"
 msgstr "Sengo2 set color recog area x _ y _ width _ height _ (0-100)"
+
+#. CoCube Soccer library block
+msgid "set NeoPixels color _"
+msgstr "set NeoPixels color _"
 
 #. Calliope NeoPixel library block
 msgid "Calliope set all NeoPixels to _"
@@ -7000,21 +7109,25 @@ msgstr "delete"
 msgid "blockdef;delete"
 msgstr "delete"
 
-#. Block input right-click context menu
-msgid "Input type:"
-msgstr "Input type:"
-
-#. Block input right-click context menu option
-msgid "string only"
-msgstr "string only"
-
-#. Block input right-click context menu option
+#. Slot type menu option
 msgid "string or number"
 msgstr "string or number"
 
-#. Block input right-click context menu option
+#. Slot type menu option
 msgid "number only"
 msgstr "number only"
+
+#. Slot type menu option
+msgid "string only"
+msgstr "string only"
+
+#. Slot type menu option
+msgid "boolean switch"
+msgstr "boolean switch"
+
+#. Slot type menu option
+msgid "color patch"
+msgstr "color patch"
 
 #. Text right-click context menu option
 msgid "stop editing"
@@ -7251,6 +7364,10 @@ msgstr "CoCube"
 #. Library name
 msgid "MIDI"
 msgstr "MIDI"
+
+#. Library name
+msgid "MIDI Player"
+msgstr "MIDI Player"
 
 #. Library name
 msgid "Function Calls"

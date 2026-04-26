@@ -252,7 +252,12 @@ in response to the Get All Code message.
 Body contains two 32-bit integers (LSB first):
 <code space used (bytes)><total code space (bytes)>
 
-### *Reserved* (OpCodes 0x22-0x25)
+### Snapshot Code to File (OpCode: 0x22; long message; IDE -> board)
+
+Body contains the file name. (By convention, code snapshot file names have the suffix .ucode.)
+Does nothing on boards without file systems.
+
+### *Reserved* (OpCodes 0x23-0x25)
 
 Reserved for additional messages.
 

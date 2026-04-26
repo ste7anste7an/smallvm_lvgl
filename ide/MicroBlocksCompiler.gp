@@ -268,6 +268,10 @@ method microBlocksSpecs SmallCompiler {
 
 		(array 'r' '[misc:dueLinkPID]'	'DUELink PID')
 
+		(array 'r' '[misc:functionExists]'		'function _ exists' 'str')
+		(array ' ' '[misc:launchCodeSnapshot]'	'launch code snapshot _' 'str')
+		(array ' ' '[misc:deepSleep]'			'deep sleep for _ secs' 'num' 60)
+
 		(array 'r' '[sensors:touchRead]'	'capacitive sensor _' 'num' 1)
 		(array 'r' '[sensors:readDHT]'		'read DHT data pin _' 'num' 1)
 		(array ' ' '[sensors:captureStart]'	'start pulse capture pin _' 'num' 0)
@@ -347,6 +351,7 @@ method microBlocksSpecs SmallCompiler {
 		(array 'r' '[file:fileSize]'		'size of file _' 'str')
 		(array ' ' '[file:startList]'		'start file list _' 'str' 'dir')
 		(array 'r' '[file:nextInList]'		'next file in list')
+		(array 'r' '[file:nextDirInList]'	'next directory in list')
 		(array 'r' '[file:systemInfo]'		'file system info')
 
 		(array ' ' '[radio:sendInteger]'			'radio send number _' 'num' 123)
@@ -591,7 +596,8 @@ method initPrimsets SmallCompiler {
 		camera
 		1wire
 		encoder
-		sd'
+		sd
+		lgvl'
 
 	primsets = (dictionary)
 	primSetIndex = 0

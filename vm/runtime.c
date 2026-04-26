@@ -1070,6 +1070,51 @@ int indexOfVarNamed(const char *s) {
 	return result;
 }
 
+// Startup gestures
+
+int startupButtonPressed = false;
+int startupFirstPressMSecs = 0;
+int startupClickCount = 0;
+
+void loadStartCodeOrClear() {
+	if (ideConnected()) return; // do nothing if connected to IDE; would break IDE/board sync
+
+	if (hasStartupSnapshot()) {
+		loadCodeSnapshot((char *) "startup.ucode");
+	} else {
+		// clear the current program
+		clearAllVariables();
+		deleteAllChunks();
+		softReset(true);
+		if (useTFT) tftClear();
+		restoreScripts();
+		startAll();
+	}
+}
+
+void processStartupGesture() {
+	OBJ noArgs;
+	if (startupFirstPressMSecs && ((millisecs() - startupFirstPressMSecs) > 1200)) {
+		startupClickCount = 0;
+	}
+	int buttonDown = (trueObj == primButtonA(&noArgs));
+	if (buttonDown) {
+		if (!startupButtonPressed) {
+			if (startupClickCount == 0) startupFirstPressMSecs = millisecs();
+			startupClickCount++;
+			if (startupClickCount >= 3) {
+				loadStartCodeOrClear();
+				startupClickCount = 0;
+			}
+			startupButtonPressed = true;
+			delay(10); // debounce down transition
+		}
+	} else {
+		if (startupButtonPressed) delay(10); // debounce up transition
+		startupButtonPressed = false;
+	}
+}
+
 // Receiving Messages from IDE
 
 #define RCVBUF_SIZE 1024
@@ -1276,6 +1321,12 @@ static void processLongMessage() {
 		break;
 	case extendedMsg:
 		processExtendedMessage(chunkIndex, bodyBytes, &rcvBuf[5]);
+		break;
+	case snapshotCodeToFileMsg:
+		#if defined(ESP32) || defined(ESP8266) || defined(RP2040_PHILHOWER)
+			// Code snapshots are supported only on boards that have a file system.
+			snapshotCodeToFile(&rcvBuf[5], bodyBytes);
+		#endif
 		break;
 	default:
 		if ((200 <= cmd) && (cmd <= 205)) {

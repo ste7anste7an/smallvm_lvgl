@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: interest@microblocks.fun\n"
 "POT-Creation-Date: 2024-10-30 07:10+0200\n"
-"PO-Revision-Date: 2026-02-21 17:09+0000\n"
+"PO-Revision-Date: 2026-02-25 07:09+0000\n"
 "Last-Translator: Josep Ferràndiz <josep.ferrandiz@gmail.com>\n"
 "Language-Team: Catalan <https://hosted.weblate.org/projects/microblocks/ide/"
 "ca/>\n"
@@ -1731,7 +1731,7 @@ msgstr "imatge.bmp"
 
 #. Color library label
 msgid "Color Operators"
-msgstr "Colors"
+msgstr "Operadors de Color"
 
 #. Color library block
 msgid "color r _ g _ b _ (0-255)"
@@ -1856,7 +1856,7 @@ msgstr "toca la freqüència _ durant _ ms"
 
 #. Tone library block
 msgid "play midi key _ for _ ms"
-msgstr "toca la tecla MIDI _ durant _ ms"
+msgstr "toca la nota MIDI _ durant _ ms"
 
 #. Tone library block
 msgid "start tone _ Hz"
@@ -7896,7 +7896,7 @@ msgstr "actualitza la pantalla"
 
 #. 8 Bit Graphics Library block
 msgid "starting at x _ y _ width _ height _"
-msgstr "comença a x _ y _ amplada _ alçada _"
+msgstr "començant a x _ y _ amplada _ alçada _"
 
 #. 8 Bit Graphics Library block
 msgid "bitmap from BMP file _"
@@ -7908,7 +7908,7 @@ msgstr "mapa de bits d'amplada _ del fitxer cru indexat _"
 
 #. 8 Bit Graphics Library block
 msgid "bitmap of width _ from string _"
-msgstr "mapa de bits d'amplada _ de la cadena _"
+msgstr "mapa de bits d'amplada _ a partir de la cadena _"
 
 #. 8 Bit Graphics Library block
 msgid "bitmap _ rotated _ º"
@@ -7932,7 +7932,7 @@ msgstr "fusiona la tesel·la _ a la posició de la tesel·la _ , _"
 
 #. 8 Bit Graphics Library block
 msgid "set palette _"
-msgstr "estableix la paleta a _"
+msgstr "selecciona la paleta _"
 
 #. 8 Bit Graphics Library block
 msgid "set transparent color index _"
@@ -8148,7 +8148,7 @@ msgstr "Plats i Palmes 2"
 
 #. MIDI library block
 msgid "stop all notes on channel _ in _ ms"
-msgstr "atura totes les notes al canal _ en _ ms"
+msgstr "atura totes les notes del canal _ en _ ms"
 
 #. General MIDI drum set
 msgid "Orchestra Ethnic"

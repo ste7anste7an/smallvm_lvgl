@@ -1,0 +1,28 @@
+module 'CoCube Emoji'
+author 'Shuai Liang'
+version 1 1 
+depends '_Graphics and Displays/8 Bit Graphics' 
+choices emoji_Menu happy naughty 'star-struck' kiss laughing neutral smug crying sleeping awkward shocked nerdy cool scared angry cold hot nauseated vomiting dizzy 
+description 'Show emojis on the TFT Screen. The emojis are stored in BMP format in the _emoji/ directory.'
+
+  spec ' ' 'set emoji' 'set emoji _ scale _' 'menu.emoji_Menu menu.range:1-5' 'happy' 4
+
+to 'set emoji' emoji scale {
+  '8bit_set scale _' (scale + 3)
+  local 'file' ('[data:join]' '_emoji/' emoji '.bmp')
+  '8bit_set palette' ('8bit_palette from BMP file' file)
+  local 'offset' 3
+  if (scale == 1) {
+    offset = 18
+  } (scale == 2) {
+    offset = 12
+  } (scale == 3) {
+    offset = 8
+  } (scale == 4) {
+    offset = 5
+  }
+  '8bit_merge' ('8bit_bitmap from BMP file' file) offset offset
+  '8bit_draw buffer'
+  '[file:close]' file
+}
+

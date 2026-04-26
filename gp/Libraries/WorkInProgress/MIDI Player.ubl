@@ -1,0 +1,101 @@
+module 'MIDI Player' Output
+author MicroBlocks
+version 1 1 
+depends _Files _MIDI 
+description 'Simple MIDI file player.
+
+Assumes the MIDI file is single-track format and contains exactly one track.
+'
+variables _midi_division _midi_bpm _midi_file 
+
+  spec ' ' 'midi_playFile' 'play midi file _ tempo _ BPM' 'str num' 'piano.mid' 120
+  space
+  spec ' ' '_midi_playLoop' '_midi_playLoop'
+  spec 'r' '_midi_byteArrayToInteger' '_midi_byteArray _ to integer' 'auto' ''
+  spec 'r' '_midi_nextMIDIMessage' '_midi_nextMIDIMessage'
+  spec 'r' '_midi_readValue' '_midi_readValue'
+
+to '_midi_byteArrayToInteger' 'byte array' {
+  local 'num' 0
+  for p (size (v 'byte array')) {
+    num = ((num << ((p - 1) * 8)) | (at p (v 'byte array')))
+  }
+  return num
+}
+
+to '_midi_nextMIDIMessage' {
+  local 'message' ('[file:readBytes]' 1 _midi_file)
+  if ((at 1 message) <= 191) {
+    message = ('[data:join]' message ('[file:readBytes]' 2 _midi_file))
+  } ((at 1 message) <= 223) {
+    message = ('[data:join]' message ('[file:readBytes]' 1 _midi_file))
+  } ((at 1 message) <= 239) {
+    message = ('[data:join]' message ('[file:readBytes]' 2 _midi_file))
+  } ((at 1 message) == 240) {
+    return message
+  } ((at 1 message) == 241) {
+    message = ('[data:join]' message ('[file:readBytes]' 1 _midi_file))
+  } ((at 1 message) == 242) {
+    message = ('[data:join]' message ('[file:readBytes]' 2 _midi_file))
+  } ((at 1 message) <= 243) {
+    message = ('[data:join]' message ('[file:readBytes]' 1 _midi_file))
+  }
+  return message
+}
+
+to '_midi_playLoop' {
+  repeatUntil ('[file:endOfFile]' _midi_file) {
+    local 'start' (millisOp)
+    local 'wait' ('_midi_readValue')
+    comment 'peek next byte, then roll back if it was a MIDI event'
+    local 'event first byte' (at 1 ('[file:readBytes]' 1 _midi_file))
+    if ((v 'event first byte') == 255) {
+      comment 'skip whole meta event'
+      file_SkipBytes 1 _midi_file
+      local 'length' ('_midi_readValue')
+      file_SkipBytes length _midi_file
+    } (or ((v 'event first byte') == 240) ((v 'event first byte') == 247)) {
+      comment 'skip whole sysex event'
+      repeatUntil ((at 1 ('[file:readBytes]' 1 _midi_file)) == 247) nil
+    } else {
+      comment 'move back 1 byte'
+      '[file:setReadPosition]' (('[file:readPosition]' _midi_file) - 1) _midi_file
+      local 'message' ('_midi_nextMIDIMessage' _midi_file)
+      waitMillis (((((60000 * wait) - ((((millisOp) - start) * _midi_division) * _midi_bpm)) / _midi_division) / _midi_bpm) - 2)
+      '_MIDI send bytes' message
+    }
+  }
+}
+
+to '_midi_readValue' {
+  local 'value' 0
+  local 'byte' (at 1 ('[file:readBytes]' 1 _midi_file))
+  repeatUntil ((byte >> 7) == 0) {
+    value = ((value << 7) | (byte & 127))
+    byte = (at 1 ('[file:readBytes]' 1 _midi_file))
+  }
+  value = ((value << 7) | (byte & 127))
+  return value
+}
+
+to midi_playFile 'file name' BPM {
+  _midi_file = (v 'file name')
+  _midi_bpm = BPM
+  '[file:open]' _midi_file
+  if (('[data:convertType]' ('[file:readBytes]' 4 _midi_file) 'string') != 'MThd') {
+    return 'Not a MIDI file. Sorry!'
+  }
+  comment 'skip:
+4 bytes: header length, always contains number 6
+2 bytes: format, we''ll assume single track format
+2 bytes: track count, we''ll assume just one'
+  file_SkipBytes 8 _midi_file
+  _midi_division = ('_midi_byteArrayToInteger' ('[file:readBytes]' 2 _midi_file))
+  if (('[data:convertType]' ('[file:readBytes]' 4 _midi_file) 'string') != 'MTrk') {
+    return 'Found no tracks in MIDI file. Sorry!'
+  }
+  comment 'skip track length'
+  file_SkipBytes 4 _midi_file
+  sendBroadcast '_midi_playLoop'
+}
+

@@ -3,12 +3,19 @@
 rm -f *.hex *.bin *.uf2
 cd ..
 
-pio run -e clue-ble
-python precompiled/uf2conv.py -c -f 0xada52840 .pio/build/clue-ble/firmware.hex -o extraVMs/vm_clue.uf2
+pio run -e cpx
+python precompiled/uf2conv.py -c .pio/build/cpx/firmware.bin -o extraVMs/vm_circuitplay.uf2
+pio run -e cplay52
+python precompiled/uf2conv.py -c .pio/build/cplay52/firmware.hex -f 0xADA52840 -o extraVMs/vm_cplay52.uf2
+pio run -e clue
+python precompiled/uf2conv.py -c -f 0xada52840 .pio/build/clue/firmware.hex -o extraVMs/vm_clue.uf2
+
 pio run -e pico-ed
 cp .pio/build/pico-ed/firmware.uf2 extraVMs/vm_pico_ed.uf2
 pio run -e m5stack
 cp .pio/build/m5stack/firmware.bin extraVMs/vm_m5stack.bin
+pio run -e nodemcu
+cp .pio/build/nodemcu/firmware.bin extraVMs/vm_nodemcu.bin
 
 pio run -e xiao-samd21
 python precompiled/uf2conv.py -c .pio/build/xiao-samd21/firmware.bin -o extraVMs/vm_xiao_samd21.uf2
@@ -68,7 +75,7 @@ cp .pio/build/esp32-c3-sparkle/firmware.bin extraVMs/vm_esp32-c3-sparkle.bin
 
 pio run -e waveshare-s3-matrix
 esptool.py --chip ESP32-S3 merge_bin -o extraVMs/vm_waveshare_s3_matrix_all.bin --flash_mode dio --flash_size 4MB 0 .pio/build/waveshare-s3-matrix/bootloader.bin 0x8000 esp32/partitionsMicroBlocks.bin 0xe000 esp32/boot_app0.bin 0x10000 .pio/build/waveshare-s3-matrix/firmware.bin
-// the following runs on the server during the release process:
+# the following runs on the server during the release process:
 python3 -m esptool --chip ESP32-S3 merge_bin -o extraVMs/vm_waveshare_s3_matrix_all.bin --flash_mode dio --flash_size 4MB 0 .pio/build/waveshare-s3-matrix/bootloader.bin 0x8000 esp32/partitionsMicroBlocks.bin 0xe000 esp32/boot_app0.bin 0x10000 .pio/build/waveshare-s3-matrix/firmware.bin
 
 pio run -e freenoveCamera

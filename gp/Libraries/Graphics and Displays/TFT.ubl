@@ -1,6 +1,6 @@
 module TFT Output
 author MicroBlocks
-version 1 14 
+version 1 17 
 description 'Draw graphics and write text on boards with a TFT display, such as the M5Stack, M5Stick, Citilab ED1 or (discontinued) IoT-Bus.'
 
   spec ' ' '[tft:clear]' 'clear TFT display'
@@ -25,10 +25,18 @@ Line 2' 50 20 16716113 2
   spec 'r' 'makeGray' 'gray _ %' 'num' 50
   spec 'r' 'randomColor' 'random color'
   space
+  spec ' ' 'tft_drawImage' 'draw image _ on TFT at x _ y _ color _ : #BR# scale _' 'str num num color num' '' 0 0 nil 1
+  spec 'r' 'tft_image' 'image _' 'str' '00000
+01010
+00000
+10001
+01110'
+  space
   spec 'r' '[tft:getWidth]' 'TFT width'
   spec 'r' '[tft:getHeight]' 'TFT height'
   space
   spec ' ' '[tft:setBacklight]' 'set TFT backlight _ (0-10)' 'num' 10
+  spec ' ' '[tft:invertDisplay]' 'invert TFT display _' 'bool' false
   space
   spec ' ' '_deferMonochromeDisplayUpdates' '_defer monochrome display updates'
   spec ' ' '_resumeMonochromeDisplayUpdates' '_resume monochrome display updates'
@@ -70,6 +78,22 @@ to tft_colorSwatch color {
   return color
 }
 
+to tft_drawImage imageString x y c optionalScale {
+  comment 'Draw an image at the given position. An image is represented by a multi-line string
+of 0 and 1 characters where each line is one row of the image. 1 means that pixel on (lit).'
+  local 'scale' (argOrDefault 5 1)
+  local 'left' x
+  for ch ('[data:convertType]' imageString 'byte array') {
+    if (ch == 10) {
+      y += scale
+      x = left
+    } else {
+      if (ch == 49) {'[tft:rect]' x y scale scale true}
+      x += scale
+    }
+  }
+}
+
 to tft_drawText s x y color optionalScale optionalBGColor {
   s = ('[data:convertType]' s 'string')
   local 'scale' (argOrDefault 5 2)
@@ -89,5 +113,9 @@ to tft_drawVector x y angle length color {
   local 'endX' (x + ((length * ('[misc:sin]' (100 * (angle + 90)))) >> 14))
   local 'endY' (y + ((length * ('[misc:sin]' (100 * angle))) >> 14))
   '[tft:line]' x y endX endY color
+}
+
+to tft_image s {
+  return ('[data:convertType]' s 'string')
 }
 

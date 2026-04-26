@@ -30,19 +30,14 @@ pio run -e calliope
 cp .pio/build/calliope/firmware.hex precompiled/vm_calliope.hex
 pio run -e calliopeV3-ble
 cp .pio/build/calliopeV3-ble/firmware.hex precompiled/vm_calliopeV3-ble.hex
-pio run -e nodemcu
-cp .pio/build/nodemcu/firmware.bin precompiled/vm_nodemcu.bin
 pio run -e ed1
 cp .pio/build/ed1/firmware.bin precompiled/vm_citilab-ed1.bin
+
 pio run -e cocube
-cp .pio/build/cocube/firmware.bin precompiled/vm_cocube.bin
+esptool.py --chip ESP32 merge_bin -o precompiled/vm_cocube.bin --flash_mode dio --flash_size 4MB 0x1000 esp32/bootloader_dio_40m.bin 0xe000 esp32/boot_app0.bin 0x8000 esp32/partitionsMicroBlocks.bin 0x10000 .pio/build/cocube/firmware.bin 0x1e8000 .pio/libdeps/cocube/CoCube-Assets/firmware/mbcode.bin 0x210000 .pio/libdeps/cocube/CoCube-Assets/firmware/littlefs.bin
 
 pio run -e esp32
 cp .pio/build/esp32/firmware.bin precompiled/vm_esp32.bin
-pio run -e cpx
-python precompiled/uf2conv.py -c .pio/build/cpx/firmware.bin -o precompiled/vm_circuitplay.uf2
-pio run -e cplay52
-python precompiled/uf2conv.py -c .pio/build/cplay52/firmware.hex -f 0xADA52840 -o precompiled/vm_cplay52.uf2
 pio run -e pico-w
 cp .pio/build/pico-w/firmware.uf2 precompiled/vm_pico_w.uf2
 pio run -e wukong2040

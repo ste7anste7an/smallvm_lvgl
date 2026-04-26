@@ -1,17 +1,16 @@
 module 'Button Events' Input
 author MicroBlocks
-version 1 0
+version 1 1 
+tags event button double long press 
 description 'Provides blocks to detect press, long press and double press events on buttons.'
-tags event button double long press
+variables _buttons 
 
-variables _buttons
-
-	spec 'r' 'button double pressed' 'button _ double pressed' 'auto' 'A'
-	spec 'r' 'button long pressed' 'button _ long pressed' 'auto' 5
-	spec 'r' 'button pressed' 'button _ pressed' 'auto' 5
-	spec 'r' '_button' '_button _' 'auto' 10
-	spec ' ' '_updateButtons' '_updateButtons'
-	spec 'r' '_read button' '_read button _' 'auto' 10
+  spec 'r' 'button double pressed' 'button _ double pressed' 'auto' 'A'
+  spec 'r' 'button long pressed' 'button _ long pressed' 'auto' 5
+  spec 'r' 'button pressed' 'button _ pressed' 'auto' 5
+  spec 'r' '_button' '_button _' 'auto' 10
+  spec ' ' '_updateButtons' '_updateButtons'
+  spec 'r' '_read button' '_read button _' 'auto' 10
 
 to '_button' 'pin or name' {
   '_updateButtons'
@@ -19,7 +18,7 @@ to '_button' 'pin or name' {
     if ((at 1 (v 'each button')) == (v 'pin or name')) {return (v 'each button')}
   }
   comment 'This button has not been initialized. Let''s add it.'
-  local 'new button' ('[data:makeList]' (v 'pin or name') '' '' 'waiting')
+  local 'new button' ('[data:makeList]' (v 'pin or name') '' '' 'waiting' '')
   '[data:addLast]' (v 'new button') _buttons
   return (v 'new button')
 }
@@ -37,6 +36,10 @@ to '_read button' 'pin or name' {
 to '_updateButtons' {
   if (_buttons == 0) {_buttons = ('[data:makeList]')}
   for button _buttons {
+    atPut 5 button ((millisOp) - (at 2 button))
+    if ((at 5 button) > 1000) {
+      atPut 4 button 'waiting'
+    }
     local 'currently pressed' ('_read button' (at 1 button))
     local 'previous state' (at 4 button)
     if (and ((v 'previous state') == 'waiting') (v 'currently pressed')) {

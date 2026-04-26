@@ -1192,6 +1192,35 @@ void resumeCodeFileUpdates() {
 	#endif
 }
 
+// Code Snapshot support
+
+int codeStoreSize() {
+	return HALF_SPACE - 8; // minus cycle word(s)
+}
+
+void appendToCodeStore(uint8 *data, int byteCount) {
+	int wordCount = byteCount / 4;
+	#ifdef USE_CODE_FILE
+		memcpy(freeStart, data, 4 * wordCount); // copy into the RAM code store
+		writeCodeFile((uint8 *) data, 4 * wordCount);
+	#else
+		flashWriteData(freeStart, wordCount, data);
+	#endif
+	freeStart += wordCount;
+}
+
+uint8* getCodeStore(int *byteCount) {
+	compactCodeStore(NULL, NULL);
+	int *codeStart = (0 == current) ? start0 : start1;
+
+	// skip the cycle count word(s)
+	codeStart++;
+	if (CYCLE_COUNT_WORDS == 2) codeStart++;
+
+	*byteCount = 4 * (freeStart - codeStart);
+	return (uint8 *) codeStart;
+}
+
 // testing
 
 static void dumpWords(int halfSpace, int count) {

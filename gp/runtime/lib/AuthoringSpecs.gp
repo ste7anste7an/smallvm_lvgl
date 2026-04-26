@@ -529,6 +529,7 @@ method languageCodeList AuthoringSpecs {
 		(array 'Српски' 'sr')
 		(array 'українська мова' 'uk')
 		(array 'Қазақша' 'kk')
+		(array 'עִבְרִית' 'he')
 		(array 'عربى' 'ar')
 		(array 'فارسی' 'fa')
 		(array 'தமிழ்' 'ta')

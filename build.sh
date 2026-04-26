@@ -119,7 +119,7 @@ else
 fi
 
 # update date of MicroBlocks.app
-touch --no-create apps/MicroBlocks.app
+touch -c apps/MicroBlocks.app
 
 # app packaging
 # also zips standalone executables

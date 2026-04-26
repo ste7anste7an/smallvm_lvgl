@@ -1,6 +1,6 @@
 module 'Calliope Servoboard' Output
 author 'Ralf Krause'
-version 1 3 
+version 1 4 
 depends Servo 
 choices csb_servoType '180°' '270°' '360°' 
 choices csb_motorPort M0 M1 'M0+M1' 
@@ -23,15 +23,15 @@ MotorPorts M0, M1
 
 to csb_AngleServo servoType servoPort angle {
   comment 'angle range maps from -servoType/2 to +servoType/2'
-  local 'port' 8
+  local 'pin' 8
   if ('C9' == servoPort) {
-    port = 9
+    pin = 9
   }
   if ('C14' == servoPort) {
-    port = 14
+    pin = 14
   }
   if ('C15' == servoPort) {
-    port = 15
+    pin = 15
   }
   local 'angleRange' 90
   if ('270°' == servoType) {
@@ -40,21 +40,21 @@ to csb_AngleServo servoType servoPort angle {
   if ('360°' == servoType) {
     angleRange = 180
   }
-  setServoAngle port ((angle * 90) / angleRange)
+  setServoAngle pin ((angle * 90) / angleRange)
 }
 
 to csb_ContinousServo servoPort speed {
-  local 'port' 8
+  local 'pin' 8
   if ('C9' == servoPort) {
-    port = 9
+    pin = 9
   }
   if ('C14' == servoPort) {
-    port = 14
+    pin = 14
   }
   if ('C15' == servoPort) {
-    port = 15
+    pin = 15
   }
-  setServoSpeed port speed
+  setServoSpeed pin speed
 }
 
 to csb_SetMotor motorPort speed {
@@ -81,29 +81,29 @@ to csb_SetMotor motorPort speed {
 }
 
 to csb_StopAll {
-  CalliopeStopServo 'C8'
-  CalliopeStopServo 'C9'
-  CalliopeStopServo 'C14'
-  CalliopeStopServo 'C15'
-  CalliopeStopMotor 'M0'
-  CalliopeStopMotor 'M1'
+  csb_StopServo 'C8'
+  csb_StopServo 'C9'
+  csb_StopServo 'C14'
+  csb_StopServo 'C15'
+  csb_StopMotor 'M0'
+  csb_StopMotor 'M1'
 }
 
 to csb_StopMotor motorPort {
-  CalliopeSetMotor motorPort 0
+  csb_SetMotor motorPort 0
 }
 
 to csb_StopServo servoPort {
-  local 'port' 8
+  local 'pin' 8
   if ('C9' == servoPort) {
-    port = 9
+    pin = 9
   }
   if ('C14' == servoPort) {
-    port = 14
+    pin = 14
   }
   if ('C15' == servoPort) {
-    port = 15
+    pin = 15
   }
-  stopServo port
+  stopServo pin
 }
 

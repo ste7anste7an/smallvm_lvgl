@@ -15,6 +15,7 @@
 
 #include "mem.h"
 #include "interp.h"
+#include "persist.h"
 #include "tinyJSON.h"
 #include "version.h"
 
@@ -440,128 +441,43 @@ static OBJ primBMP680GasResistance(int argCount, OBJ *args) {
 	return int2obj(calc_gas_res);
 }
 
-const uint8 font5x7[95 * 5] = {
-	0x00, 0x00, 0x00, 0x00, 0x00,	// space
-	0x00, 0x00, 0x4f, 0x00, 0x00,	// !
-	0x00, 0x07, 0x00, 0x07, 0x00,	// "
-	0x14, 0x7f, 0x14, 0x7f, 0x14,	// #
-	0x24, 0x2a, 0x7f, 0x2a, 0x12,	// $
-	0x23, 0x13, 0x08, 0x64, 0x62,	// %
-	0x36, 0x49, 0x55, 0x22, 0x20,	// &
-	0x00, 0x05, 0x03, 0x00, 0x00,	// '
-	0x00, 0x1c, 0x22, 0x41, 0x00,	// (
-	0x00, 0x41, 0x22, 0x1c, 0x00,	// )
-	0x14, 0x08, 0x3e, 0x08, 0x14,	// //
-	0x08, 0x08, 0x3e, 0x08, 0x08,	// +
-	0x50, 0x30, 0x00, 0x00, 0x00,	// ,
-	0x08, 0x08, 0x08, 0x08, 0x08,	// -
-	0x00, 0x60, 0x60, 0x00, 0x00,	// .
-	0x20, 0x10, 0x08, 0x04, 0x02,	// /
-	0x3e, 0x51, 0x49, 0x45, 0x3e,	// 0
-	0x00, 0x42, 0x7f, 0x40, 0x00,	// 1
-	0x42, 0x61, 0x51, 0x49, 0x46,	// 2
-	0x21, 0x41, 0x45, 0x4b, 0x31,	// 3
-	0x18, 0x14, 0x12, 0x7f, 0x10,	// 4
-	0x27, 0x45, 0x45, 0x45, 0x39,	// 5
-	0x3c, 0x4a, 0x49, 0x49, 0x30,	// 6
-	0x01, 0x71, 0x09, 0x05, 0x03,	// 7
-	0x36, 0x49, 0x49, 0x49, 0x36,	// 8
-	0x06, 0x49, 0x49, 0x29, 0x1e,	// 9
-	0x00, 0x36, 0x36, 0x00, 0x00,	// :
-	0x00, 0x56, 0x36, 0x00, 0x00,	// ;
-	0x08, 0x14, 0x22, 0x41, 0x00,	// <
-	0x14, 0x14, 0x14, 0x14, 0x14,	// =
-	0x00, 0x41, 0x22, 0x14, 0x08,	// >
-	0x02, 0x01, 0x51, 0x09, 0x06,	// ?
-	0x3e, 0x41, 0x5d, 0x55, 0x1e,	// @
-	0x7e, 0x11, 0x11, 0x11, 0x7e,	// A
-	0x7f, 0x49, 0x49, 0x49, 0x36,	// B
-	0x3e, 0x41, 0x41, 0x41, 0x22,	// C
-	0x7f, 0x41, 0x41, 0x22, 0x1c,	// D
-	0x7f, 0x49, 0x49, 0x49, 0x41,	// E
-	0x7f, 0x09, 0x09, 0x09, 0x01,	// F
-	0x3e, 0x41, 0x49, 0x49, 0x7a,	// G
-	0x7f, 0x08, 0x08, 0x08, 0x7f,	// H
-	0x00, 0x41, 0x7f, 0x41, 0x00,	// I
-	0x20, 0x40, 0x41, 0x3f, 0x01,	// J
-	0x7f, 0x08, 0x14, 0x22, 0x41,	// K
-	0x7f, 0x40, 0x40, 0x40, 0x40,	// L
-	0x7f, 0x02, 0x0c, 0x02, 0x7f,	// M
-	0x7f, 0x04, 0x08, 0x10, 0x7f,	// N
-	0x3e, 0x41, 0x41, 0x41, 0x3e,	// O
-	0x7f, 0x09, 0x09, 0x09, 0x06,	// P
-	0x3e, 0x41, 0x51, 0x21, 0x5e,	// Q
-	0x7f, 0x09, 0x19, 0x29, 0x46,	// R
-	0x26, 0x49, 0x49, 0x49, 0x32,	// S
-	0x01, 0x01, 0x7f, 0x01, 0x01,	// T
-	0x3f, 0x40, 0x40, 0x40, 0x3f,	// U
-	0x1f, 0x20, 0x40, 0x20, 0x1f,	// V
-	0x3f, 0x40, 0x38, 0x40, 0x3f,	// W
-	0x63, 0x14, 0x08, 0x14, 0x63,	// X
-	0x07, 0x08, 0x70, 0x08, 0x07,	// Y
-	0x61, 0x51, 0x49, 0x45, 0x43,	// Z
-	0x00, 0x7f, 0x41, 0x41, 0x00,	// [
-	0x02, 0x04, 0x08, 0x10, 0x20,	// (backslash)
-	0x00, 0x41, 0x41, 0x7f, 0x00,	// ]
-	0x04, 0x02, 0x01, 0x02, 0x04,	// ^
-	0x40, 0x40, 0x40, 0x40, 0x40,	// _
-	0x00, 0x00, 0x03, 0x05, 0x00,	// `
-	0x20, 0x54, 0x54, 0x54, 0x78,	// a
-	0x7F, 0x44, 0x44, 0x44, 0x38,	// b
-	0x38, 0x44, 0x44, 0x44, 0x44,	// c
-	0x38, 0x44, 0x44, 0x44, 0x7f,	// d
-	0x38, 0x54, 0x54, 0x54, 0x18,	// e
-	0x04, 0x04, 0x7e, 0x05, 0x05,	// f
-	0x08, 0x54, 0x54, 0x54, 0x3c,	// g
-	0x7f, 0x08, 0x04, 0x04, 0x78,	// h
-	0x00, 0x44, 0x7d, 0x40, 0x00,	// i
-	0x20, 0x40, 0x44, 0x3d, 0x00,	// j
-	0x7f, 0x10, 0x28, 0x44, 0x00,	// k
-	0x00, 0x41, 0x7f, 0x40, 0x00,	// l
-	0x7c, 0x04, 0x7c, 0x04, 0x78,	// m
-	0x7c, 0x08, 0x04, 0x04, 0x78,	// n
-	0x38, 0x44, 0x44, 0x44, 0x38,	// o
-	0x7c, 0x14, 0x14, 0x14, 0x08,	// p
-	0x08, 0x14, 0x14, 0x14, 0x7c,	// q
-	0x7c, 0x08, 0x04, 0x04, 0x08,	// r
-	0x48, 0x54, 0x54, 0x54, 0x24,	// s
-	0x04, 0x04, 0x3f, 0x44, 0x44,	// t
-	0x3c, 0x40, 0x40, 0x20, 0x7c,	// u
-	0x1c, 0x20, 0x40, 0x20, 0x1c,	// v
-	0x3c, 0x40, 0x30, 0x40, 0x3c,	// w
-	0x44, 0x28, 0x10, 0x28, 0x44,	// x
-	0x0c, 0x50, 0x50, 0x50, 0x3c,	// y
-	0x44, 0x64, 0x54, 0x4c, 0x44,	// z
-	0x08, 0x36, 0x41, 0x41, 0x00,	// {
-	0x00, 0x00, 0x77, 0x00, 0x00,	// |
-	0x00, 0x41, 0x41, 0x36, 0x08,	// }
-	0x02, 0x01, 0x02, 0x04, 0x02,	// ~
-};
-
 static OBJ primShapeforChar(int argCount, OBJ *args) {
 	// Return a byte array with the columns (left to right) of a character from
-	// the built-in the font (max 8 pixels tall). Character set is 0 to 255.
+	// the built-in the 5x7 font (max 8 pixels tall) for the given character.
+	// Input can be an integer (a Unicode code point) or a single character string.
 
 	const int fontWidth = 5;
-	int ascii = -1;
 	OBJ arg = args[0];
+	uint32_t ch = -1;
 	if (isInt(arg)) {
 		// argument is an integer
-		ascii = evalInt(arg);
+		ch = evalInt(arg);
 	} else if (IS_TYPE(arg, StringType) && (objWords(arg) > 0)) {
 		// argument is a non-empty string; use its first (and usually only) byte
-		ascii = *((uint8 *) &FIELD(arg, 0));
+		ch = unicodeCodePoint(obj2str(arg));
 	}
-	if ((ascii < 32) || (ascii > 126)) return zeroObj; // out of range
+	if (ch < 32) return zeroObj; // ignore non-printing ASCII characters
 
 	// create byte array
 	OBJ result = newObj(ByteArrayType, 2, falseObj); // two words, up to 8 bytes
-	if (result) setByteCountAdjust(result, fontWidth); // font width
+	if (!result) return fail(insufficientMemoryError);
+	setByteCountAdjust(result, fontWidth); // font width
+
+	// get pointer to font glyph
+	const uint8 *src;
+	#if defined(DUELink)
+		if ((ch < 32) || (ch > 126)) return zeroObj; // out of range
+		src = &mbFont[fontWidth * (ch - 32)];
+	#else
+		ch = codepointToCP437(ch);
+		if (ch > 255) return zeroObj; // out of range; shouldn't happen
+		src = &mbFont[fontWidth * ch];
+	#endif
 
 	// copy fontWidth bytes, one byte per column
 	uint8 *dst = (uint8 *) &FIELD(result, 0);
-	const uint8 *src = &font5x7[fontWidth * (ascii - 32)];
 	memcpy(dst, src, fontWidth);
+
 	return result;
 }
 
@@ -577,37 +493,81 @@ static OBJ primFunctionExists(int argCount, OBJ *args) {
 	return (chunkIndexForFunction(obj2str(args[0])) < 0) ? falseObj : trueObj;
 }
 
+static OBJ primLaunchCodeSnapshot(int argCount, OBJ *args) {
+	// Warning: This is a very advanced and potentially confusing primitive!!!
+	// This primitive replaces the code running on the board with a compiled code snapshot
+	// from a file. This means that, when this primitive is run while connected to the IDE,
+	// the code in the IDE will no longer match the code running on the board. To avoid
+	// confusion, is best to NOT run this primitive while connected to the IDE!
+	// This primitive is meant to be used only in the context of a MicroBlocks program
+	// used to select and run saved code snapshots. Such programs are typically created
+	// and maintained by product manufacturers (e.g. CoCube).
+	// The primitive is very experimental and may be removed!
+
+	if ((argCount < 1) || !IS_TYPE(args[0], StringType)) return fail(needsStringError);
+
+	#if defined(ESP32) || defined(ESP8266) || defined(RP2040_PHILHOWER)
+		if (ideConnected()) return fail(cannotUseWhileIDEConnected);
+		loadCodeSnapshot(obj2str(args[0]));
+		fail(newSnapshotSignal); // exit this task without suspending since its code has disappeared!
+	#else
+		fail(primitiveNotImplemented);
+	#endif
+	return falseObj;
+}
+
 static OBJ primDUELinkPID(int argCount, OBJ *args) {
 	return int2obj(*((uint32 *) 0x1FFF7004) & 0xFFFFFF);
 }
 
-#if defined(ARDUINO_ARCH_ESP32) || defined(ESP8266)
-
-#if defined(ARDUINO_ARCH_ESP32)
-	#include <esp_sleep.h>
-#else
-	// Defined in ioPrims.cpp because it needs to use the ESP C++ class.
-	void esp8266DeepSleep(uint64_t usecs);
-#endif
-
-static OBJ primESPSleep(int argCount, OBJ *args) {
+static OBJ primDeepSleep(int argCount, OBJ *args) {
 	// Deep sleep for N seconds. When that time elapses, the ESP32 will reset/boot.
+	// Currently does nothing on non-ESP boards; may be extended to other boards later.
 	// Note: on ESP8266, you must connect GPIO16 ("Wake" pin) to the RST to use deep sleep:
 	//	https://randomnerdtutorials.com/esp8266-deep-sleep-with-arduino-ide/
 
 	if ((argCount < 1) || !isInt(args[0])) return fail(needsIntegerError);
+	int secs = obj2int(args[0]);
 
-	uint64_t usecs = obj2int(args[0]) * 1000000;
-	#if defined(ARDUINO_ARCH_ESP32)
-		esp_sleep_enable_timer_wakeup(usecs);
-		esp_deep_sleep_start();
-	#else
-		esp8266DeepSleep(usecs);
-	#endif
+	deepSleep(secs);
 	return falseObj; // this is never executed
 }
 
-#endif
+// Experimental: will be deleted!
+
+static OBJ primLightSleep(int argCount, OBJ *args) {
+	// Light sleep for N milliseconds. When the time elapses, the ESP32 will
+	// resume from where it left off.
+
+	// Failed experiments:
+	// Attempt to enable "modem sleep". Doesn't work; esp_pm_configure() gives an error.
+	// 		#include <esp_pm.h> // power management
+	// 		esp_pm_config_esp32_t sleepConfig = {240, 80, true};
+	// 		esp_pm_configure(&sleepConfig);
+	//
+	// This breaks the USB connection:
+	// 		esp_sleep_enable_timer_wakeup(msecs * 1000);
+	// 		esp_light_sleep_start();
+
+	if ((argCount < 1) || !isInt(args[0])) return fail(needsIntegerError);
+	int msecs = obj2int(args[0]);
+	lightSleep(msecs);
+	return falseObj; // this is never executed
+}
+
+static OBJ primEnableBLE(int argCount, OBJ *args) {
+	// This fails (crashes) after 600 to 1600 cycles, probably due to heap fragmentation.
+
+	if (argCount < 1) return fail(notEnoughArguments);
+	#if defined(BLE_IDE)
+		if (trueObj == args[0]) {
+			BLE_start();
+		} else {
+			BLE_stop();
+		}
+	#endif
+	return falseObj;
+}
 
 #if defined(DUELink)
 
@@ -635,7 +595,7 @@ static OBJ primDUESleep(int argCount, OBJ *args) {
 	// Note: Boards with voltage regulators consume 1-3 mA even in shutdown mode.
 
 	// The following allows a user to recover if they create a script like "when started, sleep"
-	// It gives them ten seconds to connect the IDE to the board so they can change their code.
+	// It gives them five seconds to connect the IDE to the board so they can change their code.
 	if (totalMicrosecs() < (5 * 1000000)) return falseObj; // do nothing for N secs after startup
 
 	HAL_PWR_EnableWakeUpPin(PWR_WAKEUP_PIN1_HIGH);
@@ -828,9 +788,7 @@ static PrimEntry entries[] = {
 	{"shapeforChar", primShapeforChar},
 	{"clearGraph", primClearGraph},
 	{"functionExists", primFunctionExists},
-#if defined(ARDUINO_ARCH_ESP32) || defined(ESP8266)
-	{"espSleep", primESPSleep},
-#endif
+	{"launchCodeSnapshot", primLaunchCodeSnapshot},
 #if defined(DUELink)
 	{"dueLinkPID", primDUELinkPID},
 	{"dueSleep", primDUESleep},
@@ -852,6 +810,11 @@ static PrimEntry entries[] = {
 	{"jsonValueAt", primJSONValueAt},
 	{"jsonKeyAt", primJSONKeyAt},
 	{"scriptTooLarge", primScriptTooLarge},
+	{"deepSleep", primDeepSleep},
+
+// experimental
+	{"lightSleep", primLightSleep},
+	{"enableBLE", primEnableBLE},
 };
 
 void addMiscPrims() {

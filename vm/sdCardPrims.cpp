@@ -42,16 +42,12 @@ SdFat SD;
 #endif
 
 #if defined(DOMINO4_CWA)
-	// SS must defined before including SdFat.h
-	// #define SS 35
 	#undef DEFAULT_CS_PIN
 	#define DEFAULT_CS_PIN 35
 	#define MOSI_PIN 37
 	#define MISO_PIN 38
 	#define SCK_PIN 36
 #elif defined(SPRINGBOT)
-	// SS must defined before including SdFat.h
-	// #define SS 34
 	#undef DEFAULT_CS_PIN
 	#define DEFAULT_CS_PIN 34
 	#define MOSI_PIN 35
@@ -60,6 +56,10 @@ SdFat SD;
 #endif
 
 // Variables
+
+static int useSecondarySPI = false;
+static int isDedicatedSPI = false;
+static SPIClass *secondarySPI = NULL;
 
 #define MAX_FILE_PATH 128
 #define FILE_ENTRIES 4
@@ -77,15 +77,35 @@ static FileEntry fileEntry[FILE_ENTRIES]; // fileEntry[] records open files
 
 // Helper functions
 
+static void initSecondarySPI() {
+	if (secondarySPI) return; // already initialized
+	#if defined(ARDUINO_ARCH_ESP32)
+		// Use HSPI SPI controller for ESP32 boards
+		secondarySPI = new SPIClass(HSPI);
+		secondarySPI->begin(); // Use default SCLK, MISO, MOSI, SS pins for HSPI
+	#elif (SPI_INTERFACES_COUNT > 1) || defined(ARDUINO_ARCH_RP2040)
+		// Use SPI1 on boards that have it
+		secondarySPI = &SPI1;
+		secondarySPI->begin(); // Use default SCLK, MISO, MOSI, SS pins for HSPI
+	#else
+		// use the only SPI device on boards that do not have a second SPI device
+		secondarySPI = &SPI;
+	#endif
+}
+
 static void initSDCard(int chipSelectPin) {
 	#if defined(SPRINGBOT)
 		SPI.end();
 		SPI.begin(SCK_PIN, MISO_PIN, MOSI_PIN, DEFAULT_CS_PIN);
 	#endif
 	if (sdCardCSPin != chipSelectPin) {
-		if (sdCardCSPin != -1) SD.end();
 		if (chipSelectPin < 0) chipSelectPin = DEFAULT_CS_PIN;
-		int ok = SD.begin(chipSelectPin, SPI_SPEED);
+		int ok = SD.begin(SdSpiConfig(
+			chipSelectPin,
+			isDedicatedSPI ? DEDICATED_SPI : SHARED_SPI,
+			SPI_SPEED,
+			useSecondarySPI ? secondarySPI : &SPI
+		));
 		if (!ok) {
 			outputString("Could not open SD Card.");
 			outputString("Check wiring, chip select pin, and that card is inserted.");
@@ -145,6 +165,54 @@ static void closeIfOpen(char *fileName) {
 
 static OBJ primInit(int argCount, OBJ *args) {
 	int csPin = ((argCount > 0) && isInt(args[0])) ? obj2int(args[0]) : -1;
+	initSDCard(csPin);
+	return falseObj;
+}
+
+static OBJ primSetSPIPins(int argCount, OBJ *args) {
+	// Set the SDCard SPI clock, MOSI, MISO, and CS.
+	// If optional 5th argument is true, use SPI1.
+	// If optional 6th argument is true, use SPI in DEDICATED mode.
+	// Note: This changes the MicroBlocks SPI pins globally (unless SPI1 is specified).
+
+	if (argCount < 3) return fail(notEnoughArguments);
+	if (!(isInt(args[0]) && isInt(args[1]) && isInt(args[2]) && isInt(args[3]))) return fail(needsIntegerError);
+
+	int spiCLK = mapDigitalPinNum(obj2int(args[0]));
+	int spiMOSI = mapDigitalPinNum(obj2int(args[1]));
+	int spiMISO = mapDigitalPinNum(obj2int(args[2]));
+	int csPin = mapDigitalPinNum(obj2int(args[3]));
+	useSecondarySPI = ((argCount > 4) && (args[4] == trueObj));
+	isDedicatedSPI = ((argCount > 5) && (args[5] == trueObj));
+
+	if (useSecondarySPI) {
+		initSecondarySPI();
+		secondarySPI->end();
+		#if defined(ARDUINO_ARCH_RP2040)
+			SPI1.setSCK(spiCLK);
+			SPI1.setTX(spiMOSI);
+			SPI1.setRX(spiMISO);
+			SPI1.begin();
+		#elif defined(ARDUINO_GENERIC) || defined(NRF52)
+			secondarySPI->setPins(spiMISO, spiCLK, spiMOSI);
+			secondarySPI->begin();
+		#else
+			secondarySPI->begin(spiCLK, spiMISO, spiMOSI);
+		#endif
+	} else {
+		SPI.end();
+		#if defined(ARDUINO_ARCH_RP2040)
+			SPI.setSCK(spiCLK);
+			SPI.setTX(spiMOSI);
+			SPI.setRX(spiMISO);
+			SPI.begin();
+		#elif defined(ARDUINO_GENERIC) || defined(NRF52)
+			SPI.setPins(spiMISO, spiCLK, spiMOSI);
+			SPI.begin();
+		#else
+			SPI.begin(spiCLK, spiMISO, spiMOSI);
+		#endif
+	}
 	initSDCard(csPin);
 	return falseObj;
 }
@@ -487,6 +555,7 @@ static OBJ primDeleteFolder(int argCount, OBJ *args) {
 static PrimEntry entries[] = {
 	#if defined(SD_CARD)
 		{"init", primInit},
+		{"setSPIPins", primSetSPIPins},
 		{"open", primOpen},
 		{"close", primClose},
 		{"delete", primDelete},

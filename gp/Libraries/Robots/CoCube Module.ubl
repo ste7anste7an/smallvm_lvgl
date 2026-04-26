@@ -1,7 +1,8 @@
 module 'CoCube Module'
 author 'Liang Shuai'
-version 1 13 
+version 1 14 
 depends _Servo NeoPixel 
+choices trackerMenu '1' '2' '3' '4' '5' ALL
 description 'External modules of CoCube.
 
 CoCube is a tabletop modular multi-robot platform for education and research.
@@ -11,7 +12,7 @@ sliang23@m.fudan.edu.cn
 
 Note: All functions start by turning on pin 13 to power the module.
 The power pin is off by default and is also turned off by the IDE stop button.'
-variables _cc_cam_init_flag _cc_asr_snc 
+variables _cc_cam_init_flag _cc_asr_snc _cc_PCF8574_address
 
   spec ' ' 'ccmodule_gripper open' 'gripper open'
   spec ' ' 'ccmodule_gripper close' 'gripper close'
@@ -29,6 +30,9 @@ variables _cc_cam_init_flag _cc_asr_snc
   space
   spec 'r' 'ccmodule_ASR get command' 'ASR get command'
   spec ' ' 'ccmodule_ASR play command' 'ASR play command _' 'num' 19
+  space
+  spec 'r' 'ccmodule_tracker on black' 'Tracker _ on black' 'menu.trackerMenu' 1
+  spec 'r' 'ccmodule_tracker on white' 'Tracker _ on white' 'menu.trackerMenu' 1
   space
   spec ' ' 'ccmodule_power on module' 'power on module'
   space
@@ -169,3 +173,44 @@ to 'ccmodule_set all NeoPixels color' color {
   neoPixelSetAllToColor color
 }
 
+to 'ccmodule_tracker on black' which {
+  if (_cc_PCF8574_address != 32) {
+    stopServo 22
+    digitalWriteOp 13 true
+    waitMillis 100
+    _cc_PCF8574_address = 32
+    if ((i2cGet _cc_PCF8574_address 0) < 0) {
+      sayIt 'init fail, please check i2c address and try again.'
+      return 0
+    }
+    '[sensors:i2cWrite]' _cc_PCF8574_address ('[data:makeList]' (hexToInt 'FF'))
+  }
+  local 'var' (newList 1)
+  '[sensors:i2cRead]' _cc_PCF8574_address var
+  if ('ALL' == which) {
+    if ((at 1 var) == 7) {return (booleanConstant true)}
+  } else {
+    return (not ('[data:convertType]' (1 & ((at 1 var) >> (8 - which))) 'boolean'))
+  }
+}
+
+to 'ccmodule_tracker on white' which {
+  if (_cc_PCF8574_address != 32) {
+    stopServo 22
+    digitalWriteOp 13 true
+    waitMillis 100
+    _cc_PCF8574_address = 32
+    if ((i2cGet _cc_PCF8574_address 0) < 0) {
+      sayIt 'init fail, please check i2c address and try again.'
+      return 0
+    }
+    '[sensors:i2cWrite]' _cc_PCF8574_address ('[data:makeList]' (hexToInt 'FF'))
+  }
+  local 'var' (newList 1)
+  '[sensors:i2cRead]' _cc_PCF8574_address var
+  if ('ALL' == which) {
+    if ((at 1 var) == 255) {return (booleanConstant true)}
+  } else {
+    return ('[data:convertType]' (1 & ((at 1 var) >> (8 - which))) 'boolean')
+  }
+}

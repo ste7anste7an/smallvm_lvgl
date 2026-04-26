@@ -1,6 +1,6 @@
 module Files Data
 author MicroBlocks
-version 1 4 
+version 1 5 
 description 'Flash file system operations. Currently supports the LittleFS file system on ESP8266 and ESP32 boards. The GnuBlocks virtual machine (Linux and Raspberry Pi) supports the native system.'
 
   spec ' ' '[file:open]' 'open file _' 'str'
@@ -23,7 +23,20 @@ description 'Flash file system operations. Currently supports the LittleFS file 
   spec ' ' 'file_SkipBytes' 'skip _ bytes of file _' 'num str' 4 ''
   space
   spec 'r' 'file names' 'file names : in directory _' 'str'
+  spec 'r' 'file directories' 'directory names : in directory _' 'str'
+  space
   spec 'r' '[file:systemInfo]' 'file system info'
+
+to 'file directories' dir {
+  '[file:startList]' dir
+  local 'result' ('[data:makeList]')
+  local 'fileName' ('[file:nextDirInList]')
+  repeatUntil (fileName == '') {
+    '[data:addLast]' fileName result
+    fileName = ('[file:nextDirInList]')
+  }
+  return result
+}
 
 to 'file names' dir {
   '[file:startList]' dir

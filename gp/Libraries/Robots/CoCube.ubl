@@ -1,9 +1,10 @@
 module CoCube
 author 'Liang Shuai'
-version 2 17 
-depends Tone Display TFT '_Motors/PID' 'Robots/CoCube Module' 
+version 2 20 
+depends Tone Display TFT '_Motors/PID' 'Robots/CoCube Module' '_Graphics and Displays/8 Bit Graphics' 
 tags 'cocube robot' 
 choices cocube_rotate_Menu 'cocube;left' 'cocube;right' 
+choices cocube_emoji_Menu happy naughty 'star-struck' kiss laughing neutral smug crying sleeping awkward shocked nerdy cool scared angry cold hot nauseated vomiting dizzy 
 choices cocube_move_Menu 'cocube;forward' 'cocube;backward' 
 description 'CoCube Robot library
 
@@ -27,8 +28,9 @@ v2.14 Improve the accuracy of move_to_target and optimize the loop exit mechanis
 v2.15 Remove "set TFT backlight" function
 v2.16 Change PID global variables into local
 v2.17 Modify the movement function on the map
+v2.18 Fix "_cocube_move_flag" variable missing
 '
-variables _cocube_set_right_speed _cocube_set_left_speed _cocube_error_angle _cocube_pid_flag _cocube_error_distance _cocube_error_y _cocube_error_x _cocube_target_angle 
+variables _cocube_set_right_speed _cocube_set_left_speed _cocube_error_angle _cocube_pid_flag _cocube_error_distance _cocube_error_y _cocube_error_x _cocube_target_angle _cocube_move_flag 
 
   spec ' ' 'CoCube move for msecs' 'move _ at _ speed (0-50) for _ msecs' 'menu.cocube_move_Menu num num' 'cocube;forward' 40 1000
   spec ' ' 'CoCube rotate for msecs' 'rotate _ at _ speed (0-50) for _ msecs' 'menu.cocube_rotate_Menu num num' 'cocube;left' 30 1000
@@ -53,6 +55,8 @@ variables _cocube_set_right_speed _cocube_set_left_speed _cocube_error_angle _co
   space
   spec 'r' 'CoCube on the mat' 'on the mat'
   spec 'r' 'CoCube card ID' 'card ID'
+  space
+  spec ' ' 'CoCube set emoji' 'set emoji _ scale _' 'menu.cocube_emoji_Menu menu.range:1-5' 'happy' 4
   space
   spec ' ' 'CoCube draw ArUco marker on TFT' 'draw ArUco marker on TFT _' 'num' 0
   spec ' ' 'CoCube draw AprilTag on TFT' 'draw AprilTag on TFT _' 'num' 0
@@ -244,6 +248,27 @@ to 'CoCube rotate to angle' angle speed {
       exitLoop
     }
   }
+}
+
+to 'CoCube set emoji' emoji scale {
+  comment 'Show emojis on the TFT Screen.
+Emojis are stored in BMP format in the _emoji/ directory.'
+  '8bit_set scale _' (scale + 3)
+  local 'file' ('[data:join]' '_emoji/' emoji '.bmp')
+  '8bit_set palette' ('8bit_palette from BMP file' file)
+  local 'offset' 3
+  if (scale == 1) {
+    offset = 18
+  } (scale == 2) {
+    offset = 12
+  } (scale == 3) {
+    offset = 8
+  } (scale == 4) {
+    offset = 5
+  }
+  '8bit_merge' ('8bit_bitmap from BMP file' file) offset offset
+  '8bit_draw buffer'
+  '[file:close]' file
 }
 
 to 'CoCube set wheel' speed_left speed_right {

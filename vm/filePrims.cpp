@@ -22,14 +22,16 @@
 
 // Variables
 
-static char fullPath[32]; // used to prefix "/" to file names
+// The LittleFS maxium path is 256 but we don't want to use too much RAM so limit it to 128.
+#define MAX_PATH_LENGTH 128
+static char fullPath[MAX_PATH_LENGTH + 1]; // used to prefix "/" to file names
 
 typedef struct {
-	char fileName[32];
+	char fileName[MAX_PATH_LENGTH];
 	File file;
 } FileEntry;
 
-#define FILE_ENTRIES 8
+#define FILE_ENTRIES 4
 static FileEntry fileEntry[FILE_ENTRIES]; // fileEntry[] records open files
 
 // Helper functions
@@ -309,14 +311,7 @@ static OBJ primAppendBytes(int argCount, OBJ *args) {
 	return falseObj;
 }
 
-// File list
-
-// Root directory used for listing files
-#if defined(ESP32)
-	File rootDir;
-#else
-	Dir rootDir;
-#endif
+// File size
 
 static OBJ primFileSize(int argCount, OBJ *args) {
 	if (argCount < 1) return fail(notEnoughArguments);
@@ -330,39 +325,78 @@ static OBJ primFileSize(int argCount, OBJ *args) {
 	return int2obj(size);
 }
 
+// File/directory listing
+
+#if defined(ESP32)
+	File fileListDir;
+#else
+	Dir fileListDir;
+#endif
+
 static OBJ primStartFileList(int argCount, OBJ *args) {
+	char dirPath[256];
+
+	if ((argCount > 0) && (IS_TYPE(args[0], StringType))) {
+		char *s = obj2str(args[0]);
+		if (s[0] == '/') s++; // skip leading slash, if any
+		snprintf(dirPath, sizeof(dirPath), "/%s", s);
+	} else {
+		snprintf(dirPath, sizeof(dirPath), "/");
+	}
+
+	if (!myFS.exists(dirPath)) return falseObj;
+
 	#if defined(ESP32)
-		rootDir = myFS.open("/");
+		fileListDir = myFS.open(dirPath);
 	#else
-		rootDir = myFS.openDir("/");
+		fileListDir = myFS.openDir(dirPath);
 	#endif
+
 	return falseObj;
 }
 
-static void nextFileName(char *fileName) {
-	// Copy the next file name into the argument. Set argument to empty string when done.
-	// Argument must have room for at least 32 bytes.
+static String nextFileName(bool *isDir) {
+	// Return the next file or directory name in fileListDir and set the isDir flag
+	// if it is a directory. Return the empty string if there are no more entries.
 
-	fileName[0] = '\0'; // clear string
+	*isDir = false; // default
 	#if defined(ESP32)
-		if (rootDir) {
-			File file = rootDir.openNextFile();
-			if (file) strncat(fileName, file.name(), 31);
-		}
+		return fileListDir.getNextFileName(isDir); // returns empty string if no more entries
 	#else
-		if (rootDir.next()) strncat(fileName, rootDir.fileName().c_str(), 31);
+		if (fileListDir.next()) { // returns false if no more entries
+			*isDir = fileListDir.isDirectory();
+			return fileListDir.fileName();
+		}
 	#endif
+	return "";
 }
 
 static OBJ primNextFileInList(int argCount, OBJ *args) {
-	char fileName[100];
-	nextFileName(fileName);
-	while ((strcmp(fileName, "/") == 0) || strstr(fileName, "ublockscode")) {
-		nextFileName(fileName); // skip root directory and code file
+	bool isDir;
+	String fName = nextFileName(&isDir);
+	while (fName.length() && (isDir || (fName == "ublockscode") || (fName == "/ublockscode"))) {
+		fName = nextFileName(&isDir); // skip directories and MicroBlocks code store file
 	}
-	char *s = fileName;
-	if ('/' == s[0]) s++; // skip leading slash
-	return newStringFromBytes(s, strlen(s));
+	#if defined(ESP32)
+		if (fName.length() == 0) fileListDir.close();
+	#endif
+
+	taskSleep(-1);
+	return newStringFromBytes(fName.c_str(), fName.length());
+}
+
+static OBJ primNextDirInList(int argCount, OBJ *args) {
+	bool isDir;
+	String fName = nextFileName(&isDir);
+	while (fName.length() && !isDir) {
+		fName = nextFileName(&isDir); // skip non-directories
+	}
+	#if defined(ESP32)
+		if (fName.length() == 0) fileListDir.close();
+	#endif
+
+	taskSleep(-1);
+	return newStringFromBytes(fName.c_str(), fName.length());
 }
 
 // System info
@@ -402,6 +436,7 @@ static OBJ primAppendBytes(int argCount, OBJ *args) { return falseObj; }
 static OBJ primFileSize(int argCount, OBJ *args) { return zeroObj; };
 static OBJ primStartFileList(int argCount, OBJ *args) { return falseObj; }
 static OBJ primNextFileInList(int argCount, OBJ *args) { return newString(0); }
+static OBJ primNextDirInList(int argCount, OBJ *args) { return newString(0); }
 static OBJ primSystemInfo(int argCount, OBJ *args) { return falseObj; }
 
 #endif
@@ -423,6 +458,7 @@ static PrimEntry entries[] = {
 	{"fileSize", primFileSize},
 	{"startList", primStartFileList},
 	{"nextInList", primNextFileInList},
+	{"nextDirInList", primNextDirInList},
 	{"systemInfo", primSystemInfo},
 };
 

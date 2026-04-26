@@ -98,6 +98,8 @@ method baudForBoard ESPTool boardName {
 		return 230400
 	} ('Mbits' == boardName) {
 		return 230400
+	} ('CoCube'  == boardName) {
+		return 230400
 	} (isOneOf boardName 'ESP32-S2' 'ESP32-S3' 'ESP32-C3') {
 		return 115200 // was 460800
 	}
@@ -440,6 +442,7 @@ method installFirmware ESPTool boardName eraseFlag downloadFlag vmData {
 	) {
 		ok = (uploadESP8266VM this vmData eraseFlag)
 	} else {
+		setAllInOneBinary this ('CoCube' == boardName)
 		ok = (uploadESP32VM this vmData eraseFlag)
 	}
 

@@ -1,6 +1,6 @@
 module 'Sensor Primitives' Input
 author MicroBlocks
-version 1 1
+version 1 2
 description 'Provides blocks to read tilt in the three axes, acceleration, temperature and light level. Many boards come with this particular set of sensors, such as the micro:bit, the Circuit Playground Express, the Calliope or the Citilab ED1. Also include primitives for DHT sensors, ESP32 capacitive sensing, pulse capture, and i2c speed and pin settings. '
 tags tilt acceleration light sensor capacitive button
 
@@ -20,8 +20,6 @@ tags tilt acceleration light sensor capacitive button
 	space
 	spec ' ' '[sensors:i2cSetClockSpeed]' 'set i2c clock speed _' 'num' 400000
 	spec ' ' '[sensors:i2cSetPins]' 'set i2c pins SDA _ SCL _' 'num num' 4 5
-	space
-	spec ' ' '[sensors:spiSetPins]' 'set spi pins SCK _ MOSI _ MISO _' 'num num num'
 	space
 	spec 'r' '[sensors:readDHT]'		'read DHT data pin _' 'num' 1
 	space

@@ -274,11 +274,12 @@ static OBJ primRoundedRect(int argCount, OBJ *args) {
 	int radius = obj2int(args[4]);
 
 	if (2 * radius >= height) {
-		radius = height / 2 - 1;
+		radius = (height / 2) - 1;
 	}
 	if (2 * radius >= width) {
-		radius = width / 2 - 1;
+		radius = (width / 2) - 1;
 	}
+	if (radius < 0) radius = 0;
 
 	EM_ASM_({
 			if ($6) {

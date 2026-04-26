@@ -1,6 +1,6 @@
 module 'HTTP client' Comm
 author MicroBlocks
-version 1 8 
+version 1 11 
 depends WiFi 
 tags http network get post put delete 
 choices requestTypes GET POST PUT DELETE 
@@ -22,9 +22,46 @@ description 'Send HTTP requests and get responses back. You can use this library
   spec 'r' '_lowercase' '_lowercase _' 'auto' 'ABC Def gH'
   spec 'r' '_request_url' '_request_url _ method _ body _ : port _ : useHTTPS _' 'str menu.requestTypes str num bool' '' 'GET' '' 80 false
   spec 'r' '_readHTTPResponse' '_readHTTPResponse'
+  spec 'r' '_http_expected_length' 'expectedLength _' 'str' ''
+  spec 'r' '_http_dechunk' '_http_dechunk _' 'str'
 
 to '_http_body_start' response {
   return (('[data:find]' ('[data:unicodeString]' ('[data:makeList]' 13 10 13 10)) response) + 4)
+}
+
+to '_http_dechunk' response {
+  local 'crlf' ('[data:join]' ('[data:unicodeString]' 13) ('[data:unicodeString]' 10))
+  local 'result' ('[data:makeList]')
+  local 'chunk_start' ('_http_body_start' response)
+  forever {
+    local 'chunk_size_end' ('[data:find]' crlf response chunk_start)
+    local 'byte_count' 0
+    if (chunk_size_end != -1) {
+      byte_count = (hexToInt ('[data:copyFromTo]' response chunk_start chunk_size_end))
+    }
+    if (byte_count > 0) {
+      chunk_start = ((chunk_size_end + 2) + byte_count)
+      '[data:addLast]' ('[data:copyFromTo]' response (chunk_size_end + 2) chunk_start) result
+    } else {
+      return ('[data:joinStrings]' result)
+    }
+  }
+}
+
+to '_http_expected_length' response {
+  if (('_http_body_start' response) < 10) {
+    comment 'Incomplete HTTP headers'
+    return 0
+  }
+  local 'start' (('[data:find]' 'Content-Length: ' response) + 16)
+  if (start < 16) {
+    comment 'Headers complete but no ''Content-Length:'' header'
+    return -1
+  }
+  comment 'Extract the content length and return the total expected length (including headers).'
+  local 'end' ('[data:find]' ('_line_end') response start)
+  local 'contentLength' ('[data:convertType]' ('[data:copyFromTo]' response start (end - 1)) 'number')
+  return ((('_http_body_start' response) + contentLength) - 1)
 }
 
 to '_http_header' header response {
@@ -42,7 +79,7 @@ to '_http_header' header response {
 
 to '_http_header_text' response {
   local 'headersStart' (('[data:find]' ('_line_end') response) + 2)
-  return ('[data:copyFromTo]' response headersStart (('_http_body_start' response) + 2))
+  return ('[data:copyFromTo]' response headersStart (('_http_body_start' response) - 1))
 }
 
 to '_http_status' response {
@@ -72,16 +109,28 @@ to '_lowercase' string {
 
 to '_readHTTPResponse' {
   local 'response' ''
+  local 'expectedLength' 0
   local 'lastChunkTime' (millisOp)
+  local 'last chunk' ('[data:convertType]' ('[data:makeList]' 13 10 48 13 10 13 10) 'string')
   repeatUntil (not ('[net:httpIsConnected]')) {
     local 'chunk' ('[net:httpResponse]')
     if ((size chunk) > 0) {
       response = ('[data:join]' response chunk)
       lastChunkTime = (millisOp)
+      local 'i' ('[data:find]' (v 'last chunk') response)
+      if (and (and (i > 0) (i == ((size response) - 6))) (('[data:find]' 'Transfer-Encoding: chunked' response) > 0)) {
+        exitLoop
+      }
+      if (expectedLength == 0) {
+        expectedLength = ('_http_expected_length' response)
+      }
+      if (and (expectedLength > 0) ((size response) >= expectedLength)) {
+        exitLoop
+      }
     } (((millisOp) - lastChunkTime) > 10000) {
-      return response
+      exitLoop
     }
-    waitMillis 20
+    waitMillis 10
   }
   response = ('[data:join]' response ('[net:httpResponse]'))
   return response
@@ -111,7 +160,7 @@ to '_request_url' url method body optionalPort optionalHTTPS {
   if (not ('[net:httpIsConnected]')) {
     return ('[data:join]' '0 Could not connect to server' ('_line_end'))
   }
-  '[net:httpRequest]' method host path body
+  '[net:httpRequest]' method ('[data:join]' host ':' port) path body
   return ('_readHTTPResponse')
 }
 
@@ -147,7 +196,11 @@ to 'https܃//' url optionalPort {
   local 'response' ('_request_url' url 'GET' '' port true)
   if (response != '') {
     if (('_http_status' response) == 200) {
-      return ('[data:copyFromTo]' response ('_http_body_start' response))
+      if (('[data:find]' 'Transfer-Encoding: chunked' response) > 0) {
+        return ('_http_dechunk' response)
+      } else {
+        return ('[data:copyFromTo]' response ('_http_body_start' response))
+      }
     } else {
       return ('_http_status_text' response)
     }

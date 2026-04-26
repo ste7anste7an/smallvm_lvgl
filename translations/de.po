@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: interest@microblocks.fun\n"
 "POT-Creation-Date: 2024-10-28 16:43+0200\n"
-"PO-Revision-Date: 2026-02-24 01:50+0000\n"
+"PO-Revision-Date: 2026-04-21 20:09+0000\n"
 "Last-Translator: Ralf Krause <ralf.krause@moodleschule.de>\n"
 "Language-Team: German <https://hosted.weblate.org/projects/microblocks/ide/"
 "de/>\n"
@@ -12,7 +12,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.16.1-dev\n"
+"X-Generator: Weblate 5.17.1-dev\n"
 
 #. Name of data type, as in the dropdown menu in the ( (123) is a ( number v ) ) block
 msgid "number"
@@ -110,7 +110,7 @@ msgstr "prefix"
 
 #. Example text for lowercase and uppercase Strings library block
 msgid "THIS is a String! :)"
-msgstr "DAS ist ein Text! :-)"
+msgstr "DAS ist eine Zeichenkette! :-)"
 
 #. Example text for Strings library block
 msgid "Hello, world!"
@@ -138,7 +138,7 @@ msgstr "bewege fantàstic _ mm"
 
 #. WiFi Radio library block
 msgid "wifi last string"
-msgstr "WiFi letzter Text"
+msgstr "WiFi letzte Zeichenkette"
 
 #. Tip Bar label or text (at the bottom of the IDE, gives info on the currently hovered element)
 msgid "Palette"
@@ -156,15 +156,15 @@ msgstr "Schließt den seriellen Anschluss."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Add an item to the end of a list."
-msgstr "Fügt ein Element an das Ende der Liste an."
+msgstr "fügt ein Element an das Ende der Liste an."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Delete the Nth item (or all items) of a list."
-msgstr "Löscht das angegebene Element (oder alle Elemente) aus der Liste."
+msgstr "löscht das angegebene Element (oder alle Elemente) aus der Liste."
 
 #. Block input right-click context menu option
 msgid "number/string"
-msgstr "Zahl/Text"
+msgstr "Zahl/Zeichenkette"
 
 #. Graph button tooltip
 msgid "Graph"
@@ -273,7 +273,7 @@ msgstr "Nur aktuelle Chrome- und Edge-Browser unterstützen WebSerial."
 
 #. Block part type, while making a new block
 msgid "label"
-msgstr "Beschriftung"
+msgstr "Label"
 
 #. Tip Bar label or text (at the bottom of the IDE, gives info on the currently hovered element)
 msgid "Pane Divider"
@@ -293,7 +293,7 @@ msgstr "verberge Implementationsblöcke"
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Report the product of the given numbers."
-msgstr "Gibt das Produkt der beiden Zahlen zurück."
+msgstr "gibt das Produkt der beiden Zahlen zurück."
 
 #. String in file picker and library dialogs
 msgid "Could not fetch library."
@@ -322,7 +322,7 @@ msgstr "vorwärts"
 
 #. Block input right-click context menu option
 msgid "string or number"
-msgstr "Text oder Zahl"
+msgstr "Zahl oder Zeichenkette"
 
 #. MicroBlocks IDE information
 msgid "Drag the firmware file you just saved to the %1 drive."
@@ -382,7 +382,7 @@ msgstr "i2c Gerät _ schreibe Liste _"
 
 #. Primitive block. Mostly hidden from end users.
 msgid "radio last string"
-msgstr "Radio letzter Text"
+msgstr "Radio letzte Zeichenkette"
 
 #. Primitive block. Mostly hidden from end users.
 msgid "radio set power (0-7) _"
@@ -430,7 +430,7 @@ msgstr "Radio sende Paar _ = _"
 
 #. Example string. Tells the user this input accepts an integer, a string list or a byte array
 msgid "anIntegerStringListOrByteArray"
-msgstr "Ganzzahl, Text, Liste oder ByteArray"
+msgstr "Zahl, Zeichenkette, Liste oder ByteArray"
 
 #. Block in Comm category
 msgid "i2c set device _ register _ to _"
@@ -442,7 +442,7 @@ msgstr "Katze"
 
 #. Example string. Tells the user this input accepts a string list or a byte array
 msgid "aStringListOrByteArray"
-msgstr "Text, Liste oder ByteArray"
+msgstr "Zeichenkette, Liste oder ByteArray"
 
 #. NeoPixel library block
 msgid "set all NeoPixels color _"
@@ -501,7 +501,7 @@ msgstr "neues ByteArray _"
 
 #. Primitive block. Mostly hidden from end users.
 msgid "radio send string _"
-msgstr "Radio sende Text _"
+msgstr "Radio sende Zeichenkette _"
 
 #. Block in Data category
 msgid "copy _ from _"
@@ -557,7 +557,7 @@ msgstr "Licht"
 
 #. Block in Data category
 msgid "string from unicode _"
-msgstr "Text aus Unicode _"
+msgstr "Zeichenkette aus Unicode _"
 
 #. Example value for the ( list < > ) block
 msgid "bird"
@@ -723,7 +723,7 @@ msgstr "erstelle einen Befehlsblock"
 
 #. Example string. Tells the user this input accepts a byte list or a string.
 msgid "aByteListOrString"
-msgstr "ByteListe oder Text"
+msgstr "ByteListe oder Zeichenkette"
 
 #. Block in Data category
 msgid "delete item _ of list _"
@@ -869,7 +869,7 @@ msgstr "und Header _"
 
 #. Ultrasound distance library block
 msgid "distance (cm) trigger _ echo _"
-msgstr "Entfernung (cm) Auslöser _ Echo _"
+msgstr "Entfernung (cm) Trigger _ Echo _"
 
 #. Turtle Geometry library block
 msgid "trtl;home"
@@ -1001,11 +1001,11 @@ msgstr "_ ist in Kleinbuchstaben"
 
 #. Strings library block
 msgid "join string list _ separator _"
-msgstr "verbinde Textliste _ Trennzeichen _"
+msgstr "verbinde Zeichenkettenliste _ Trennzeichen _"
 
 #. Strings library block
 msgid "string from unicodes _"
-msgstr "Text aus Unicodes _"
+msgstr "Zeichenkette aus Unicodes _"
 
 #. Lists library block
 msgid "circular item _ of _"
@@ -1114,7 +1114,7 @@ msgstr "_ ohne Leerzeichen"
 
 #. Example string. Tells the user this input accepts a list or a string
 msgid "aListOrString"
-msgstr "Liste oder Text"
+msgstr "Liste oder Zeichenkette"
 
 #. TCS34725 color sensor library block
 msgid "color _ name"
@@ -1649,7 +1649,7 @@ msgstr "Plotter drehe _ Grad"
 
 #. Example string. Tells the user this input accepts a string
 msgid "aString"
-msgstr "ein Text"
+msgstr "eine Zeichenkette"
 
 #. BME280 environmental sensor library block
 msgid "bmx280 pressure"
@@ -1714,7 +1714,7 @@ msgstr "spiele MIDI-Note _ für _ ms"
 #. Strings library label
 #. string (text) processing functions
 msgid "Strings"
-msgstr "Zeichenfolgen"
+msgstr "Zeichenketten"
 
 #. Example string for ( (prefix) begins with (pre) )
 msgid "pre"
@@ -1775,7 +1775,7 @@ msgstr "speichere Bild dieser Blockdefinition als PNG-Datei"
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Change a variable by the given amount."
-msgstr "Ändert den Wert der Variable um den angegebenen Wert."
+msgstr "ändert den Wert der Variable um den angegebenen Wert."
 
 #. BirdBrain Technologies Finch Robot library block
 msgid "Tilt Left"
@@ -1855,7 +1855,7 @@ msgstr "Nutzerdefiniert ..."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Report the absolute value of the given number (always >= 0)."
-msgstr "Gibt den absoluten Betrag der Zahl zurück (stets >= 0)."
+msgstr "gibt den absoluten Betrag der Zahl zurück (immer größer oder gleich 0)."
 
 #. Tooltip in "Stop" button. Top right of IDE.
 msgid "Stop"
@@ -1965,118 +1965,117 @@ msgstr "Beendet alle anderen Skripte außer diesem."
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Call the function with the given name and optional parameter list and report its return value."
 msgstr ""
-"Ruft die Funktion mit dem angegebenen Namen sowie den optionalen Parametern "
+"ruft die Funktion mit dem angegebenen Namen sowie den optionalen Parametern "
 "auf und gibt einen Wert zurück."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Report the sum of the given numbers."
-msgstr "Gibt die Summe der gegebenen Zahlen zurück."
+msgstr "gibt die Summe der gegebenen Zahlen zurück."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Report the first number divided by the second."
 msgstr ""
-"Gibt den Quotienten der beiden Zahlen zurück (erste Zahl durch zweite Zahl)."
+"gibt den Quotienten der beiden Zahlen zurück (erste Zahl durch zweite Zahl)."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Report the remainder of dividing the first number by the second."
 msgstr ""
-"Gibt den Rest bei Division der ersten Zahl durch die zweite Zahl zurück."
+"gibt den Rest bei Division der ersten Zahl durch die zweite Zahl zurück."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Report the minimum of the values."
-msgstr "Gibt das Minimum der Werte zurück."
+msgstr "gibt das Minimum der Werte zurück."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Report the maximum of the values."
-msgstr "Gibt das Maximum der Werte zurück."
+msgstr "gibt das Maximum der Werte zurück."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Report a randomly chosen number in the given range."
-msgstr "Gibt eine zufälligen Wert aus dem gegebenen Bereich zurück."
+msgstr "gibt eine zufälligen Wert aus dem gegebenen Bereich zurück."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 #. The (-o) tag turns into an icon of a boolean input set to on, or true (green)
 msgid "Report (-o) if the first value is less than the second one."
-msgstr "Gibt (-o) zurück, falls der erste Wert kleiner als der zweite Wert ist."
+msgstr "gibt (-o) zurück, falls der erste Wert kleiner als der zweite Wert ist."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 #. The (-o) tag turns into an icon of a boolean input set to on, or true (green)
 msgid "Report (-o) if the first value is less than or equal to the second one."
 msgstr ""
-"Gibt (-o) zurück, falls der erste Wert kleiner oder gleich dem zweiten Wert "
+"gibt (-o) zurück, falls der erste Wert kleiner oder gleich dem zweiten Wert "
 "ist."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 #. The (-o) tag turns into an icon of a boolean input set to on, or true (green)
 msgid "Report (-o) if the two values are not equal."
-msgstr "Gibt (-o) zurück, falls beide Werte ungleich sind."
+msgstr "gibt (-o) zurück, falls beide Werte ungleich sind."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 #. The (-o) tag turns into an icon of a boolean input set to on, or true (green)
 msgid "Report (-o) if the first value is greater than the second one."
-msgstr "Gibt (-o) zurück, falls der erste Wert größer als der zweite Wert ist."
+msgstr "gibt (-o) zurück, falls der erste Wert größer als der zweite Wert ist."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 #. The (-o) tag turns into an icon of a boolean input set to on, or true (green)
 msgid "Report (-o) if either value is (-o)"
-msgstr "Gibt (-o) zurück, falls mindestens einer der beiden Werte (-o) ist."
+msgstr "gibt (-o) zurück, falls mindestens einer der beiden Werte (-o) ist."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Report bitwise AND of two numbers."
-msgstr "Gibt die bitweise UND-Verknüpfung zweier Zahlen zurück."
+msgstr "gibt das bitweise UND zweier Zahlen zurück."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Report bitwise OR of two numbers."
-msgstr "Gibt die bitweise ODER-Verknüpfung zweier Zahlen zurück."
+msgstr "gibt das bitweise ODER zweier Zahlen zurück."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Report bitwise XOR (exclusive OR) of two numbers."
-msgstr ""
-"Gibt die bitweise XOR-Verknüpfung (exklusives ODER) zweier Zahlen zurück."
+msgstr "gibt das bitweise XOR (exklusives ODER) zweier Zahlen zurück."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Report bitwise inverse of the given number."
-msgstr "Gibt die bitweise Negation der Zahl zurück."
+msgstr "gibt die bitweise Negation der Zahl zurück."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Report the given number shifted right by the given number of bits (arithmetic shift; sign is maintained)."
 msgstr ""
-"Gibt die Zahl zurück, die bei der bitweisen Verschiebung der Eingabe nach "
+"gibt die Zahl zurück, die bei der bitweisen Verschiebung der Eingabe nach "
 "rechts entsteht (arithmetische Verschiebung. Vorzeichen bleibt erhalten)."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Set a variable to the given value."
-msgstr "Weist der Variable den angegebenen Wert zu."
+msgstr "setzt die Variable auf den angegebenen Wert."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Report the Nth item of a list, string, or byte array."
 msgstr ""
-"Gibt das angegebene Element aus der Liste, der Zeichenfolge oder dem "
+"gibt das angegebene Element aus der Liste, der Zeichenkette oder dem "
 "ByteArray zurück."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Create and report a short list containing the given items. Length limited by available stack space."
 msgstr ""
-"Erstellt eine kurze Liste mit den angegebenen Elementen und gibt diese "
-"zurück. Die Größe ist durch den Stack-Speicher begrenzt."
+"erstellt eine Liste mit den angegebenen Elementen und gibt diese zurück. Die "
+"Größe ist durch den Stack-Speicher begrenzt."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Report a copy from the given index through the end (or optional stop index) of the given list, string, or byte array."
 msgstr ""
-"Gibt eine Kopie vom angegebenen Index bis zum Ende (oder optional zum "
-"Stopindex) der Liste, der Zeichenfolge oder des ByteArray zurück."
+"gib eine Kopie vom angegebenen Index bis zum Ende (oder bis zum Stoppindex) "
+"aus der Liste, der Zeichenkette oder dem ByteArray zurück."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Combine the items of a list into a string, optionally separated by a delimiter (e.g. comma)."
 msgstr ""
-"Verbindet die Elemente der Liste zu einer Zeichenfolge, optional mit "
+"verbinde die Elemente einer Liste zu einer Zeichenkette, optional mit "
 "Trennzeichen getrennt."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Report a byte array containing the UTF-8 bytes of the given string."
 msgstr ""
-"Gibt ein ByteArray zurück, das die UTF-8-Bytes der angegebenen Zeichenfolge "
-"enthält."
+"gibt ein ByteArray zurück, das die Unicode-Werte der angegebenen "
+"Zeichenkette enthält."
 
 #. Example message for [ when _ received ] and [ broadcast _ ] blocks
 msgid "go!"
@@ -2104,7 +2103,7 @@ msgstr "Wahrheitswert"
 
 #. Name of data type, as in the dropdown menu in the ( (123) is a ( number v ) ) block
 msgid "string"
-msgstr "Text"
+msgstr "Zeichenkette"
 
 #. Block in Data category
 msgid "starting at _"
@@ -2566,7 +2565,7 @@ msgstr "System"
 
 #. String in file picker and library dialogs
 msgid "New library name?"
-msgstr "Name für neues Modul?"
+msgstr "Name für das neue Modul?"
 
 #. Scripting area right-click context menu
 msgid "show all block definitions"
@@ -2643,7 +2642,7 @@ msgstr "Pfad der Anfrage _"
 
 #. Web Things library block
 msgid "set boolean property _ title _ @Type _"
-msgstr "setze Wahrheitseigenschaft _ Name _ @Typ _"
+msgstr "setze Wahrheitwert Eigenschaft _ Name _ @Typ _"
 
 #. UDP library block
 msgid "UDP remote port"
@@ -2729,13 +2728,12 @@ msgstr "Macht gar nichts, wird aber zum Dokumentieren genutzt."
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 #. The (-o) tag turns into an icon of a boolean input set to on, or true (green)
 msgid "Report (-o) if both values are (-o)"
-msgstr "Gibt (-o) zurück, falls beide Werte (-o) sind."
+msgstr "gibt (-o) zurück, falls beide Werte (-o) sind."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 #. The (-o) tag turns into an icon of a boolean input set to on, or true (green)
 msgid "Report (-o) if first input is a value of the given data type."
-msgstr ""
-"Gibt (-o) zurück, falls die Eingabe ein Wert des angegebenen Datentyps ist."
+msgstr "gibt (-o) zurück, falls die Eingabe den angegebenen Datentyps hat."
 
 #. "Output" blocks category label
 msgid "cat;Output"
@@ -3027,7 +3025,7 @@ msgstr "setze Thing Fähigkeit auf _"
 
 #. Web Things library block
 msgid "set string property _ title _ @Type _"
-msgstr "setze Texteigenschaft _ Name _ @Typ _"
+msgstr "setze Zeichenkette Eigenschaft _ Name _ @Typ _"
 
 #. Web Things library block
 msgid "set number property _ title _ @Type _"
@@ -3039,7 +3037,7 @@ msgstr "schreibgeschützt _"
 
 #. WiFi Radio library block
 msgid "wifi send string _"
-msgstr "WiFi sende Text _"
+msgstr "WiFi sende Zeichenkette _"
 
 #. WiFi Radio library block
 msgid "wifi send pair _ = _"
@@ -3248,78 +3246,78 @@ msgstr "Wiederholt die umschlossenen Blöcke, bis die Bedingung (-o) wird."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Report the value of a register (0-255) of an I2C device (0-127)."
-msgstr "Gibt für ein I2C-Gerät (0-127) den Wert eines Registers (0-255) zurück."
+msgstr "gibt den Wert des Registers (0-255) für ein I2C-Gerät (0-127) zurück."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 #. The (-o) tag turns into an icon of a boolean input set to on, or true (green)
 msgid "Report (-o) if the two values are equal."
-msgstr "Gibt (-o) zurück, falls beide Werte identisch sind."
+msgstr "gibt (-o) zurück, falls beide Werte identisch sind."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Report the first number minus the second."
 msgstr ""
-"Gibt die Differenz der beiden Zahlen zurück (erste Zahl minus zweite Zahl)."
+"gibt die Differenz der beiden Zahlen zurück (erste Zahl minus zweite Zahl)."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 #. The (-o) tag turns into an icon of a boolean input set to on, or true (green)
 msgid "Report (-o) if the first value is greater than or equal to the second one."
 msgstr ""
-"Gibt (-o) zurück, falls der erste Wert größer oder gleich dem zweiten Wert "
+"gibt (-o) zurück, falls der erste Wert größer oder gleich dem zweiten Wert "
 "ist."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 #. The (-o) tag turns into an icon of a boolean input set to on, or true (green)
 #. The (o-) tag turns into an icon of a boolean input set to off, or false (red)
 msgid "Boolean constant ( (-o) or (o-) )."
-msgstr "Gibt einen Wahrheitswert ( (-o) oder (o-) ) zurück."
+msgstr "gibt einen Wahrheitswert ( (-o) oder (o-) ) zurück."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Report the given number shifted left by the given number of bits."
 msgstr ""
-"Gibt die Zahl zurück, die aus der bitweisen Verschiebung der Eingabe um die "
-"angegebene Anzahl von Bits nach links entsteht."
+"gibt die Zahl zurück, die bei der bitweisen Verschiebung der Eingabe nach "
+"links entsteht."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Create a variable local to the containing script with the given initial value."
 msgstr ""
-"Erzeugt eine lokale Variable im enthaltenen Skript und setzt den angegebenen "
+"erzeugt eine lokale Variable im enthaltenen Skript und setzt den angegebenen "
 "Anfangswert."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Report the number of items in a list, string, or byte array."
 msgstr ""
-"Gibt die Anzahl der Elemente der Liste, der Zeichenfolge oder des ByteArrays "
+"gibt die Anzahl der Elemente der Liste, der Zeichenkette oder des ByteArrays "
 "zurück."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Join (concatenate) the given lists, strings, or byte arrays and report the result."
 msgstr ""
-"Verbindet (verkettet) die angegebenen Listen, Zeichenfolgen oder ByteArrays "
-"und gibt das Ergebnis zurück."
+"verbinde die angegebenen Listen, Zeichenketten oder ByteArrays und gib das "
+"Ergebnis zurück."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Report the Unicode value (\"code point\") of the Nth character of the given string."
 msgstr ""
-"Gibt den Unicode-Wert (\"Codepunkt\") des N-ten Zeichens der angegebenen "
-"Zeichenfolge an."
+"gibt den Unicode (\"code point\") des angegebenen Zeichens aus der "
+"Zeichenkette zurück."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Report a string containing the given Unicode value (\"code point\") or list of values."
 msgstr ""
-"Gibt eine Zeichenfolge zurück, die den angegebenen Unicode-Wert oder eine "
-"Liste von Werten enthält."
+"gibt eine Zeichenkette zurück, die den angegebenen Unicode (\"code point\") "
+"oder eine Liste von Unicodes enthält."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Report a new list of the given length filled with zero or the optional value."
 msgstr ""
-"Erzeuge eine neue Liste der angegebenen Länge und fülle sie mit Null oder "
-"dem optionalen Wert."
+"erzeuge eine neue Liste der angegebenen Länge, gefüllt mit Null oder dem "
+"optionalen Wert."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Report a new byte array of the given length filled with zero or the optional value."
 msgstr ""
-"Erzeuge ein neues ByteArray der angegebenen Länge und fülle es mit Null oder "
-"dem optionalen Wert."
+"erzeuge ein neues ByteArray der angegebenen Länge, gefüllt mit Null oder dem "
+"optionalen Wert."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Report the number of words of memory available. Stop button frees up memory."
@@ -3410,19 +3408,19 @@ msgstr ""
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Report the last broadcast message received."
-msgstr "Gibt die zuletzt empfangene Nachricht zurück."
+msgstr "gibt die zuletzt empfangene Nachricht zurück."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Report the numerical value of a hexadecimal string (range: -0x1FFFFFFF to 0x1FFFFFFF)"
 msgstr ""
-"Gibt den numerischen Wert einer hexadezimalen Zeichenfolge zurück (Bereich: -"
+"gibt den numerischen Wert einer hexadezimalen Zeichenkette zurück (Bereich: -"
 "0x1FFFFFFF bis 0x1FFFFFFF)"
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Split the given string with the given delimiter and report the result (a list of strings)."
 msgstr ""
-"Teilt die gegebene Zeichenfolge mit dem angegebenen Trennzeichen und gibt "
-"dies als Liste von Zeichenfolgen zurück."
+"teile die gegebene Zeichenkette mit dem Trennzeichen und gib das Ergebnis "
+"als Liste von Zeichenkette zurück."
 
 #. Block in Input category
 msgid "board type"
@@ -3567,7 +3565,7 @@ msgstr "löschen"
 
 #. Block input right-click context menu option
 msgid "string only"
-msgstr "nur Text"
+msgstr "Zeichenkette"
 
 #. Block input right-click context menu option
 msgid "number only"
@@ -3603,16 +3601,16 @@ msgstr "gibt den Zustand der Taste A zurück ( (-o) oder (o-) )."
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Report a number proportional to the voltage on an analog pin (0 = ground, 1023 = supply voltage)."
 msgstr ""
-"Zeigt eine Zahl proportional zur Spannung an einem analogen Pin (0 = Masse, "
+"zeigt eine Zahl proportional zur Spannung an einem analogen Pin (0 = Masse, "
 "1023 = Versorgungsspannung)."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Report number of analog pins on this device."
-msgstr "Zeigt die Anzahl analoger Pins des Geräts."
+msgstr "zeigt die Anzahl analoger Pins dieses Geräts."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Report number of digital pins on this device."
-msgstr "Zeigt die Anzahl digitaler Pins des Geräts."
+msgstr "zeigt die Anzahl digitaler Pins dieses Geräts."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Receive multiple bytes from an I2C device."
@@ -3621,7 +3619,7 @@ msgstr "Empfängt mehrere Byte von einem I2C-Gerät."
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Read a byte from an SPI device while sending a zero byte. Report the byte received."
 msgstr ""
-"Liest ein Byte von einem SPI-Gerät, während es ein Null-Byte sendet, und "
+"liest ein Byte von einem SPI-Gerät, während es ein Null-Byte sendet, und "
 "gibt das Byte zurück."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
@@ -3637,7 +3635,7 @@ msgstr "Öffnet einen seriellen Anschluss mit der angegebenen Baud-Rate."
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Report data received from the serial port (a byte array)."
 msgstr ""
-"Gibt die empfangenen Daten vom seriellen Anschluss (als ByteArray) zurück."
+"gibt die empfangenen Daten vom seriellen Anschluss als ByteArray zurück."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Send a byte array to the serial port."
@@ -3650,7 +3648,7 @@ msgstr "Wartet, bis die Bedingung (-o) wird."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Return (report) the given value from a function or script."
-msgstr "Gibt den Wert einer Funktion oder eines Skripts zurück."
+msgstr "gibt den Wert einer Funktion oder eines Skripts zurück."
 
 #. Block in Control category
 msgid "when started"
@@ -3792,12 +3790,12 @@ msgstr "Sendet die angegebene Nachricht als Broadcast."
 #. The (o-) tag turns into an icon of a boolean input set to off, or false (red)
 msgid "Report the logical inverse of a Boolean ( (-o) or (o-) ) value."
 msgstr ""
-"Gibt die logische Umkehrung des Wahrheitswerts ( (-o) oder (o-) ) zurück."
+"gibt die logische Umkehrung des Wahrheitswerts ( (-o) oder (o-) ) zurück."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Replace the Nth item (or all items) of a list or byte array with the given value."
 msgstr ""
-"Setzt das angegebene Element (oder alle Elemente) in der Liste oder dem "
+"setzt das angegebene Element (oder alle Elemente) in der Liste oder dem "
 "ByteArray auf den gegebenen Wert."
 
 #. Block in Input category
@@ -3838,7 +3836,7 @@ msgstr "definiere"
 
 #. Block input right-click context menu option
 msgid "editable number or string"
-msgstr "editierbare Zahl oder Text"
+msgstr "editierbare Zahl oder Zeichenkette"
 
 #. Block part type, while making a new block
 msgid "input"
@@ -3875,7 +3873,7 @@ msgstr ""
 #. The [l] tag turns into an icon of a mouse with the left button pressed
 msgid "[l] right arrow to show optional inputs, left arrow to hide."
 msgstr ""
-"[l] Rechtspfeil zum Anzeigen optionaler Eingaben, Linkspfeil zum Verstecken."
+"[l] Rechtspfeil zum Anzeigen optionaler Eingaben, Linkspfeil zum Verbergen."
 
 #. Tip Bar label or text (at the bottom of the IDE, gives info on the currently hovered element)
 #. The [l] tag turns into an icon of a mouse with the left button pressed
@@ -3900,7 +3898,7 @@ msgstr "zeigt den Wert grafisch an."
 #. The (-o) tag turns into an icon of a boolean input set to on, or true (green)
 #. The (o-) tag turns into an icon of a boolean input set to off, or false (red)
 msgid "Report the electrical logic level on a digital pin ( (-o) or (o-) )."
-msgstr "Zeigt den Logikpegel eines digitalen Pins ( (-o) or (o-) )."
+msgstr "zeigt den Logikpegel eines digitalen Pins ( (-o) or (o-) )."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Pulse width modulate (PWM) a pin with the given duty cycle (0 - 1023)."
@@ -3925,12 +3923,12 @@ msgstr "Wartet die in Mikrosekunden angegebene Zeit."
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Find and report the index of an item in a list or a substring within a string. Report -1 if not found."
 msgstr ""
-"Gibt die Stelle des Elements in der Liste oder der Teilzeichenfolge in der "
-"Zeichenfolge zurück. Gibt -1 zurück, falls nichts gefunden wird."
+"suche ein Element in der Liste oder eine Teilkette in der Zeichenkette und "
+"gib die Stelle zurück. Wenn -1, dann wurde nichts gefunden."
 
 #. Cutebot Pro library block
 msgid "CBPro IR code"
-msgstr "CBPro IR Code"
+msgstr "CBPro IR-Code"
 
 #. Cutebot Pro library block
 msgid "CBPro set _ servo _ angle to _ deg"
@@ -3970,7 +3968,7 @@ msgstr "CBPro setze Vorderlicht _ auf _"
 
 #. Cutebot Pro library block
 msgid "CBPro IR code received?"
-msgstr "CBPro IR Code empfangen?"
+msgstr "CBPro IR-Code empfangen?"
 
 #. Cutebot Pro library block
 msgid "CBPro set NeoPixel _ to _"
@@ -4065,7 +4063,7 @@ msgstr "CBPro drehe Rotationsservo _ mit _ (-100~100)"
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 #. The (-o) tag turns into an icon of a boolean input set to on, or true (green)
 msgid "Reports (-o) if the board is connected to IDE."
-msgstr "Zeigt (-o), wenn das Board mit der IDE verbunden ist."
+msgstr "zeigt (-o), wenn das Board mit der IDE verbunden ist."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Set the SPI clock speed, mode, channel (Raspberry Pi only), and bit order."
@@ -4299,24 +4297,24 @@ msgstr ""
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Report the given argument or defaultValue if the argument was not supplied by the caller."
 msgstr ""
-"Gibt das angegebene Argument aus oder einen Standardwert, wenn das Argument "
+"gibt das angegebene Argument aus oder einen Standardwert, wenn das Argument "
 "nicht beim Aufruf bereitgestellt wurde."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Convert a value to the given data type."
-msgstr "Konvertiert den Wert in den angegebenen Datentyp."
+msgstr "konvertiert den Wert in den angegebenen Datentyp."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 #. The (-o) tag turns into an icon of a boolean input set to on, or true (green)
 msgid "If the condition is (-o) report the first alternative otherwise report the second alternative."
 msgstr ""
-"Gibt die erste Alternative zurück, wenn die Bedingung (-o) ist, andernfalls "
+"gibt die erste Alternative zurück, wenn die Bedingung (-o) ist, andernfalls "
 "die zweite Alternative."
 
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Map a value in the \"from\" range to the corresponding value in the \"to\" range."
 msgstr ""
-"Ordnet den Wert aus dem Quellbereich auf den entsprechenden Wert im "
+"ordnet einen Wert aus dem Quellbereich auf den entsprechenden Wert im "
 "Zielbereich zu."
 
 #. OLED Graphics library block
@@ -4583,7 +4581,7 @@ msgstr "_ pseudozufällige Zahlen _ bis _ mit Seed _"
 #. Tip Bar text for a block (at the bottom of the IDE, gives info on the currently hovered block or input)
 msgid "Report a list containing the given range of numbers (with optional increment). Useful in \"for\" loops."
 msgstr ""
-"Gibt eine Liste aus, die den angegebenen Zahlenbereich enthält (mit "
+"gibt eine Liste aus, die den angegebenen Zahlenbereich enthält (mit "
 "optionalem Inkrement). Nützlich in \"für\"-Schleifen."
 
 #. Settings menu option
@@ -4696,7 +4694,7 @@ msgstr "BLE sende Zahl _"
 
 #. BLE Radio library block
 msgid "ble send string _"
-msgstr "BLE sende Text _"
+msgstr "BLE sende Zeichenkette _"
 
 #. BLE Radio library block
 msgid "ble set group _ (0-255)"
@@ -4716,7 +4714,7 @@ msgstr "BLE letzte Zahl"
 
 #. BLE Radio library block
 msgid "ble last string"
-msgstr "BLE letzter Text"
+msgstr "BLE letzte Zeichenkette"
 
 #. BLE Scanner library block
 msgid "RSSI"
@@ -5639,7 +5637,7 @@ msgstr "TdR Knopf 2"
 
 #. InnovaDidàctic TdR shield library block
 msgid "TdR receive IR code"
-msgstr "TdR empfange IR Code"
+msgstr "TdR empfange IR-Code"
 
 #. InnovaDidàctic Imagina shield library block
 msgid "Imagina light"
@@ -8045,7 +8043,7 @@ msgstr "Bitmap mit Breite _ aus raw indexed Datei _"
 
 #. 8 Bit Graphics Library block
 msgid "bitmap of width _ from string _"
-msgstr "Bitmap mit Breite _ aus der Zeichenkette _"
+msgstr "Bitmap mit Breite _ von Zeichenkette _"
 
 #. 8 Bit Graphics Library block
 msgid "bitmap _ rotated _ º"
@@ -8289,7 +8287,7 @@ msgstr "Vierstellige Anzeige (TM1650)"
 
 #. Library name
 msgid "TFT"
-msgstr "TfT"
+msgstr "TFT"
 
 #. Library name
 msgid "CoCube Module"
@@ -8306,3 +8304,128 @@ msgstr "MIDI"
 #. Library name
 msgid "Function Calls"
 msgstr "Funktionsaufrufe"
+
+#. CoCube Emoji library label
+#. Show emojis on the TFT Screen.
+msgid "CoCube Emoji"
+msgstr "CoCube Emoji"
+
+#. CoCube emoji block
+msgid "set emoji _ scale _"
+msgstr "setze Emoji _ Größe _"
+
+#. CoCube emoji block
+msgid "naughty"
+msgstr "frech"
+
+#. CoCube emoji block
+msgid "star-struck"
+msgstr "von Sternen beeindruckt"
+
+#. CoCube emoji block
+msgid "kiss"
+msgstr "Kuss"
+
+#. CoCube emoji block
+msgid "laughing"
+msgstr "lachend"
+
+#. CoCube emoji block
+msgid "neutral"
+msgstr "neutral"
+
+#. CoCube emoji block
+msgid "smug"
+msgstr "selbstgefällig"
+
+#. CoCube emoji block
+msgid "crying"
+msgstr "schreiend"
+
+#. CoCube emoji block
+msgid "sleeping"
+msgstr "schlafend"
+
+#. CoCube emoji block
+msgid "awkward"
+msgstr "unangenehm"
+
+#. CoCube emoji block
+msgid "shocked"
+msgstr "geschockt"
+
+#. CoCube emoji block
+msgid "nerdy"
+msgstr "nerdig"
+
+#. CoCube emoji block
+msgid "cool"
+msgstr "cool"
+
+#. CoCube emoji block
+msgid "scared"
+msgstr "verängstigt"
+
+#. CoCube emoji block
+msgid "cold"
+msgstr "kalt"
+
+#. CoCube emoji block
+msgid "hot"
+msgstr "heiß"
+
+#. CoCube emoji block
+msgid "nauseated"
+msgstr "übel"
+
+#. CoCube emoji block
+msgid "vomiting"
+msgstr "erbrechend"
+
+#. CoCube emoji block
+msgid "dizzy"
+msgstr "schwindlig"
+
+#. CoCube Module library block
+msgid "Tracker _ on black"
+msgstr "Tracker _ auf schwarz"
+
+#. CoCube Module library block
+msgid "Tracker _ on white"
+msgstr "Tracker _ auf weiß"
+
+#. CoCube Soccer library block
+msgid "set NeoPixels color _"
+msgstr "setze NeoPixel-Farbe _"
+
+#. General MIDI drum set
+msgid "Jungle"
+msgstr "Jungle"
+
+#. General MIDI drum set
+msgid "Techno"
+msgstr "Techno"
+
+#. General MIDI drum set
+msgid "House"
+msgstr "House"
+
+#. General MIDI drum set
+msgid "Power"
+msgstr "Power"
+
+#. General MIDI drum set
+msgid "Electronic"
+msgstr "Electronic"
+
+#. General MIDI drum set
+msgid "Orchestra"
+msgstr "Orchestra"
+
+#. General MIDI drum set
+msgid "Ethnic"
+msgstr "Ethnic"
+
+#. Library name
+msgid "MIDI Player"
+msgstr "MIDI Player"

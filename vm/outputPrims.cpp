@@ -330,7 +330,10 @@ static int updateLightLevel() {
 	int c3 = analogRead(COL3);
 	int c5 = analogRead(COL5);
 	analogReference(AR_INTERNAL); // revert to using the internal 0.6v reference
-	analogRead(1); // read from another analog pin to free the last column pin for output
+
+	// disconnect last column pin from ADC so it can be used for other pin operations
+	NRF_SAADC->CH[0].PSELN = SAADC_CH_PSELP_PSELP_NC;
+	NRF_SAADC->CH[0].PSELP = SAADC_CH_PSELP_PSELP_NC;
 
 	lightLevel = (2850 - (c1 + c3 + c5)) / 3;
 	if (lightLevel < 0) lightLevel = 0;
@@ -987,6 +990,8 @@ static void initNeoPixelPin(int pinNum) { // ESP32
 			pinNum = 48; // ESP32-S3-DevKitC-1 internal NeoPixel pin
 		#elif defined(ESP32_C3)
 			pinNum = 8; // ESP32-C3-DevKitC-02 internal NeoPixel pin
+		#elif defined(NEOPIXEL_PIN_LED)
+			pinNum = NEOPIXEL_PIN_LED;
 		#else
 			pinNum = 0; // default to pin 0
 		#endif

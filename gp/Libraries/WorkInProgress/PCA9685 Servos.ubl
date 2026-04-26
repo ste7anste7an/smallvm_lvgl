@@ -1,0 +1,57 @@
+module 'PCA9685 Servos' Output
+author 'Rick Stoddard'
+version 1 1 
+description 'Support for up to 16 servos controlled by a PCA9685 board.
+
+Datasheet: https://cdn-shop.adafruit.com/datasheets/PCA9685.pdf'
+variables _pca9685_servoPos 
+
+  spec ' ' 'pca9685_setServo' 'pca9685 set servo _ to _ (-90 to 90)' 'num.range:0-15 num' 0 0
+  spec ' ' 'pca9685_sleep' 'pca9685 sleep _' 'bool' false
+  space
+  spec ' ' '_pca9685_init' '_pca9685_init'
+  spec ' ' '_pca9685_setRegister' '_pca9685 set register _ to _' 'num num' 0 0
+
+to '_pca9685_init' {
+  if (_pca9685_servoPos != 0) {
+    comment 'Already initialized'
+    return
+  }
+  comment 'Create list to store servo positions, initially all zero'
+  _pca9685_servoPos = (newList 16 0)
+  comment 'Sleep Mode'
+  '_pca9685_setRegister' 0 16
+  comment 'Frequency'
+  '_pca9685_setRegister' (hexToInt 'FE') (hexToInt '79')
+  comment 'Mode 1 Wakeup'
+  '_pca9685_setRegister' 0 0
+  comment 'Mode 2 Output Config totem pole'
+  '_pca9685_setRegister' 1 4
+  comment 'Wakeup '
+  '_pca9685_setRegister' 0 0
+}
+
+to '_pca9685_setRegister' reg value {
+  i2cSet (hexToInt '40') reg value
+}
+
+to pca9685_setServo which degrees {
+  '_pca9685_init'
+  comment 'Limit channel range'
+  which = (maximum 0 (minimum which 16))
+  comment 'Limit angle range'
+  degrees = (maximum -90 (minimum degrees 90))
+  local 'baseReg' (6 + (which * 4))
+  comment 'Set channel 0-15'
+  '_pca9685_setRegister' (baseReg + 2) (('[misc:rescale]' degrees -90 90 170 450) & (hexToInt 'FF'))
+  '_pca9685_setRegister' (baseReg + 3) ((('[misc:rescale]' degrees -90 90 170 450) >> 8) & (hexToInt 'FF'))
+  '_pca9685_setRegister' (6 + (channel * 4)) 0
+  '_pca9685_setRegister' (baseReg + 1) 0
+  atPut (which + 1) _pca9685_servoPos degrees
+}
+
+to pca9685_sleep sleepFlag {
+  '_pca9685_init'
+  '_pca9685_setRegister' 0 (ifExpression sleepFlag 16 0)
+}
+

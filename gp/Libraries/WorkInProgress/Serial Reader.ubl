@@ -1,0 +1,106 @@
+module 'Serial Reader' Input
+author MicroBlocks
+version 1 0 
+description 'Reads fixed-size data chunks from the serial port, storing any leftover bytes in a buffer for later read operations. Includes operations to read integers of various sizes.
+
+Assumes the serial port has been opened at the desired baud rate.
+'
+variables _serRead_buffer 
+
+  spec 'r' 'serRead_available' 'reader bytes available'
+  spec 'r' 'serRead_next' 'read _ bytes : as string _' 'num bool' 10 false
+  space
+  spec ' ' 'serRead_skip' 'skip _ bytes' 'num' 10
+  spec ' ' 'serRead_clear' 'clear buffer'
+  space
+  spec 'r' 'serRead_8bit' 'read 8-bit number signed _' 'bool' false
+  spec 'r' 'serRead_16bit' 'read 16-bit number MSB _ signed _' 'bool bool' false false
+  spec 'r' 'serRead_24bit' 'read 24-bit number MSB _ signed _' 'bool bool' false false
+  spec 'r' 'serRead_32bit' 'read 32-bit number MSB _' 'bool' false
+
+to serRead_16bit msb signed {
+  local 'bytes' (serRead_next 2)
+  if msb {
+    local 'result' (((at 1 bytes) << 8) | (at 2 bytes))
+  } else {
+    local 'result' (((at 2 bytes) << 8) | (at 1 bytes))
+  }
+  if signed {
+    comment 'Sign-extend the result'
+    result = ((result << 15) >> 15)
+  }
+  return result
+}
+
+to serRead_24bit msb signed {
+  local 'bytes' (serRead_next 3)
+  if msb {
+    local 'result' (((at 1 bytes) << 16) | (((at 2 bytes) << 8) | (at 3 bytes)))
+  } else {
+    local 'result' (((at 3 bytes) << 16) | (((at 2 bytes) << 8) | (at 1 bytes)))
+  }
+  if signed {
+    comment 'Sign-extend the result'
+    result = ((result << 7) >> 7)
+  }
+  return result
+}
+
+to serRead_32bit msb {
+  local 'bytes' (serRead_next 4)
+  if msb {
+    local 'high byte' (at 1 bytes)
+    local 'result' ((((at 1 bytes) << 24) | ((at 2 bytes) << 16)) | (((at 3 bytes) << 8) | (at 4 bytes)))
+  } else {
+    local 'high byte' (at 4 bytes)
+    local 'result' ((((at 4 bytes) << 24) | ((at 3 bytes) << 16)) | (((at 2 bytes) << 8) | (at 1 bytes)))
+  }
+  if ((v 'high byte') > 127) {
+    sayIt '32-bit number is out of range for MicroBlocks'
+    stopTask
+  }
+  return result
+}
+
+to serRead_8bit signed {
+  repeatUntil ((serRead_available) > 0) {
+    waitMillis 1
+  }
+  local 'result' (at 1 _serRead_buffer)
+  _serRead_buffer = ('[data:copyFromTo]' _serRead_buffer 2)
+  if signed {
+    comment 'Sign-extend the result'
+    result = ((result << 23) >> 23)
+  }
+  return result
+}
+
+to serRead_available {
+  if (_serRead_buffer == 0) {_serRead_buffer = ('[data:newByteArray]' 0)}
+  local 'newData' ('[serial:read]')
+  if ((size newData) != 0) {
+    _serRead_buffer = ('[data:join]' _serRead_buffer newData)
+  }
+  return (size _serRead_buffer)
+}
+
+to serRead_clear {
+  _serRead_buffer = ('[data:newByteArray]' 0)
+}
+
+to serRead_next byteCount optionalStringFlag {
+  repeatUntil ((serRead_available) >= byteCount) {
+    waitMillis 1
+  }
+  local 'result' ('[data:copyFromTo]' _serRead_buffer 1 byteCount)
+  _serRead_buffer = ('[data:copyFromTo]' _serRead_buffer (byteCount + 1))
+  if (argOrDefault 2 false) {
+    result = ('[data:convertType]' result 'string')
+  }
+  return result
+}
+
+to serRead_skip byteCount {
+  local 'ignore' (serRead_next byteCount false)
+}
+

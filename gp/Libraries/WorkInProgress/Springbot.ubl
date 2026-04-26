@@ -1,5 +1,68 @@
 module Springbot
-author 'bjarke@gotfredsen.com'
-version 1 2 
-depends  'Tone' 'NeoPixel' 'SDCard'
-description 'Springbot Libraries'
+author MicroBlocks
+version 1 0 
+tags tilt acceleration light temperature 
+description '
+Blocks for the Springbot including sensors and NeoPixel.'
+variables _springbot_LED_color 
+
+  spec ' ' 'springbot_setColorLED' 'set color LED to _' 'color'
+  spec ' ' 'springbot_clearColorLED' 'clear color LED'
+  spec ' ' 'springbot_brightenBy' 'brighten color LED by _' 'num' 10
+  space
+  spec 'r' 'springbot_colorSwatch' '_' 'color'
+  spec 'r' 'springbot_colorFromRGB' 'color r _ g _ b _ (0-255)' 'num num num' 100 0 0
+  spec 'r' 'springbot_randomColor' 'random color'
+  space
+  spec 'r' '[sensors:tiltX]' 'tilt x'
+  spec 'r' '[sensors:tiltY]' 'tilt y'
+  spec 'r' '[sensors:tiltZ]' 'tilt z'
+  spec 'r' '[sensors:acceleration]' 'acceleration'
+  space
+  spec 'r' '[display:lightLevel]' 'light level'
+  spec 'r' '[sensors:temperature]' 'temperature (°C)'
+
+to springbot_brightenBy delta {
+  if (_springbot_LED_color != 0) {
+    local 'h' ('[misc:hue]' _springbot_LED_color)
+    local 's' ('[misc:saturation]' _springbot_LED_color)
+    local 'v' (('[misc:brightness]' _springbot_LED_color) + delta)
+    v = (maximum 20 (minimum v 100))
+    springbot_setColorLED ('[misc:hsvColor]' h s v)
+  }
+}
+
+to springbot_clearColorLED {
+  springbot_setColorLED 0
+}
+
+to springbot_colorFromRGB r g b {
+  r = (maximum 0 (minimum r 255))
+  g = (maximum 0 (minimum g 255))
+  b = (maximum 0 (minimum b 255))
+  return (((r << 16) | (g << 8)) | b)
+}
+
+to springbot_colorSwatch color {
+  return color
+}
+
+to springbot_randomColor {
+  local 'n1' (random 100 200)
+  local 'n2' (random 0 100)
+  if (1 == (random 1 3)) {
+    return ((n1 << 16) | (n2 << 8))
+  } (1 == (random 1 2)) {
+    return ((n2 << 16) | n1)
+  } else {
+    return ((n1 << 8) | n2)
+  }
+}
+
+to springbot_setColorLED color {
+  _springbot_LED_color = color
+  '[display:neoPixelSetPin]' -1 false
+  '[display:neoPixelSend]' _springbot_LED_color
+  waitMicros 300
+}
+

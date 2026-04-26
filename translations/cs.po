@@ -3,8 +3,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: interest@microblocks.fun\n"
 "POT-Creation-Date: 2024-10-30 06:26+0200\n"
-"PO-Revision-Date: 2026-01-18 23:01+0000\n"
-"Last-Translator: Miroslav Klimoš <miraklim@centrum.cz>\n"
+"PO-Revision-Date: 2026-04-24 03:09+0000\n"
+"Last-Translator: Miroslav Klimoš <miraklimos@gmail.com>\n"
 "Language-Team: Czech <https://hosted.weblate.org/projects/microblocks/ide/"
 "cs/>\n"
 "Language: cs\n"
@@ -12,7 +12,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=((n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2);\n"
-"X-Generator: Weblate 5.15.2\n"
+"X-Generator: Weblate 5.17.1-dev\n"
 
 #. "Output" blocks category label
 msgid "cat;Output"
@@ -6670,3 +6670,165 @@ msgstr "CB OLED napiš _ od x _ y _ velké _"
 #. Coding Box library block
 msgid "cb light"
 msgstr "CB světlo"
+
+#. Block in Function Calls library
+msgid "function _ exists"
+msgstr "funkce _ existuje"
+
+#. External Displays Library block
+msgid "detach display"
+msgstr "odpoj displej"
+
+#. External Displays Library block
+msgid "attach OLED w _ h _"
+msgstr "připoj OLED šířka _ výška _"
+
+#. External Displays Library block
+msgid "attach ILI9341 rotation _ dc pin _ cs pin _ backlight pin _"
+msgstr "připoj ILI9341 rotace _ dc pin _ cs pin _ backlight pin _"
+
+#. External Displays Library block
+#. The #BR# tag must be kept intact. It translates to a new line
+msgid "attach ST7796 w _ h _ rotation _ #BR# dc pin _ cs pin _ backlight pin _"
+msgstr ""
+"připoj ST7796 šířka _ výška _ otočení _ #BR# dc pin _ cs pin _ backlight pin "
+"_"
+
+#. External Displays Library block
+#. The #BR# tag must be kept intact. It translates to a new line
+msgid "attach ST7789 w _ h _ rotation _ #BR# dc pin _ cs pin _ backlight pin _"
+msgstr ""
+"připoj ST7789 šířka _ výška _ otočení _ #BR# dc pin _ cs pin _ backlight pin "
+"_"
+
+#. External Displays Library block
+#. The #BR# tag must be kept intact. It translates to a new line
+msgid "#BR# reset pin _ invert colors _"
+msgstr "#BR# reset pin _ inverzní barvy _"
+
+#. External Displays Library block
+#. The #BR# tag must be kept intact. It translates to a new line
+msgid "attach ST7735 w _ h _ rotation _ #BR# dc pin _ cs pin _ backlight pin _"
+msgstr ""
+"připoj ST7735 šířka _ výška _ otočení _ #BR# dc pin _ cs pin _ backlight pin "
+"_"
+
+#. Library name
+msgid "Function Calls"
+msgstr "Volání Funkcí"
+
+#. Library name
+msgid "MIDI"
+msgstr "MIDI"
+
+#. Library name
+msgid "TFT"
+msgstr "TFT displej"
+
+#. Library name
+msgid "Four Digit Display (TM1650)"
+msgstr "4-místný LED (TM1650)"
+
+#. Library name
+msgid "Four Digit Display (TM1637)"
+msgstr "4-místný LED (TM1637)"
+
+#. Library name
+msgid "External Displays"
+msgstr "Externí Displeje"
+
+#. Library name
+msgid "Color"
+msgstr "Barva"
+
+#. Library name
+msgid "BMP"
+msgstr "BMP"
+
+#. Library name
+msgid "8 Bit Graphics"
+msgstr "8-bitová Grafika"
+
+#. WiFi library block
+msgid "stop wifi"
+msgstr "Zastav WiFi"
+
+#. 8 Bit Graphics Library block
+msgid "screen height"
+msgstr "výška obrazovky"
+
+#. 8 Bit Graphics Library block
+msgid "screen width"
+msgstr "šířka obrazovky"
+
+#. 8 Bit Graphics Library block
+msgid "current palette"
+msgstr "aktuální paleta"
+
+#. 8 Bit Graphics Library block
+msgid "draw palette table _"
+msgstr "nakresli tabulku palety _"
+
+#. 8 Bit Graphics Library block
+msgid "color number for r _ g _ b _ (0-255)"
+msgstr "číslo barvy pro R _ G _ B _ (0-255)"
+
+#. 8 Bit Graphics Library block
+msgid "8 bit _ palette"
+msgstr "8-bitová paleta _"
+
+#. 8 Bit Graphics Library block
+msgid "4 bit _ palette"
+msgstr "4-bitová paleta _"
+
+#. 8 Bit Graphics Library block
+msgid "palette from BMP file _"
+msgstr "paleta z BMP souboru _"
+
+#. 8 Bit Graphics Library block
+msgid "palette from pal file _"
+msgstr "paleta z PAL souboru _"
+
+#. 8 Bit Graphics Library block
+msgid "set transparent color index _"
+msgstr "nastav index průhledné barvy _"
+
+#. 8 Bit Graphics Library block
+msgid "set palette _"
+msgstr "nastav paletu _"
+
+#. 8 Bit Graphics Library block
+msgid "merge tile _ at tile position _ , _"
+msgstr "spoj dlaždice _ na pozici _ , _"
+
+#. 8 Bit Graphics Library block
+msgid "merge tile _ from _ , _ to _ , _"
+msgstr "spoj dlaždici _ od _ , _ do _ , _"
+
+#. 8 Bit Graphics Library block
+msgid "merge bitmap _ at _ , _"
+msgstr "sluč bitmapu _ na _ , _"
+
+#. 8 Bit Graphics Library block
+msgid "bitmap _ mirrored across _ axis"
+msgstr "zrcadli bitmapu _ podle osy _"
+
+#. Graph context menu option
+msgid "decrease range"
+msgstr "zmenšit rozsah"
+
+#. Graph context menu option
+msgid "increase range"
+msgstr "zvětšit rozsah"
+
+#. Program size information
+msgid "Using %1 out of %2 bytes"
+msgstr "Použito %1 z %2 bajtů"
+
+#. Settings menu option
+msgid "show program size on board"
+msgstr "ukázat velikost programu v mikropočítači"
+
+#. Settings menu option
+msgid "open vm folder on microblocks.fun"
+msgstr "otevřít složku vm na microblocks.fun"

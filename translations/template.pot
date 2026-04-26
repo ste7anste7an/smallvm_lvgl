@@ -2517,7 +2517,11 @@ msgid "Hip Hop"
 msgstr ""
 
 #. General MIDI drum set
-msgid "Jungle Techno"
+msgid "Jungle"
+msgstr ""
+
+#. General MIDI drum set
+msgid "Techno"
 msgstr ""
 
 #. General MIDI drum set
@@ -2525,7 +2529,15 @@ msgid "Room L/R"
 msgstr ""
 
 #. General MIDI drum set
-msgid "House Power Electronic"
+msgid "House"
+msgstr ""
+
+#. General MIDI drum set
+msgid "Power"
+msgstr ""
+
+#. General MIDI drum set
+msgid "Electronic"
 msgstr ""
 
 #. General MIDI drum set
@@ -2573,7 +2585,11 @@ msgid "Brush 2 L/R"
 msgstr ""
 
 #. General MIDI drum set
-msgid "Orchestra Ethnic"
+msgid "Orchestra"
+msgstr ""
+
+#. General MIDI drum set
+msgid "Ethnic"
 msgstr ""
 
 #. General MIDI drum set
@@ -5111,6 +5127,87 @@ msgstr ""
 msgid "battery percentage"
 msgstr ""
 
+#. CoCube Emoji library label
+#. Show emojis on the TFT Screen.
+msgid "CoCube Emoji"
+msgstr ""
+
+#. CoCube emoji block
+msgid "set emoji _ scale _"
+msgstr ""
+
+#. CoCube emoji block
+msgid "naughty"
+msgstr ""
+
+#. CoCube emoji block
+msgid "star-struck"
+msgstr ""
+
+#. CoCube emoji block
+msgid "kiss"
+msgstr ""
+
+#. CoCube emoji block
+msgid "laughing"
+msgstr ""
+
+#. CoCube emoji block
+msgid "neutral"
+msgstr ""
+
+#. CoCube emoji block
+msgid "smug"
+msgstr ""
+
+#. CoCube emoji block
+msgid "crying"
+msgstr ""
+
+#. CoCube emoji block
+msgid "sleeping"
+msgstr ""
+
+#. CoCube emoji block
+msgid "awkward"
+msgstr ""
+
+#. CoCube emoji block
+msgid "shocked"
+msgstr ""
+
+#. CoCube emoji block
+msgid "nerdy"
+msgstr ""
+
+#. CoCube emoji block
+msgid "cool"
+msgstr ""
+
+#. CoCube emoji block
+msgid "scared"
+msgstr ""
+
+#. CoCube emoji block
+msgid "cold"
+msgstr ""
+
+#. CoCube emoji block
+msgid "hot"
+msgstr ""
+
+#. CoCube emoji block
+msgid "nauseated"
+msgstr ""
+
+#. CoCube emoji block
+msgid "vomiting"
+msgstr ""
+
+#. CoCube emoji block
+msgid "dizzy"
+msgstr ""
+
 #. CoCube Module library block
 msgid "3D gesture connected"
 msgstr ""
@@ -5165,6 +5262,14 @@ msgstr ""
 
 #. CoCube Module library block
 msgid "ultrasonic distance (mm)"
+msgstr ""
+
+#. CoCube Module library block
+msgid "Tracker _ on black"
+msgstr ""
+
+#. CoCube Module library block
+msgid "Tracker _ on white"
 msgstr ""
 
 #. CoCube Sengo1 library choice
@@ -5457,6 +5562,10 @@ msgstr ""
 
 #. CoCube Sengo2 library block
 msgid "Sengo2 set color recog area x _ y _ width _ height _ (0-100)"
+msgstr ""
+
+#. CoCube Soccer library block
+msgid "set NeoPixels color _"
 msgstr ""
 
 #. Calliope NeoPixel library block
@@ -7000,20 +7109,24 @@ msgstr ""
 msgid "blockdef;delete"
 msgstr ""
 
-#. Block input right-click context menu
-msgid "Input type:"
-msgstr ""
-
-#. Block input right-click context menu option
-msgid "string only"
-msgstr ""
-
-#. Block input right-click context menu option
+#. Slot type menu option
 msgid "string or number"
 msgstr ""
 
-#. Block input right-click context menu option
+#. Slot type menu option
 msgid "number only"
+msgstr ""
+
+#. Slot type menu option
+msgid "string only"
+msgstr ""
+
+#. Slot type menu option
+msgid "boolean switch"
+msgstr ""
+
+#. Slot type menu option
+msgid "color patch"
 msgstr ""
 
 #. Text right-click context menu option
@@ -7250,6 +7363,10 @@ msgstr ""
 
 #. Library name
 msgid "MIDI"
+msgstr ""
+
+#. Library name
+msgid "MIDI Player"
 msgstr ""
 
 #. Library name

@@ -1,6 +1,6 @@
 module 'External Displays' Output
 author MicroBlocks
-version 1 3 
+version 1 6 
 description 'This library supports connecting selected external displays to MicroBlocks boards.
 
 * Only selected display controllers are supported.
@@ -14,5 +14,30 @@ description 'This library supports connecting selected external displays to Micr
   spec ' ' '[tft:init7789]' 'attach ST7789 w _ h _ rotation _ #BR# dc pin _ cs pin _ backlight pin _ : #BR# reset pin _ invert colors _ BGR colors _ : #BR# xOffset _ yOffset _' 'num num num num num num num bool bool num num' 240 135 0 0 0 0 -1 false false 0 0
   spec ' ' '[tft:init7796]' 'attach ST7796 w _ h _ rotation _ #BR# dc pin _ cs pin _ backlight pin _ : #BR# reset pin _ invert colors _ BGR colors _ : #BR# xOffset _ yOffset _' 'num num num num num num num bool bool num num' 480 320 0 0 0 0 -1 false false 0 0
   spec ' ' '[tft:init9341]' 'attach ILI9341 rotation _ dc pin _ cs pin _ backlight pin _ : #BR# reset pin _ invert colors _' 'num num num num num bool' 0 0 0 0 -1 false
-  spec ' ' '[tft:initOLED]' 'attach OLED w _ h _ : reset pin _' 'num num num' 128 64 -1
+  spec ' ' '[tft:initOLED]' 'attach OLED w _ h _ : #BR#  flip vertical _ is SH1106 _' 'num num bool bool' 128 64 false false
   spec ' ' '[tft:closeDisplay]' 'detach display'
+  space
+  spec ' ' '[tft:setDisplaySPIPins]' 'set display SPI clk pin _ mosi pin _ miso pin _ : spi _' 'num num num num' 18 19 16 0
+  advanced
+  spec ' ' 'externalDisplay_sendOLEDCmds' 'send OLED commands _' 'str' 'A7,A0,C0'
+
+to 'externalDisplay_sendOLEDCmds' cmdString {
+  comment 'Send one or more hexadecimal command bytes to an I2C OLED display.
+Multiple commands are separated by commas. Used for experimentation
+and to initialize uncommon OLED display types.'
+  local 'i2cAddr' (hexToInt '3C')
+  if (not ('[sensors:i2cExists]' i2cAddr)) {
+    i2cAddr = (hexToInt '3D')
+    if (not ('[sensors:i2cExists]' i2cAddr)) {
+      sayIt 'Could not find I2C OLED display'
+      waitMillis 1000
+      return 0
+    }
+  }
+  local 'cmds' ('[data:split]' cmdString ',')
+  local 'cmdPrefix' (hexToInt '80')
+  for cmd cmds {
+    '[sensors:i2cWrite]' i2cAddr ('[data:makeList]' cmdPrefix (hexToInt cmd))
+  }
+}
+

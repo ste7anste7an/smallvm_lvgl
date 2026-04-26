@@ -1,6 +1,6 @@
 module 'Misc Primitives'
 author MicroBlocks
-version 1 11 
+version 1 11
 description 'Miscellaneous system primitives.
 '
 
@@ -29,3 +29,6 @@ description 'Miscellaneous system primitives.
   spec ' ' '[display:mbEnableDisplay]' 'enable LED display _' 'bool' false
   spec ' ' '[display:neoPixelSetMaxBrightness]' 'set NeoPixel max brightness _ (10-255)' 'num' 40
   spec ' ' '[display:neoPixelSetRGB]' 'NeoPixel is RGB _' 'bool' false
+  space
+  spec ' ' '[misc:launchCodeSnapshot]'	'launch code snapshot _' 'str'
+  spec ' ' '[misc:deepSleep]'			'esp32 deep sleep for _ secs' 'num' 60

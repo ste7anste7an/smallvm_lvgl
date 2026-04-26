@@ -607,50 +607,6 @@ OBJ primSPIExchange(int argCount, OBJ *args) {
 	return falseObj;
 }
 
-OBJ primSPISetPins(int argCount, OBJ *args) {
-	// Set the SPI clock, MOSI, and MISO pins.
-	// Note: This changes the pins for the default SPI device on boards that support that.
-	// On the Raspberry Pi Pico and Pico2 boards you just use possible SPI0 pins.
-
-	if (argCount < 3) return fail(notEnoughArguments);
-	if (!(isInt(args[0]) && isInt(args[1]) && isInt(args[2]))) return fail(needsIntegerError);
-
-	#if defined(ESP8266) || defined(NRF51) || defined(ARDUINO_WEACT) || defined(__ZEPHYR__) || \
-		defined(ARDUINO_ARCH_SAMD) || defined(ARDUINO_SAM_DUE)
-			// Changing SPI pins is not supported.
-			return fail(primitiveNotImplemented);
-	#else
-		int clkPin = mapDigitalPinNum(obj2int(args[0]));
-		int mosiPin = mapDigitalPinNum(obj2int(args[1]));
-		int misoPin = mapDigitalPinNum(obj2int(args[2]));
-
-		setPinMode(clkPin, OUTPUT);
-		setPinMode(mosiPin, OUTPUT);
-		setPinMode(misoPin, INPUT);
-
-		SPI.end(); // stop SPI on current pins
-
-		#if defined(ESP32)
-			SPI.begin(clkPin, misoPin, mosiPin);
-		#elif defined(NRF52)
-			SPI.setPins(misoPin, clkPin, mosiPin);
-			SPI.begin();
-		#elif defined(TARGET_RP2040) || defined(PICO_RP2350)
-			SPI.setSCK(clkPin);
-			SPI.setMOSI(mosiPin);
-			SPI.setMISO(misoPin);
-			SPI.begin();
-		#elif defined(ARDUINO_TEENSY40) || defined(ARDUINO_TEENSY41)
-			SPI.setSCK(clkPin);
-			SPI.setMOSI(mosiPin);
-			SPI.setMISO(misoPin);
-			SPI.begin();
-		#endif
-	#endif
-
-	return falseObj;
-}
-
 // Accelerometer and Temperature
 
 int accelStarted = false;
@@ -1711,7 +1667,9 @@ static int readTemperature() {
 	return (qmi8658Read16Bit(QMI8658_TEMP) >> 8) + fudgeFactor;
 }
 
-#elif defined(DUELink_DISABLED)
+#elif defined(DUELink)
+
+#if defined(DISABLED_DUELINK_ACCELEROMETER)
 
 // DISABLED! Unfortunately, enabling this code adds ~10k to the compiled code size.
 // That is more than the available code space without shrinking the code store by 4k.
@@ -1761,14 +1719,30 @@ static void setAccelRange(int range) {
 	writeI2CReg(MC3216_ADDR, 0x07, 1);					// start accelerometer
 }
 
-static int readTemperature() {
-	if (!IS_DUE_STEM) return 0;
+#endif // DISABLED_DUELINK_ACCELEROMETER
 
-	OBJ pinArg = int2obj(9);
-	int analogValue = obj2int(primAnalogRead(1, &pinArg));
-	int mVx10 = (33000 * analogValue) / 1023;
-	return (mVx10 - 4000) / 195;
+static int readTemperature() {
+	if (IS_DUE_STEM) {
+		// Use built-in temperature sensor
+		OBJ pinArg = int2obj(9);
+		int analogValue = obj2int(primAnalogRead(1, &pinArg));
+		int mVx10 = (33000 * analogValue) / 1023;
+		return (mVx10 - 4000) / 195;
+	}
+
+	// use temperature sensor on the STM32C071 processor chip
+	const int slope = 151; // degrees C per ADC increment * 100 (for CincoBit)
+	const int zeroPoint = 2200; // for 10 readings
+
+	// collect the sum of 10 ADC readings to average out jitter
+	int adcTotal = 0;
+	for (int i = 0; i < 10; i++) adcTotal += analogRead(ATEMP);
+
+	return (((adcTotal - zeroPoint) * slope) + 500) / 1000; // temp in degrees C
 }
+
+static int readAcceleration(int registerID) { return 0; }
+static void setAccelRange(int range) { }
 
 // Support Springbot START
 #elif defined(SPRINGBOT)
@@ -1831,8 +1805,9 @@ static int readAcceleration(int registerID) {
 	if (!accelStarted) startAccelerometer();
 
 	int reg = 0;
-	if (1 == registerID) reg = KX022_XOUT_H; // x-axis (high byte)
-	if (3 == registerID) reg = KX022_YOUT_H; // y-axis (high byte)
+	// X and Y axes are swapped
+	if (1 == registerID) reg = KX022_YOUT_H; // x-axis (high byte)
+	if (3 == registerID) reg = KX022_XOUT_H; // y-axis (high byte)
 	if (5 == registerID) reg = KX022_ZOUT_H; // z-axis (high byte)
 
 	int val = (reg != 0) ? kx022Read(reg) : 0;
@@ -1840,6 +1815,8 @@ static int readAcceleration(int registerID) {
 
 	if (val < -127) val = -127;
 	if (val > 127) val = 127;
+
+	if ((1 == registerID) || (5 == registerID)) val = -val; // X and Z inverted
 
 	// Scale to MicroBlocks convention: approx. -200..200
 	return (val * 200) / 127;
@@ -2247,15 +2224,25 @@ static OBJ primTouchRead(int argCount, OBJ *args) {
 #else
 
 static OBJ primTouchRead(int argCount, OBJ *args) {
-	uint8 esp32TouchPins[10] = {0, 2, 4, 12, 13, 14, 15, 27, 32, 33};
+	if (argCount < 1) return fail(notEnoughArguments);
+
 	int gpioPin = mapDigitalPinNum(obj2int(args[0]));
-	if (gpioPin < 0) return int2obj(999); // illegal pin; no touch
-	for (int i = 0; i < sizeof(esp32TouchPins); i++) {
-		if (gpioPin == esp32TouchPins[i]) {
+	if (gpioPin < 0) return int2obj(999); // reserved or out-of-range pin number
+
+	#if defined(ESP32_S2) || defined(ESP32_S3)
+		if ((1 <= gpioPin) && (gpioPin <= 14)) {
 			return int2obj(touchRead(gpioPin));
 		}
-	}
-	return zeroObj; // gpioPin is not an ESP32 touch pin
+	#elif defined(ESP32_ORIGINAL)
+		uint8 esp32TouchPins[10] = {0, 2, 4, 12, 13, 14, 15, 27, 32, 33};
+		for (int i = 0; i < sizeof(esp32TouchPins); i++) {
+			if (gpioPin == esp32TouchPins[i]) {
+				return int2obj(touchRead(gpioPin));
+			}
+		}
+	#endif
+
+	return int2obj(999); // gpioPin is not an ESP32 touch pin on this chip
 }
 
 #endif
@@ -2617,15 +2604,136 @@ static OBJ primMicrophone(int argCount, OBJ *args) {
 
 #if defined (COCUBE)
 	#include <CoCubeSensor.h>
+	#include "persist.h"
+	#include "fileSys.h"
+	#define PIN_BUTTON 36 // Power Button
+	#define PIN_BUTTON_A 38
+	#define PIN_BUTTON_B 37
 	CoCubeSensor cocube;
+
+	int clickCount = 0;
+	unsigned long lastClickTime = 0;
+
+	const unsigned long TIMEOUT_MS = 800; // 连按判定窗口
+
+	int clickCountPower = 0;
+	unsigned long lastClickTimePower = 0;
+
+
+	void checkResetButton() {
+		static int lastStateA = HIGH;
+		int stateA = digitalRead(PIN_BUTTON_A);
+		int stateB = digitalRead(PIN_BUTTON_B);
+
+		if (stateB == LOW) {
+			if (lastStateA == HIGH && stateA == LOW) {
+				unsigned long now = millis();
+
+				if (now - lastClickTime > TIMEOUT_MS) {
+					clickCount = 0;
+				}
+
+				clickCount++;
+				lastClickTime = now;
+				delay(50);
+			}
+
+			if (clickCount >= 4) {
+				delay(200);
+				// primLaunchCodeSnapshot();
+				char* targetFile = (char*) "startup.ucode"; // 确保文件名正确
+    			loadCodeSnapshot(targetFile);
+				// backupMbcodeToSPIFFS("backup_shay");
+				clickCount = 0;
+			}
+
+		} else {
+			if (clickCount > 0) {
+				clickCount = 0;
+			}
+		}
+
+		lastStateA = stateA;
+	}
+
+	// 检测引脚是否稳定保持在指定电平（采样 20ms，要求全部一致）
+	int pinIsStable(int pin, int expectedLevel) {
+		for (int i = 0; i < 20; i++) {
+			if (digitalRead(pin) != expectedLevel) return 0;
+			delay(1);
+		}
+		return 1;
+	}
+
+	void checkPowerButton() {
+		static int lastState = HIGH;
+		static int pinDisabled = -1; // -1=未检测, 0=正常, 1=悬空已禁用
+		static int falseFireCount = 0; // 运行时误触发计数
+
+		// 首次调用：采样 200ms 检测引脚是否悬空
+		if (pinDisabled == -1) {
+			int toggles = 0;
+			int prev = digitalRead(PIN_BUTTON);
+			for (int i = 0; i < 1000; i++) {
+				delayMicroseconds(200); // 共 200ms
+				int cur = digitalRead(PIN_BUTTON);
+				if (cur != prev) toggles++;
+				prev = cur;
+			}
+			pinDisabled = (toggles > 3) ? 1 : 0;
+		}
+		if (pinDisabled) return;
+
+		int currentState = digitalRead(PIN_BUTTON);
+		unsigned long now = millis();
+
+		// 1. 超时自动重置点击计数（放在检测逻辑之前）
+		if (clickCountPower > 0 && (now - lastClickTimePower > TIMEOUT_MS)) {
+			clickCountPower = 0;
+		}
+
+		// 2. 边缘检测：按下瞬间 (HIGH -> LOW)
+		if (lastState == HIGH && currentState == LOW) {
+			// 要求引脚持续稳定 LOW 20ms（悬空引脚做不到）
+			if (pinIsStable(PIN_BUTTON, LOW)) {
+				clickCountPower++;
+				lastClickTimePower = now;
+				falseFireCount = 0;
+			} else {
+				falseFireCount++;
+				// 连续多次不稳定 → 判定为悬空，永久禁用
+				if (falseFireCount >= 5) {
+					pinDisabled = 1;
+					clickCountPower = 0;
+					return;
+				}
+			}
+		}
+		lastState = digitalRead(PIN_BUTTON); // 用最新读数更新状态
+
+		// 3. 立即触发逻辑：达到 3 次立即执行，不再等待超时
+		if (clickCountPower >= 3) {
+			delay(200);
+			char* targetFile = (char*) "startup.ucode";
+			loadCodeSnapshot(targetFile);
+			clickCountPower = 0;
+		}
+	}
 
 	void cocubeSensorInit() {
 		cocube.Init();
+		#if !defined(COCUBE_SOCCER)
+			pinMode(PIN_BUTTON, INPUT);
+		#endif
 	}
 
 	void cocubeSensorUpdate() {
 		cocube.Update();
-		cocube.EncoderUpdate();
+		#if !defined(COCUBE_SOCCER)
+			cocube.EncoderUpdate();
+			checkPowerButton();
+			checkResetButton();
+		#endif
 	}
 
 	static OBJ primPositionX(int argCount, OBJ *args) {
@@ -2656,13 +2764,19 @@ static OBJ primMicrophone(int argCount, OBJ *args) {
 	}
 
 	static OBJ primPositionSpeedLeft(int argCount, OBJ *args) {
-			int result = cocube.GetSpeedLeft();
-			return int2obj(result);
+		#if defined(COCUBE_SOCCER)
+			return zeroObj;
+		#else
+			return int2obj((int) cocube.GetSpeedLeft());
+		#endif
 	}
 
 	static OBJ primPositionSpeedRight(int argCount, OBJ *args) {
-			int result = cocube.GetSpeedRight();
-			return int2obj(result);
+		#if defined(COCUBE_SOCCER)
+			return zeroObj;
+		#else
+			return int2obj((int) cocube.GetSpeedRight());
+		#endif
 	}
 #endif
 
