@@ -2869,7 +2869,7 @@ static PrimEntry entries[] = {
 	{"internalI2cSet", primInternalI2cSet},
 	{"spiExchange", primSPIExchange},
 	{"spiSetup", primSPISetup},
-	{"spiSetPins", primSPISetPins},
+	//{"spiSetPins", primSPISetPins},
 	#if defined(PICO)
 	{"spiPins", primSPIPins},
 	#endif

@@ -361,7 +361,9 @@ static String nextFileName(bool *isDir) {
 
 	*isDir = false; // default
 	#if defined(ESP32)
-		return fileListDir.getNextFileName(isDir); // returns empty string if no more entries
+		// sodb
+		//return fileListDir.getNextFileName(isDir); // returns empty string if no more entries
+		return fileListDir.getNextFileName(); // returns empty string if no more entries
 	#else
 		if (fileListDir.next()) { // returns false if no more entries
 			*isDir = fileListDir.isDirectory();
